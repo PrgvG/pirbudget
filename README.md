@@ -1,6 +1,6 @@
-# template
+# PirBudget
 
-Full-stack application with React frontend and Express backend.
+Full-stack приложение для учёта бюджета: React frontend и Express backend.
 
 ## Structure
 
@@ -39,7 +39,7 @@ cp backend/env.example backend/.env
 ./scripts/start-dev.sh
 
 # Или вручную:
-docker-compose -p template-dev -f docker-compose.dev.yml up -d mongodb
+docker-compose -p pirbudget-dev -f docker-compose.dev.yml up -d mongodb
 ```
 
 4. **Проверка подключения к MongoDB:**
@@ -83,7 +83,7 @@ cd frontend && npm run dev
 ./scripts/start-prod.sh
 
 # Или вручную:
-docker-compose -p template-prod up -d --build
+docker-compose -p pirbudget-prod up -d --build
 ```
 
 2. **Проверка статуса:**
@@ -102,18 +102,18 @@ docker-compose ps
 **Управление:**
 ```bash
 # Просмотр логов
-docker-compose -p template-prod logs -f
+docker-compose -p pirbudget-prod logs -f
 
 # Просмотр логов конкретного сервиса
-docker-compose -p template-prod logs -f backend
-docker-compose -p template-prod logs -f frontend
-docker-compose -p template-prod logs -f mongodb
+docker-compose -p pirbudget-prod logs -f backend
+docker-compose -p pirbudget-prod logs -f frontend
+docker-compose -p pirbudget-prod logs -f mongodb
 
 # Остановка
-docker-compose -p template-prod down
+docker-compose -p pirbudget-prod down
 
 # Остановка с удалением volumes
-docker-compose -p template-prod down -v
+docker-compose -p pirbudget-prod down -v
 ```
 
 ---
@@ -123,10 +123,10 @@ docker-compose -p template-prod down -v
 MongoDB подключение настраивается через переменные окружения в `backend/.env` файле.
 
 **Важно:** 
-- **Dev окружение** (`docker-compose.dev.yml`) использует порт **27018** на хосте и имя проекта **template-dev**
-- **Prod окружение** (`docker-compose.yml`) использует порт **27017** на хосте и имя проекта **template-prod**
+- **Dev окружение** (`docker-compose.dev.yml`) использует порт **27018** на хосте и имя проекта **pirbudget-dev**
+- **Prod окружение** (`docker-compose.yml`) использует порт **27017** на хосте и имя проекта **pirbudget-prod**
 - Это позволяет запускать оба инстанса MongoDB одновременно без конфликтов портов и контейнеров
-- При использовании команд docker-compose вручную всегда указывайте имя проекта: `-p template-dev` или `-p template-prod`
+- При использовании команд docker-compose вручную всегда указывайте имя проекта: `-p pirbudget-dev` или `-p pirbudget-prod`
 
 ## Scripts
 

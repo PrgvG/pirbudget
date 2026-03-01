@@ -59,9 +59,9 @@ describe('Dashboard', () => {
         </AuthContext.Provider>
       </QueryClientProvider>
     );
-    await screen.findByRole('heading', { name: /template/i });
+    await screen.findByRole('heading', { name: /pirbudget/i });
     expect(
-      screen.getByRole('heading', { name: /template/i })
+      screen.getByRole('heading', { name: /pirbudget/i })
     ).toBeInTheDocument();
     expect(screen.getByTestId('health-bar')).toBeInTheDocument();
   });

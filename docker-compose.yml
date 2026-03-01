@@ -1,22 +1,22 @@
 services:
   mongodb:
     image: mongo:8.0
-    container_name: template-mongodb
+    container_name: pirbudget-mongodb
     ports:
       - '27017:27017'
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=password
-      - MONGO_INITDB_DATABASE=template
+      - MONGO_INITDB_DATABASE=pirbudget
     volumes:
       - mongodb_data:/data/db
     networks:
-      - template-network
+      - pirbudget-network
     restart: unless-stopped
 
   mongo-express:
     image: mongo-express:latest
-    container_name: template-mongo-express
+    container_name: pirbudget-mongo-express
     ports:
       - '8082:8081'
     environment:
@@ -29,43 +29,43 @@ services:
     depends_on:
       - mongodb
     networks:
-      - template-network
+      - pirbudget-network
     restart: unless-stopped
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: template-backend
+    container_name: pirbudget-backend
     ports:
       - '3002:3001'
     environment:
       - NODE_ENV=production
       - PORT=3001
-      - DATABASE_URL=mongodb://admin:password@mongodb:27017/template?authSource=admin
+      - DATABASE_URL=mongodb://admin:password@mongodb:27017/pirbudget?authSource=admin
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
     depends_on:
       - mongodb
     networks:
-      - template-network
+      - pirbudget-network
     restart: unless-stopped
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: template-frontend
+    container_name: pirbudget-frontend
     ports:
       - '80:80'
     depends_on:
       - backend
     networks:
-      - template-network
+      - pirbudget-network
     restart: unless-stopped
 
 networks:
-  template-network:
+  pirbudget-network:
     driver: bridge
 
 volumes:

@@ -4,20 +4,20 @@
 services:
   mongodb:
     image: mongo:8.0
-    container_name: template-mongodb-dev
+    container_name: pirbudget-mongodb-dev
     ports:
       - '27018:27017'
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=password
-      - MONGO_INITDB_DATABASE=template
+      - MONGO_INITDB_DATABASE=pirbudget
     volumes:
       - mongodb_data_dev:/data/db
     restart: unless-stopped
 
   mongo-express:
     image: mongo-express:latest
-    container_name: template-mongo-express-dev
+    container_name: pirbudget-mongo-express-dev
     ports:
       - '8081:8081'
     environment:

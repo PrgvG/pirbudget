@@ -69,7 +69,7 @@ cd ..
 Файл `backend/.env` должен содержать:
 ```env
 # Для dev окружения используйте порт 27018
-DATABASE_URL="mongodb://admin:password@localhost:27018/template?authSource=admin"
+DATABASE_URL="mongodb://admin:password@localhost:27018/pirbudget?authSource=admin"
 PORT=3001
 NODE_ENV=development
 ```
@@ -80,7 +80,7 @@ NODE_ENV=development
 
 ```bash
 # Запустить только MongoDB
-docker-compose -p template-dev -f docker-compose.dev.yml up -d mongodb
+docker-compose -p pirbudget-dev -f docker-compose.dev.yml up -d mongodb
 
 # Проверить статус
 docker ps | grep mongodb
@@ -90,7 +90,7 @@ docker ps | grep mongodb
 
 ```bash
 # Запустить все сервисы
-docker-compose -p template-prod up -d --build
+docker-compose -p pirbudget-prod up -d --build
 ```
 
 ### Шаг 4: Проверка подключения к MongoDB
@@ -118,7 +118,7 @@ cd frontend && npm run dev
 #### Production-like (Docker):
 
 ```bash
-docker-compose -p template-prod up -d
+docker-compose -p pirbudget-prod up -d
 ```
 
 ---
@@ -129,40 +129,40 @@ docker-compose -p template-prod up -d
 
 ```bash
 # Запустить
-docker-compose -p template-dev -f docker-compose.dev.yml up -d mongodb
+docker-compose -p pirbudget-dev -f docker-compose.dev.yml up -d mongodb
 
 # Остановить
-docker-compose -p template-dev -f docker-compose.dev.yml down
+docker-compose -p pirbudget-dev -f docker-compose.dev.yml down
 
 # Просмотр логов
-docker-compose -p template-dev -f docker-compose.dev.yml logs -f mongodb
+docker-compose -p pirbudget-dev -f docker-compose.dev.yml logs -f mongodb
 
 # Подключиться к MongoDB
-docker exec -it template-mongodb-dev mongosh -u admin -p 'password' --authenticationDatabase admin
+docker exec -it pirbudget-mongodb-dev mongosh -u admin -p 'password' --authenticationDatabase admin
 ```
 
 ### Docker Compose (production-like)
 
 ```bash
 # Запустить все сервисы
-docker-compose -p template-prod up -d
+docker-compose -p pirbudget-prod up -d
 
 # Остановить все сервисы
-docker-compose -p template-prod down
+docker-compose -p pirbudget-prod down
 
 # Пересобрать и запустить
-docker-compose -p template-prod up -d --build
+docker-compose -p pirbudget-prod up -d --build
 
 # Просмотр логов
-docker-compose -p template-prod logs -f
+docker-compose -p pirbudget-prod logs -f
 
 # Просмотр логов конкретного сервиса
-docker-compose -p template-prod logs -f backend
-docker-compose -p template-prod logs -f frontend
-docker-compose -p template-prod logs -f mongodb
+docker-compose -p pirbudget-prod logs -f backend
+docker-compose -p pirbudget-prod logs -f frontend
+docker-compose -p pirbudget-prod logs -f mongodb
 
 # Остановить и удалить volumes
-docker-compose -p template-prod down -v
+docker-compose -p pirbudget-prod down -v
 ```
 
 ---
@@ -246,11 +246,11 @@ kill <PID>
 
 ```bash
 # Проверить логи
-docker-compose -p template-dev -f docker-compose.dev.yml logs mongodb
+docker-compose -p pirbudget-dev -f docker-compose.dev.yml logs mongodb
 
 # Пересоздать контейнер
-docker-compose -p template-dev -f docker-compose.dev.yml down -v
-docker-compose -p template-dev -f docker-compose.dev.yml up -d mongodb
+docker-compose -p pirbudget-dev -f docker-compose.dev.yml down -v
+docker-compose -p pirbudget-dev -f docker-compose.dev.yml up -d mongodb
 ```
 
 ### Ошибки подключения к БД
@@ -265,10 +265,10 @@ docker ps | grep mongodb
 3. Проверьте логи:
 ```bash
 # Для dev окружения:
-docker-compose -p template-dev -f docker-compose.dev.yml logs mongodb
+docker-compose -p pirbudget-dev -f docker-compose.dev.yml logs mongodb
 
 # Для prod окружения:
-docker-compose -p template-prod logs mongodb
+docker-compose -p pirbudget-prod logs mongodb
 ```
 
 ---
@@ -277,7 +277,7 @@ docker-compose -p template-prod logs mongodb
 
 Для автоматического запуска MongoDB при загрузке системы:
 
-1. Создайте файл `~/Library/LaunchAgents/com.template.mongodb.plist`:
+1. Создайте файл `~/Library/LaunchAgents/com.pirbudget.mongodb.plist`:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -285,12 +285,12 @@ docker-compose -p template-prod logs mongodb
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.template.mongodb</string>
+    <string>com.pirbudget.mongodb</string>
     <key>ProgramArguments</key>
     <array>
         <string>/usr/local/bin/docker-compose</string>
         <string>-f</string>
-        <string>/Users/YOUR_USERNAME/Repos/template/docker-compose.dev.yml</string>
+        <string>/Users/YOUR_USERNAME/Repos/pirbudget/docker-compose.dev.yml</string>
         <string>up</string>
         <string>-d</string>
         <string>mongodb</string>
@@ -298,7 +298,7 @@ docker-compose -p template-prod logs mongodb
     <key>RunAtLoad</key>
     <true/>
     <key>WorkingDirectory</key>
-    <string>/Users/YOUR_USERNAME/Repos/template</string>
+    <string>/Users/YOUR_USERNAME/Repos/pirbudget</string>
 </dict>
 </plist>
 ```
@@ -307,6 +307,6 @@ docker-compose -p template-prod logs mongodb
 
 3. Загрузите:
 ```bash
-launchctl load ~/Library/LaunchAgents/com.template.mongodb.plist
+launchctl load ~/Library/LaunchAgents/com.pirbudget.mongodb.plist
 ```
 

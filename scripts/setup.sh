@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_ROOT" || exit 1
 
-echo "🚀 Настройка проекта template..."
+echo "🚀 Настройка проекта pirbudget..."
 
 # Установка зависимостей в корне
 echo "📦 Устанавливаем зависимости корневого проекта..."

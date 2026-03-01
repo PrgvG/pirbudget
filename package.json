@@ -1,7 +1,7 @@
 {
-  "name": "template",
+  "name": "pirbudget",
   "version": "1.0.0",
-  "description": "Full-stack application with React and Express",
+  "description": "Приложение для учёта бюджета (React + Express)",
   "private": true,
   "workspaces": [
     "backend",

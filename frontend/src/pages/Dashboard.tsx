@@ -60,7 +60,7 @@ export function Dashboard() {
   return (
     <div className="app">
       <div className={styles.header}>
-        <h1>template</h1>
+        <h1>PirBudget</h1>
         <div className={styles.headerRight}>
           {user && (
             <span className={styles.userInfo}>
@@ -77,7 +77,7 @@ export function Dashboard() {
           </button>
         </div>
       </div>
-      <p>React + TypeScript + Vite</p>
+      <p>Учёт бюджета</p>
 
       <HealthStatusBar dbStatus={dbStatus} onRefresh={onRefresh} />
 
