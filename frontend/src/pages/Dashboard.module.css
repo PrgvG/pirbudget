@@ -26,6 +26,24 @@
   font-weight: 500;
 }
 
+.nav {
+  margin-bottom: 1rem;
+}
+
+.navLink {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: #2563eb;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.navLink:hover {
+  background-color: #1d4ed8;
+}
+
 .mongoLink {
   display: inline-block;
   padding: 0.5rem 1rem;

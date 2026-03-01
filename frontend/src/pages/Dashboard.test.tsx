@@ -17,6 +17,16 @@ vi.mock('../modules/health', () => ({
   ),
 }));
 
+vi.mock('@tanstack/react-router', async importOriginal => {
+  const mod = await importOriginal<typeof import('@tanstack/react-router')>();
+  return {
+    ...mod,
+    Link: ({ children, to }: { children: unknown; to: string }) => (
+      <a href={to}>{children}</a>
+    ),
+  };
+});
+
 const mockFetch = vi.fn(() =>
   Promise.resolve({
     ok: true,

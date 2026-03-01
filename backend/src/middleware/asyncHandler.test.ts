@@ -16,7 +16,9 @@ describe('wrapAsync', () => {
     const { req, res, next } = createMocks();
 
     wrapped(req, res, next);
-    await vi.waitFor(() => expect(handler).toHaveBeenCalledWith(req, res, next));
+    await vi.waitFor(() =>
+      expect(handler).toHaveBeenCalledWith(req, res, next)
+    );
 
     expect(next).not.toHaveBeenCalled();
   });

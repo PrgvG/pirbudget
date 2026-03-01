@@ -9,4 +9,4 @@ export type {
   Transaction,
   IncomeEntryCreate,
   IncomeEntryUpdate,
-} from "shared/transactions";
+} from 'shared/transactions';

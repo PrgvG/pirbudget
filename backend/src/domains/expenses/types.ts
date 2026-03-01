@@ -16,10 +16,10 @@ export type {
   RecurringExpensePaymentUpdate,
   RecurringPaymentOccurrenceCreate,
   RecurringPaymentOccurrenceUpdate,
-} from "shared/expenses";
+} from 'shared/expenses';
 
 export type {
   RecurrenceByInterval,
   RecurrenceByDate,
   RecurrenceRule,
-} from "shared/recurrence";
+} from 'shared/recurrence';

@@ -20,12 +20,8 @@ describe('parseExpiresIn', () => {
     expect(() => parseExpiresIn('abc')).toThrow(
       'Invalid JWT_EXPIRES_IN format'
     );
-    expect(() => parseExpiresIn('7x')).toThrow(
-      'Invalid JWT_EXPIRES_IN format'
-    );
+    expect(() => parseExpiresIn('7x')).toThrow('Invalid JWT_EXPIRES_IN format');
     expect(() => parseExpiresIn('')).toThrow('Invalid JWT_EXPIRES_IN format');
-    expect(() => parseExpiresIn('d7')).toThrow(
-      'Invalid JWT_EXPIRES_IN format'
-    );
+    expect(() => parseExpiresIn('d7')).toThrow('Invalid JWT_EXPIRES_IN format');
   });
 });

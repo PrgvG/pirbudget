@@ -56,9 +56,7 @@ describe('apiFetch', () => {
 
   it('adds Authorization header when token exists', async () => {
     mockGetToken.mockReturnValue('my-token');
-    const fetchSpy = vi
-      .fn()
-      .mockResolvedValue(createMockResponse());
+    const fetchSpy = vi.fn().mockResolvedValue(createMockResponse());
     vi.stubGlobal('fetch', fetchSpy);
 
     await apiFetch('/api/test');
@@ -71,9 +69,7 @@ describe('apiFetch', () => {
 
   it('does not add Authorization header when token is null', async () => {
     mockGetToken.mockReturnValue(null);
-    const fetchSpy = vi
-      .fn()
-      .mockResolvedValue(createMockResponse());
+    const fetchSpy = vi.fn().mockResolvedValue(createMockResponse());
     vi.stubGlobal('fetch', fetchSpy);
 
     await apiFetch('/api/test');
@@ -85,9 +81,7 @@ describe('apiFetch', () => {
   });
 
   it('sets Content-Type and stringifies body when body is an object', async () => {
-    const fetchSpy = vi
-      .fn()
-      .mockResolvedValue(createMockResponse());
+    const fetchSpy = vi.fn().mockResolvedValue(createMockResponse());
     vi.stubGlobal('fetch', fetchSpy);
 
     await apiFetch('/api/test', { body: { key: 'value' } });
@@ -100,9 +94,7 @@ describe('apiFetch', () => {
   });
 
   it('does not set Content-Type when body is a string', async () => {
-    const fetchSpy = vi
-      .fn()
-      .mockResolvedValue(createMockResponse());
+    const fetchSpy = vi.fn().mockResolvedValue(createMockResponse());
     vi.stubGlobal('fetch', fetchSpy);
 
     await apiFetch('/api/test', { body: 'raw-string' });
@@ -115,9 +107,7 @@ describe('apiFetch', () => {
   });
 
   it('prepends slash to path when missing', async () => {
-    const fetchSpy = vi
-      .fn()
-      .mockResolvedValue(createMockResponse());
+    const fetchSpy = vi.fn().mockResolvedValue(createMockResponse());
     vi.stubGlobal('fetch', fetchSpy);
 
     await apiFetch('api/test');

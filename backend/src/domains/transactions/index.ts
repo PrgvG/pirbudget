@@ -2,4 +2,4 @@
  * Домен: операции (доходы и расходы).
  */
 
-export * from "./types.js";
+export * from './types.js';

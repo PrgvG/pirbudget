@@ -2,4 +2,4 @@
  * Домен: группы платежей (категории расходов).
  */
 
-export * from "./types.js";
+export * from './types.js';

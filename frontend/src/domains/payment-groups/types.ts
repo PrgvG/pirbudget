@@ -7,4 +7,4 @@ export type {
   PaymentGroup,
   PaymentGroupCreate,
   PaymentGroupUpdate,
-} from "shared/payment-groups";
+} from 'shared/payment-groups';

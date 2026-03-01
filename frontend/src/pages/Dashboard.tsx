@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { useAuth } from '../contexts/useAuth';
 import { apiJson } from '../api/client';
 import { isUserArray, isApiMessage } from '../types/guards';
@@ -78,6 +79,12 @@ export function Dashboard() {
         </div>
       </div>
       <p>Учёт бюджета</p>
+
+      <nav className={styles.nav}>
+        <Link to="/groups" className={styles.navLink}>
+          Группы платежей
+        </Link>
+      </nav>
 
       <HealthStatusBar dbStatus={dbStatus} onRefresh={onRefresh} />
 

@@ -2,4 +2,4 @@
  * Домен: расходы (платежи).
  */
 
-export * from "./types";
+export * from './types';
