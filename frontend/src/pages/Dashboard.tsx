@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { useAuth } from '../contexts/useAuth';
 import { apiJson } from '../api/client';
-import { isUserArray, isApiMessage } from '../types/guards';
+import { isUsersResponse, isApiMessage } from '../types/guards';
 import { HealthStatusBar, fetchHealth } from '../modules/health';
 import type { DbStatus } from '../modules/health';
 import styles from './Dashboard.module.css';
@@ -10,7 +10,10 @@ import styles from './Dashboard.module.css';
 function useUsersQuery() {
   return useQuery({
     queryKey: ['users'],
-    queryFn: () => apiJson('/api/users', {}, isUserArray),
+    queryFn: async () => {
+      const data = await apiJson('/api/users', {}, isUsersResponse);
+      return data.users;
+    },
   });
 }
 

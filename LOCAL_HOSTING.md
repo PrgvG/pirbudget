@@ -167,6 +167,42 @@ docker-compose -p pirbudget-prod down -v
 
 ---
 
+## Устранение неполадок
+
+### Ошибка 429 (Too Many Requests) при логине
+
+Строгий лимит (10 запросов за 15 минут) действует **только для POST** `/api/auth` (логин и регистрация). Запросы GET `/api/auth/me` (проверка токена при обновлении страницы) в этот лимит не входят, поэтому обновление страницы больше не должно приводить к 429.
+
+Если 429 всё же появился (много попыток входа подряд): перезапустите backend — счётчик сбросится. Для разработки можно ослабить лимит в `backend/.env`: `RATE_LIMIT_AUTH_MAX=100`.
+
+---
+
+### Ошибка «Authentication failed» при подключении к MongoDB
+
+Если backend при запуске выдаёт `MongoServerError: Authentication failed`, значит в томе Docker уже лежат старые данные MongoDB (с другими учётными данными или от другой версии). Переменные `MONGO_INITDB_ROOT_USERNAME` и `MONGO_INITDB_ROOT_PASSWORD` применяются только при **первой** инициализации пустой базы.
+
+**Что сделать:** удалить том и заново поднять контейнеры, чтобы MongoDB создал пользователя `admin` с паролем `password`.
+
+```bash
+# В корне проекта
+docker-compose -p pirbudget-dev -f docker-compose.dev.yml down -v
+docker-compose -p pirbudget-dev -f docker-compose.dev.yml up -d mongodb mongo-express
+```
+
+Подождите 5–10 секунд, пока MongoDB полностью запустится, затем снова запустите приложение:
+
+```bash
+npm run dev
+```
+
+В `backend/.env` должна быть строка (как в `env.example`):
+
+```env
+DATABASE_URL="mongodb://admin:password@localhost:27018/pirbudget?authSource=admin"
+```
+
+---
+
 ## Полезные команды
 
 ### Проверка работы

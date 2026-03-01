@@ -6,6 +6,14 @@ export type User = {
   updatedAt: string;
 };
 
+/** Ответ GET /api/users (пагинация) */
+export type UsersResponse = {
+  users: User[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
 export type AuthResponse = {
   token: string;
   user: User;

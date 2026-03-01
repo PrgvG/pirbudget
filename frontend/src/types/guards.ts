@@ -1,4 +1,4 @@
-import type { AuthResponse, User } from './index';
+import type { AuthResponse, User, UsersResponse } from './index';
 
 function hasTokenAndUser(obj: object): obj is AuthResponse {
   const o = obj as Record<string, unknown>;
@@ -28,6 +28,21 @@ export function isUser(data: unknown): data is User {
 
 export function isUserArray(data: unknown): data is User[] {
   return Array.isArray(data) && data.every(isUser);
+}
+
+function isUsersResponseObject(obj: object): obj is UsersResponse {
+  const o = obj as Record<string, unknown>;
+  return (
+    Array.isArray(o.users) &&
+    o.users.every((u: unknown) => isUser(u)) &&
+    typeof o.total === 'number' &&
+    typeof o.page === 'number' &&
+    typeof o.limit === 'number'
+  );
+}
+
+export function isUsersResponse(data: unknown): data is UsersResponse {
+  return typeof data === 'object' && data !== null && isUsersResponseObject(data);
 }
 
 export function isApiMessage(data: unknown): data is { message: string } {

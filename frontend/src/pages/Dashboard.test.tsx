@@ -5,7 +5,9 @@ import { AuthContext } from '../contexts/useAuth';
 import { Dashboard } from './Dashboard';
 
 vi.mock('../api/client', () => ({
-  apiJson: vi.fn(() => Promise.resolve([])),
+  apiJson: vi.fn(() =>
+    Promise.resolve({ users: [], total: 0, page: 1, limit: 20 })
+  ),
 }));
 
 vi.mock('../modules/health', () => ({
