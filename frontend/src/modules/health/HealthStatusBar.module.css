@@ -1,0 +1,59 @@
+.bar {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.connected {
+  composes: bar;
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.disconnected {
+  composes: bar;
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.checking {
+  composes: bar;
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dotConnected {
+  composes: dot;
+  background-color: #28a745;
+}
+
+.dotDisconnected {
+  composes: dot;
+  background-color: #dc3545;
+}
+
+.dotChecking {
+  composes: dot;
+  background-color: #ffc107;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.refreshButton {
+  margin-left: auto;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+}

@@ -1,0 +1,59 @@
+.container {
+  max-width: 400px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+}
+
+.fieldGroup {
+  margin-bottom: 1rem;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.error {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: #f8d7da;
+  color: #721c24;
+  border-radius: 4px;
+}
+
+.submitButton {
+  width: 100%;
+  padding: 0.75rem;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+.submitButton:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.loginButton {
+  composes: submitButton;
+  background-color: #007bff;
+}
+
+.registerButton {
+  composes: submitButton;
+  background-color: #28a745;
+}
+
+.footer {
+  margin-top: 1rem;
+}
