@@ -1,0 +1,40 @@
+{
+  "name": "shared",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./ids": {
+      "types": "./dist/ids.d.ts",
+      "default": "./dist/ids.js"
+    },
+    "./payment-groups": {
+      "types": "./dist/payment-groups.d.ts",
+      "default": "./dist/payment-groups.js"
+    },
+    "./recurrence": {
+      "types": "./dist/recurrence.d.ts",
+      "default": "./dist/recurrence.js"
+    },
+    "./expenses": {
+      "types": "./dist/expenses.d.ts",
+      "default": "./dist/expenses.js"
+    },
+    "./transactions": {
+      "types": "./dist/transactions.d.ts",
+      "default": "./dist/transactions.js"
+    }
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
