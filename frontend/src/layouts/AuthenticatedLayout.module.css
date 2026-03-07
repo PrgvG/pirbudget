@@ -1,0 +1,83 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-bottom: 0;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+}
+
+.logo {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.userInfo {
+  font-size: 0.8rem;
+  color: #6b7280;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 480px) {
+  .userInfo {
+    max-width: 220px;
+  }
+}
+
+.logoutButton {
+  padding: 0.4rem 0.75rem;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.logoutButton:hover {
+  background-color: #c82333;
+}
+
+.main {
+  flex: 1;
+  padding: 1rem;
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  overflow: auto;
+}
+
+@media (min-width: 480px) {
+  .main {
+    padding: 1.5rem 2rem;
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
+}

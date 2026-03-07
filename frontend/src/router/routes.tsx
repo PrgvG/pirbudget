@@ -1,6 +1,7 @@
 import { createRoute, redirect } from '@tanstack/react-router';
 import { shouldRedirectToLogin } from './authRedirect';
 import { rootRoute } from './root';
+import { AuthenticatedLayout } from '../layouts/AuthenticatedLayout';
 import { ProtectedDashboard } from './ProtectedDashboard';
 import { ProtectedGroups } from './ProtectedGroups';
 import { ProtectedIncomes } from './ProtectedIncomes';
@@ -11,7 +12,7 @@ import { ProtectedStatistics } from './ProtectedStatistics';
 import { LoginPage } from '../modules/registration/LoginPage';
 import { RegisterPage } from '../modules/registration/RegisterPage';
 
-export const indexRoute = createRoute({
+export const authenticatedLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   beforeLoad: () => {
@@ -19,72 +20,48 @@ export const indexRoute = createRoute({
       throw redirect({ to: '/login' });
     }
   },
+  component: AuthenticatedLayout,
+});
+
+export const indexRoute = createRoute({
+  getParentRoute: () => authenticatedLayoutRoute,
+  path: '.',
   component: ProtectedDashboard,
 });
 
 export const groupsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/groups',
-  beforeLoad: () => {
-    if (shouldRedirectToLogin()) {
-      throw redirect({ to: '/login' });
-    }
-  },
   component: ProtectedGroups,
 });
 
 export const incomesRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/incomes',
-  beforeLoad: () => {
-    if (shouldRedirectToLogin()) {
-      throw redirect({ to: '/login' });
-    }
-  },
   component: ProtectedIncomes,
 });
 
 export const expensesRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/expenses',
-  beforeLoad: () => {
-    if (shouldRedirectToLogin()) {
-      throw redirect({ to: '/login' });
-    }
-  },
   component: ProtectedExpenses,
 });
 
 export const historyRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/history',
-  beforeLoad: () => {
-    if (shouldRedirectToLogin()) {
-      throw redirect({ to: '/login' });
-    }
-  },
   component: ProtectedHistory,
 });
 
 export const planRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/plan',
-  beforeLoad: () => {
-    if (shouldRedirectToLogin()) {
-      throw redirect({ to: '/login' });
-    }
-  },
   component: ProtectedPlan,
 });
 
 export const statisticsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/stats',
-  beforeLoad: () => {
-    if (shouldRedirectToLogin()) {
-      throw redirect({ to: '/login' });
-    }
-  },
   component: ProtectedStatistics,
 });
 

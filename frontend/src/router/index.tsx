@@ -1,6 +1,7 @@
 import { createRouter } from '@tanstack/react-router';
 import { rootRoute } from './root';
 import {
+  authenticatedLayoutRoute,
   indexRoute,
   groupsRoute,
   incomesRoute,
@@ -13,13 +14,15 @@ import {
 } from './routes';
 
 const routeTree = rootRoute.addChildren([
-  indexRoute,
-  groupsRoute,
-  incomesRoute,
-  expensesRoute,
-  historyRoute,
-  planRoute,
-  statisticsRoute,
+  authenticatedLayoutRoute.addChildren([
+    indexRoute,
+    groupsRoute,
+    incomesRoute,
+    expensesRoute,
+    historyRoute,
+    planRoute,
+    statisticsRoute,
+  ]),
   loginRoute,
   registerRoute,
 ]);

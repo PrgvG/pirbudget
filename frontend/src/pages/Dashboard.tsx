@@ -1,112 +1,16 @@
-import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
-import { useAuth } from '../contexts/useAuth';
-import { apiJson } from '../api/client';
-import { isApiMessage } from '../types/guards';
-import { HealthStatusBar, fetchHealth } from '../modules/health';
-import type { DbStatus } from '../modules/health';
 import styles from './Dashboard.module.css';
 
-function useApiMessageQuery() {
-  return useQuery({
-    queryKey: ['apiMessage'],
-    queryFn: async () => {
-      const data = await apiJson('/api', {}, isApiMessage);
-      return data.message;
-    },
-  });
-}
-
-function useHealthQuery() {
-  return useQuery({
-    queryKey: ['health'],
-    queryFn: fetchHealth,
-  });
-}
-
 export function Dashboard() {
-  const { user, logout } = useAuth();
-  const messageQuery = useApiMessageQuery();
-  const healthQuery = useHealthQuery();
-
-  const dbStatus: DbStatus = healthQuery.isPending
-    ? 'checking'
-    : healthQuery.data?.database === 'connected'
-      ? 'connected'
-      : 'disconnected';
-
-  const onRefresh = () => {
-    messageQuery.refetch();
-    healthQuery.refetch();
-  };
-  const message = messageQuery.data ?? '';
-
   return (
-    <div className="app">
-      <div className={styles.header}>
-        <h1>PirBudget</h1>
-        <div className={styles.headerRight}>
-          {user && (
-            <span className={styles.userInfo}>
-              {user.email}
-              {user.name ? ` (${user.name})` : ''}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={logout}
-            className={styles.logoutButton}
-          >
-            Выйти
-          </button>
-        </div>
-      </div>
-      <p>Учёт бюджета</p>
-
-      <nav className={styles.nav}>
-        <Link to="/groups" className={styles.navLink}>
-          Группы
-        </Link>
-        <Link to="/incomes" className={styles.navLink}>
-          Поступления
-        </Link>
-        <Link to="/expenses" className={styles.navLink}>
-          Платежи
-        </Link>
-        <Link to="/history" className={styles.navLink}>
-          История
-        </Link>
-        <Link to="/plan" className={styles.navLink}>
-          План
-        </Link>
-        <Link to="/stats" className={styles.navLink}>
-          Статистика
-        </Link>
-      </nav>
-
-      <HealthStatusBar dbStatus={dbStatus} onRefresh={onRefresh} />
-
-      <section className={styles.welcome}>
-        <h2>Добро пожаловать в PirBudget</h2>
-        <p>
-          Учёт бюджета: группы платежей, поступления, обязательные платежи,
-          история операций, план и статистика за месяц.
-        </p>
-        <p className={styles.navHint}>Выберите раздел в меню выше.</p>
-      </section>
-
-      {message && <p className={styles.backendMessage}>Backend: {message}</p>}
-
-      <div>
-        <a
-          href="http://localhost:8081"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={styles.mongoLink}
-        >
-          Открыть веб-морду MongoDB (Mongo Express)
-        </a>
-      </div>
-    </div>
+    <section className={styles.welcome}>
+      <h2>Добро пожаловать в PirBudget</h2>
+      <p>
+        Учёт бюджета: группы платежей, поступления, обязательные платежи,
+        история операций, план и статистика за месяц.
+      </p>
+      <p className={styles.navHint}>
+        Выберите раздел в меню внизу.
+      </p>
+    </section>
   );
 }
