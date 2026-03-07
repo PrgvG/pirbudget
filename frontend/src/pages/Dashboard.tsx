@@ -87,6 +87,9 @@ export function Dashboard() {
         <Link to="/groups" className={styles.navLink}>
           Группы платежей
         </Link>
+        <Link to="/incomes" className={styles.navLink}>
+          Поступления
+        </Link>
       </nav>
 
       <HealthStatusBar dbStatus={dbStatus} onRefresh={onRefresh} />

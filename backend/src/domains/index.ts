@@ -3,5 +3,6 @@
  */
 
 export * from './payment-groups/index.js';
+export * from './income-entries/index.js';
 export * from './expenses/index.js';
 export * from './transactions/index.js';

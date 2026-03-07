@@ -10,6 +10,7 @@ import usersRouter from './routes/users';
 import healthRouter from './routes/health';
 import apiRouter from './routes/api';
 import paymentGroupsRouter from './domains/payment-groups/routes.js';
+import incomeEntriesRouter from './domains/income-entries/routes.js';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { rateLimiter, authRateLimiter } from './middleware/rateLimit';
 
@@ -39,6 +40,7 @@ app.use('/health', healthRouter);
 app.use('/api/auth', authRateLimiter, authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/payment-groups', paymentGroupsRouter);
+app.use('/api/income-entries', incomeEntriesRouter);
 app.use('/api', apiRouter);
 
 app.use(notFound);

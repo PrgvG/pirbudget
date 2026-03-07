@@ -3,6 +3,7 @@ import { shouldRedirectToLogin } from './authRedirect';
 import { rootRoute } from './root';
 import { ProtectedDashboard } from './ProtectedDashboard';
 import { ProtectedGroups } from './ProtectedGroups';
+import { ProtectedIncomes } from './ProtectedIncomes';
 import { LoginPage } from '../modules/registration/LoginPage';
 import { RegisterPage } from '../modules/registration/RegisterPage';
 
@@ -26,6 +27,17 @@ export const groupsRoute = createRoute({
     }
   },
   component: ProtectedGroups,
+});
+
+export const incomesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/incomes',
+  beforeLoad: () => {
+    if (shouldRedirectToLogin()) {
+      throw redirect({ to: '/login' });
+    }
+  },
+  component: ProtectedIncomes,
 });
 
 export const loginRoute = createRoute({
