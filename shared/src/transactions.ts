@@ -3,27 +3,49 @@
  * Общие правила и формы; для расхода — те же типы платежей с direction: "expense".
  */
 
-import type { EntityId } from "./ids.js";
-import type { ExpensePayment } from "./expenses.js";
+import { z } from 'zod';
+import { entityIdSchema, localIdSchema } from './ids.js';
+import {
+  instantExpensePaymentSchema,
+  recurringExpensePaymentSchema,
+} from './expenses.js';
 
-export type IncomeEntry = {
-  direction: "income";
-  id: EntityId;
-  amount: number;
+export const incomeEntrySchema = z.object({
+  direction: z.literal('income'),
+  id: entityIdSchema,
+  amount: z.number(),
   /** ISO date */
-  date: string;
-  source: string;
-  note?: string;
-  createdAt: string;
-  updatedAt: string;
-};
+  date: z.string(),
+  source: z.string(),
+  note: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
 
-export type ExpenseEntry = ExpensePayment & { direction: "expense" };
+export const expenseEntrySchema = z.union([
+  instantExpensePaymentSchema.extend({
+    direction: z.literal('expense'),
+  }),
+  recurringExpensePaymentSchema.extend({
+    direction: z.literal('expense'),
+  }),
+]);
 
-export type Transaction = IncomeEntry | ExpenseEntry;
+export const transactionSchema = z.union([
+  incomeEntrySchema,
+  expenseEntrySchema,
+]);
 
-// DTO
-export type IncomeEntryCreate = Omit<IncomeEntry, "id" | "createdAt" | "updatedAt"> & {
-  localId?: string;
-};
-export type IncomeEntryUpdate = Partial<Omit<IncomeEntry, "id" | "createdAt" | "updatedAt">>;
+export const incomeEntryCreateSchema = incomeEntrySchema
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .extend({ localId: localIdSchema.optional() });
+
+export const incomeEntryUpdateSchema = incomeEntrySchema
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .partial();
+
+export type IncomeEntry = z.infer<typeof incomeEntrySchema>;
+export type ExpenseEntry = z.infer<typeof expenseEntrySchema>;
+export type Transaction = z.infer<typeof transactionSchema>;
+export type IncomeEntryCreate = z.infer<typeof incomeEntryCreateSchema>;
+export type IncomeEntryUpdate = z.infer<typeof incomeEntryUpdateSchema>;

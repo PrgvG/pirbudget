@@ -27,7 +27,7 @@ export const authRateLimiter = rateLimit({
   max: authMax,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => req.method !== 'POST',
+  skip: req => req.method !== 'POST',
   handler: (_req, res) => {
     res.status(429).json({
       error: 'Too many authentication attempts, please try again later',

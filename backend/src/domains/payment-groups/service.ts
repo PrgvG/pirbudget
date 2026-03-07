@@ -18,6 +18,7 @@ function docToPaymentGroup(doc: {
   sortOrder: number;
   color?: string;
   icon?: string;
+  archived?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }): PaymentGroup {
@@ -27,6 +28,7 @@ function docToPaymentGroup(doc: {
     sortOrder: doc.sortOrder,
     ...(doc.color != null && { color: doc.color }),
     ...(doc.icon != null && { icon: doc.icon }),
+    ...(doc.archived === true && { archived: true }),
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
   };
@@ -42,7 +44,21 @@ function toObjectId(id: string): mongoose.Types.ObjectId {
 export const paymentGroupsService = {
   async list(userId: string): Promise<PaymentGroup[]> {
     const uid = toObjectId(userId);
-    const docs = await PaymentGroupModel.find({ userId: uid })
+    const docs = await PaymentGroupModel.find({
+      userId: uid,
+      archived: { $ne: true },
+    })
+      .sort({ sortOrder: 1 })
+      .lean();
+    return docs.map(doc => docToPaymentGroup(doc));
+  },
+
+  async listArchived(userId: string): Promise<PaymentGroup[]> {
+    const uid = toObjectId(userId);
+    const docs = await PaymentGroupModel.find({
+      userId: uid,
+      archived: true,
+    })
       .sort({ sortOrder: 1 })
       .lean();
     return docs.map(doc => docToPaymentGroup(doc));
@@ -108,10 +124,10 @@ export const paymentGroupsService = {
 
   async delete(userId: string, id: string): Promise<void> {
     const uid = toObjectId(userId);
-    const result = await PaymentGroupModel.findOneAndDelete({
-      _id: toObjectId(id),
-      userId: uid,
-    });
+    const result = await PaymentGroupModel.findOneAndUpdate(
+      { _id: toObjectId(id), userId: uid },
+      { $set: { archived: true } }
+    );
     if (!result) {
       throw new AppError('Group not found', {
         statusCode: 404,

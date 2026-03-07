@@ -13,7 +13,7 @@ echo "🚀 Запуск локальной разработки..."
 # Проверяем, запущен ли MongoDB
 if ! docker ps | grep -q pirbudget-mongodb-dev; then
   echo "📦 Запускаем MongoDB и Mongo Express..."
-  docker-compose -p pirbudget-dev -f docker-compose.dev.yml up -d mongodb mongo-express
+  docker compose -p pirbudget-dev -f docker-compose.dev.yml up -d mongodb mongo-express
   echo "⏳ Ждем запуска MongoDB..."
   sleep 3
 else
@@ -21,7 +21,7 @@ else
   # Проверяем, запущен ли Mongo Express
   if ! docker ps | grep -q pirbudget-mongo-express-dev; then
     echo "📦 Запускаем Mongo Express..."
-    docker-compose -p pirbudget-dev -f docker-compose.dev.yml up -d mongo-express
+    docker compose -p pirbudget-dev -f docker-compose.dev.yml up -d mongo-express
   else
     echo "✅ Mongo Express уже запущен"
   fi

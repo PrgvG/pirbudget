@@ -3,21 +3,30 @@
  * Используется только в повторяющихся расходах (RecurringExpensePayment).
  */
 
-export type RecurrenceByInterval = {
-  kind: "interval";
-  unit: "day" | "week" | "month" | "year";
+import { z } from 'zod';
+
+export const recurrenceByIntervalSchema = z.object({
+  kind: z.literal('interval'),
+  unit: z.enum(['day', 'week', 'month', 'year']),
   /** Каждые N unit (1, 2, 3...) */
-  interval: number;
+  interval: z.number().int().positive(),
   /** ISO date — от какой даты считать первую occurrence */
-  anchorDate: string;
+  anchorDate: z.string(),
   /** ISO date — опциональная дата окончания серии */
-  endDate?: string;
-};
+  endDate: z.string().optional(),
+});
 
-export type RecurrenceByDate = {
-  kind: "date";
+export const recurrenceByDateSchema = z.object({
+  kind: z.literal('date'),
   /** ISO date — единственная дата платежа */
-  date: string;
-};
+  date: z.string(),
+});
 
-export type RecurrenceRule = RecurrenceByInterval | RecurrenceByDate;
+export const recurrenceRuleSchema = z.discriminatedUnion('kind', [
+  recurrenceByIntervalSchema,
+  recurrenceByDateSchema,
+]);
+
+export type RecurrenceByInterval = z.infer<typeof recurrenceByIntervalSchema>;
+export type RecurrenceByDate = z.infer<typeof recurrenceByDateSchema>;
+export type RecurrenceRule = z.infer<typeof recurrenceRuleSchema>;

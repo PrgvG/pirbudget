@@ -21,6 +21,7 @@ vi.mock('../../middleware/auth.js', () => ({
 vi.mock('./service.js', () => ({
   paymentGroupsService: {
     list: vi.fn(),
+    listArchived: vi.fn(),
     getById: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
@@ -47,6 +48,7 @@ const group = {
 describe('payment-groups routes', () => {
   beforeEach(() => {
     vi.mocked(paymentGroupsService.list).mockReset();
+    vi.mocked(paymentGroupsService.listArchived).mockReset();
     vi.mocked(paymentGroupsService.getById).mockReset();
     vi.mocked(paymentGroupsService.create).mockReset();
     vi.mocked(paymentGroupsService.update).mockReset();
@@ -72,6 +74,34 @@ describe('payment-groups routes', () => {
 
       const res = await request(createApp())
         .get('/api/payment-groups')
+        .expect(200);
+
+      expect(res.body).toEqual([]);
+    });
+  });
+
+  describe('GET /api/payment-groups/archived', () => {
+    it('returns 200 and list from listArchived', async () => {
+      const archivedGroup = { ...group, archived: true };
+      vi.mocked(paymentGroupsService.listArchived).mockResolvedValue([
+        archivedGroup,
+      ]);
+
+      const res = await request(createApp())
+        .get('/api/payment-groups/archived')
+        .expect(200);
+
+      expect(res.body).toEqual([archivedGroup]);
+      expect(paymentGroupsService.listArchived).toHaveBeenCalledWith(
+        '507f1f77bcf86cd799439011'
+      );
+    });
+
+    it('returns empty array when no archived groups', async () => {
+      vi.mocked(paymentGroupsService.listArchived).mockResolvedValue([]);
+
+      const res = await request(createApp())
+        .get('/api/payment-groups/archived')
         .expect(200);
 
       expect(res.body).toEqual([]);

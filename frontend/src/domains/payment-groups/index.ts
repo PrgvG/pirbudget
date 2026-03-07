@@ -5,6 +5,7 @@
 export * from './types';
 export {
   fetchPaymentGroups,
+  fetchArchivedPaymentGroups,
   fetchPaymentGroup,
   createPaymentGroup,
   updatePaymentGroup,

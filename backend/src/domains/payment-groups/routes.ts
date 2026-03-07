@@ -36,6 +36,21 @@ router.get(
 );
 
 router.get(
+  '/archived',
+  wrapAsync(
+    async (
+      req: AuthenticatedRequest,
+      res: Response,
+      _next: NextFunction
+    ): Promise<void> => {
+      const userId = req.user!.userId;
+      const list = await paymentGroupsService.listArchived(userId);
+      res.json(list);
+    }
+  )
+);
+
+router.get(
   '/:id',
   wrapAsync(
     async (

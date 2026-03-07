@@ -18,7 +18,8 @@ function isPaymentGroupObject(obj: object): obj is PaymentGroup {
     typeof o.createdAt === 'string' &&
     typeof o.updatedAt === 'string' &&
     (o.color === undefined || typeof o.color === 'string') &&
-    (o.icon === undefined || typeof o.icon === 'string')
+    (o.icon === undefined || typeof o.icon === 'string') &&
+    (o.archived === undefined || typeof o.archived === 'boolean')
   );
 }
 
@@ -34,6 +35,10 @@ export function isPaymentGroupArray(data: unknown): data is PaymentGroup[] {
 
 export async function fetchPaymentGroups(): Promise<PaymentGroup[]> {
   return apiJson('/api/payment-groups', {}, isPaymentGroupArray);
+}
+
+export async function fetchArchivedPaymentGroups(): Promise<PaymentGroup[]> {
+  return apiJson('/api/payment-groups/archived', {}, isPaymentGroupArray);
 }
 
 export async function fetchPaymentGroup(id: string): Promise<PaymentGroup> {

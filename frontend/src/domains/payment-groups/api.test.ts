@@ -3,6 +3,7 @@ import {
   isPaymentGroup,
   isPaymentGroupArray,
   fetchPaymentGroups,
+  fetchArchivedPaymentGroups,
   fetchPaymentGroup,
   createPaymentGroup,
   updatePaymentGroup,
@@ -32,6 +33,10 @@ describe('isPaymentGroup', () => {
     expect(
       isPaymentGroup({ ...validPaymentGroup, color: '#fff', icon: '🛒' })
     ).toBe(true);
+  });
+
+  it('returns true for PaymentGroup with archived', () => {
+    expect(isPaymentGroup({ ...validPaymentGroup, archived: true })).toBe(true);
   });
 
   it('returns false for null', () => {
@@ -101,6 +106,25 @@ describe('fetchPaymentGroups', () => {
 
     expect(apiJson).toHaveBeenCalledWith(
       '/api/payment-groups',
+      {},
+      expect.any(Function)
+    );
+    expect(result).toEqual([validPaymentGroup]);
+  });
+});
+
+describe('fetchArchivedPaymentGroups', () => {
+  beforeEach(() => {
+    vi.mocked(apiJson).mockReset();
+  });
+
+  it('calls apiJson with archived path and returns data when guard passes', async () => {
+    vi.mocked(apiJson).mockResolvedValue([validPaymentGroup]);
+
+    const result = await fetchArchivedPaymentGroups();
+
+    expect(apiJson).toHaveBeenCalledWith(
+      '/api/payment-groups/archived',
       {},
       expect.any(Function)
     );

@@ -9,7 +9,7 @@ const mockFindOneAndDelete = vi.fn();
 
 vi.mock('./model.js', () => ({
   default: {
-    find: () => mockFind(),
+    find: (filter: unknown) => mockFind(filter),
     findOne: (filter: unknown) => mockFindOne(filter),
     create: (data: unknown) => mockCreate(data),
     findOneAndUpdate: (filter: unknown, update: unknown, opts: unknown) =>
@@ -44,7 +44,9 @@ describe('paymentGroupsService', () => {
     it('returns empty array when no groups', async () => {
       const result = await paymentGroupsService.list(validUserId);
       expect(result).toEqual([]);
-      expect(mockFind).toHaveBeenCalled();
+      expect(mockFind).toHaveBeenCalledWith(
+        expect.objectContaining({ archived: { $ne: true } })
+      );
     });
 
     it('returns mapped groups with id and ISO dates', async () => {
@@ -64,6 +66,42 @@ describe('paymentGroupsService', () => {
       expect(result[0]).toMatchObject({ id: 'id1', name: 'A', sortOrder: 0 });
       expect(result[0].createdAt).toBe('2024-01-01T00:00:00.000Z');
       expect(result[0].updatedAt).toBe('2024-01-01T00:00:00.000Z');
+    });
+  });
+
+  describe('listArchived', () => {
+    it('returns empty array when no archived groups', async () => {
+      mockFind.mockReturnValue({
+        sort: vi.fn().mockReturnValue({ lean: vi.fn().mockResolvedValue([]) }),
+      });
+
+      const result = await paymentGroupsService.listArchived(validUserId);
+
+      expect(result).toEqual([]);
+      expect(mockFind).toHaveBeenCalledWith(
+        expect.objectContaining({ archived: true })
+      );
+    });
+
+    it('returns only archived groups', async () => {
+      const docs = [
+        doc({ _id: 'id1', name: 'Archived A', archived: true }),
+        doc({ _id: 'id2', name: 'Archived B', archived: true }),
+      ];
+      mockFind.mockReturnValue({
+        sort: vi
+          .fn()
+          .mockReturnValue({ lean: vi.fn().mockResolvedValue(docs) }),
+      });
+
+      const result = await paymentGroupsService.listArchived(validUserId);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toMatchObject({
+        id: 'id1',
+        name: 'Archived A',
+        archived: true,
+      });
     });
   });
 
@@ -187,16 +225,22 @@ describe('paymentGroupsService', () => {
   });
 
   describe('delete', () => {
-    it('succeeds when document exists', async () => {
-      mockFindOneAndDelete.mockResolvedValue(doc());
+    it('sets archived true when document exists', async () => {
+      mockFindOneAndUpdate.mockResolvedValue(doc());
 
       await expect(
         paymentGroupsService.delete(validUserId, validId)
       ).resolves.toBeUndefined();
+
+      expect(mockFindOneAndUpdate).toHaveBeenCalledWith(
+        expect.any(Object),
+        { $set: { archived: true } },
+        undefined
+      );
     });
 
     it('throws AppError 404 when not found', async () => {
-      mockFindOneAndDelete.mockResolvedValue(null);
+      mockFindOneAndUpdate.mockResolvedValue(null);
 
       await expect(
         paymentGroupsService.delete(validUserId, validId)

@@ -55,8 +55,9 @@ export default defineConfig({
     outDir: 'dist',
   },
   test: {
+    pool: 'threads',
     globals: true,
-    environment: 'jsdom',
+    environment: 'happy-dom',
     setupFiles: ['./src/test/setup.ts'],
     coverage: {
       provider: 'v8',

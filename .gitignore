@@ -4,6 +4,8 @@ build
 .next
 coverage
 *.log
+.cursor
+.vscode
 .env
 .env.local
 .env*.local

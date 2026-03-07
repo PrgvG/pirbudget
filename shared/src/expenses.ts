@@ -3,64 +3,108 @@
  * Факт по повторяющимся — RecurringPaymentOccurrence.
  */
 
-import type { EntityId } from "./ids.js";
-import type { RecurrenceRule } from "./recurrence.js";
+import { z } from 'zod';
+import { entityIdSchema, localIdSchema } from './ids.js';
+import { recurrenceRuleSchema } from './recurrence.js';
 
-export type BaseExpensePayment = {
-  id: EntityId;
-  groupId: EntityId;
-  note?: string;
-  createdAt: string;
-  updatedAt: string;
-};
+const baseExpensePaymentSchema = z.object({
+  id: entityIdSchema,
+  groupId: entityIdSchema,
+  note: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
 
-export type InstantExpensePayment = BaseExpensePayment & {
-  kind: "instant";
-  amount: number;
+export const instantExpensePaymentSchema = baseExpensePaymentSchema.extend({
+  kind: z.literal('instant'),
+  amount: z.number(),
   /** ISO date */
-  date: string;
-};
+  date: z.string(),
+});
 
-export type RecurringExpensePayment = BaseExpensePayment & {
-  kind: "recurring";
-  amountPerOccurrence: number;
-  recurrence: RecurrenceRule;
+export const recurringExpensePaymentSchema = baseExpensePaymentSchema.extend({
+  kind: z.literal('recurring'),
+  amountPerOccurrence: z.number(),
+  recurrence: recurrenceRuleSchema,
   /** null = бесконечно */
-  repeatCount: number | null;
-};
+  repeatCount: z.number().int().nonnegative().nullable(),
+});
 
-export type ExpensePayment = InstantExpensePayment | RecurringExpensePayment;
+export const expensePaymentSchema = z.discriminatedUnion('kind', [
+  instantExpensePaymentSchema,
+  recurringExpensePaymentSchema,
+]);
 
-export type RecurringPaymentOccurrenceStatus = "completed" | "skipped" | "pending";
+export const recurringPaymentOccurrenceStatusSchema = z.enum([
+  'completed',
+  'skipped',
+  'pending',
+]);
 
-export type RecurringPaymentOccurrence = {
-  id: EntityId;
-  recurringPaymentId: EntityId;
-  scheduledDate: string;
-  status: RecurringPaymentOccurrenceStatus;
-  amount?: number;
-  createdAt: string;
-  updatedAt: string;
-};
+export const recurringPaymentOccurrenceSchema = z.object({
+  id: entityIdSchema,
+  recurringPaymentId: entityIdSchema,
+  scheduledDate: z.string(),
+  status: recurringPaymentOccurrenceStatusSchema,
+  amount: z.number().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
 
-// DTO
-export type InstantExpensePaymentCreate = Omit<InstantExpensePayment, "id" | "createdAt" | "updatedAt"> & {
-  localId?: string;
-};
-export type InstantExpensePaymentUpdate = Partial<Omit<InstantExpensePayment, "id" | "createdAt" | "updatedAt">>;
+// DTO Create/Update
+export const instantExpensePaymentCreateSchema = instantExpensePaymentSchema
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .extend({ localId: localIdSchema.optional() });
 
-export type RecurringExpensePaymentCreate = Omit<
-  RecurringExpensePayment,
-  "id" | "createdAt" | "updatedAt"
-> & { localId?: string };
-export type RecurringExpensePaymentUpdate = Partial<
-  Omit<RecurringExpensePayment, "id" | "createdAt" | "updatedAt">
+export const instantExpensePaymentUpdateSchema = instantExpensePaymentSchema
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .partial();
+
+export const recurringExpensePaymentCreateSchema = recurringExpensePaymentSchema
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .extend({ localId: localIdSchema.optional() });
+
+export const recurringExpensePaymentUpdateSchema = recurringExpensePaymentSchema
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .partial();
+
+export const recurringPaymentOccurrenceCreateSchema =
+  recurringPaymentOccurrenceSchema
+    .omit({ id: true, createdAt: true, updatedAt: true })
+    .extend({ localId: localIdSchema.optional() });
+
+export const recurringPaymentOccurrenceUpdateSchema =
+  recurringPaymentOccurrenceSchema
+    .omit({ id: true, createdAt: true, updatedAt: true })
+    .partial();
+
+export type BaseExpensePayment = z.infer<typeof baseExpensePaymentSchema>;
+export type InstantExpensePayment = z.infer<typeof instantExpensePaymentSchema>;
+export type RecurringExpensePayment = z.infer<
+  typeof recurringExpensePaymentSchema
 >;
-
-export type RecurringPaymentOccurrenceCreate = Omit<
-  RecurringPaymentOccurrence,
-  "id" | "createdAt" | "updatedAt"
-> & { localId?: string };
-export type RecurringPaymentOccurrenceUpdate = Partial<
-  Omit<RecurringPaymentOccurrence, "id" | "createdAt" | "updatedAt">
+export type ExpensePayment = z.infer<typeof expensePaymentSchema>;
+export type RecurringPaymentOccurrenceStatus = z.infer<
+  typeof recurringPaymentOccurrenceStatusSchema
+>;
+export type RecurringPaymentOccurrence = z.infer<
+  typeof recurringPaymentOccurrenceSchema
+>;
+export type InstantExpensePaymentCreate = z.infer<
+  typeof instantExpensePaymentCreateSchema
+>;
+export type InstantExpensePaymentUpdate = z.infer<
+  typeof instantExpensePaymentUpdateSchema
+>;
+export type RecurringExpensePaymentCreate = z.infer<
+  typeof recurringExpensePaymentCreateSchema
+>;
+export type RecurringExpensePaymentUpdate = z.infer<
+  typeof recurringExpensePaymentUpdateSchema
+>;
+export type RecurringPaymentOccurrenceCreate = z.infer<
+  typeof recurringPaymentOccurrenceCreateSchema
+>;
+export type RecurringPaymentOccurrenceUpdate = z.infer<
+  typeof recurringPaymentOccurrenceUpdateSchema
 >;

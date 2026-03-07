@@ -11,6 +11,7 @@ export type IPaymentGroupDoc = Document & {
   sortOrder: number;
   color?: string;
   icon?: string;
+  archived?: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -39,6 +40,10 @@ const PaymentGroupSchema = new Schema<IPaymentGroupDoc>(
     icon: {
       type: String,
       trim: true,
+    },
+    archived: {
+      type: Boolean,
+      default: false,
     },
   },
   {

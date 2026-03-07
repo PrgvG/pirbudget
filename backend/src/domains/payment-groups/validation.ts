@@ -1,29 +1,13 @@
 /**
  * Валидация тела запросов для групп платежей.
+ * Схемы — из shared; здесь только обёртки с кодами ошибок.
  */
 
 import { z } from 'zod';
-
-export const paymentGroupCreateSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Name is required')
-    .transform(s => s.trim()),
-  sortOrder: z.number().int().min(0),
-  color: z.string().trim().optional(),
-  icon: z.string().trim().optional(),
-});
-
-export const paymentGroupUpdateSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Name cannot be empty')
-    .transform(s => s.trim())
-    .optional(),
-  sortOrder: z.number().int().min(0).optional(),
-  color: z.string().trim().optional(),
-  icon: z.string().trim().optional(),
-});
+import {
+  paymentGroupCreateSchema,
+  paymentGroupUpdateSchema,
+} from 'shared/payment-groups';
 
 export type PaymentGroupCreateValid = {
   ok: true;

@@ -42,7 +42,9 @@ function isUsersResponseObject(obj: object): obj is UsersResponse {
 }
 
 export function isUsersResponse(data: unknown): data is UsersResponse {
-  return typeof data === 'object' && data !== null && isUsersResponseObject(data);
+  return (
+    typeof data === 'object' && data !== null && isUsersResponseObject(data)
+  );
 }
 
 export function isApiMessage(data: unknown): data is { message: string } {

@@ -357,7 +357,7 @@ export function GroupsPage() {
                   </button>
                   {deleteConfirmId === g.id ? (
                     <>
-                      <span className={styles.confirmText}>Удалить?</span>
+                      <span className={styles.confirmText}>В архив?</span>
                       <button
                         type="button"
                         onClick={() => deleteMutation.mutate(g.id)}
@@ -379,8 +379,8 @@ export function GroupsPage() {
                       type="button"
                       onClick={() => setDeleteConfirmId(g.id)}
                       className={styles.iconButton}
-                      title="Удалить"
-                      aria-label="Удалить"
+                      title="В архив"
+                      aria-label="В архив"
                     >
                       ✕
                     </button>

@@ -80,7 +80,7 @@ NODE_ENV=development
 
 ```bash
 # Запустить только MongoDB
-docker-compose -p pirbudget-dev -f docker-compose.dev.yml up -d mongodb
+docker compose -p pirbudget-dev -f docker-compose.dev.yml up -d mongodb
 
 # Проверить статус
 docker ps | grep mongodb
@@ -90,7 +90,7 @@ docker ps | grep mongodb
 
 ```bash
 # Запустить все сервисы
-docker-compose -p pirbudget-prod up -d --build
+docker compose -p pirbudget-prod up -d --build
 ```
 
 ### Шаг 4: Проверка подключения к MongoDB
@@ -118,7 +118,7 @@ cd frontend && npm run dev
 #### Production-like (Docker):
 
 ```bash
-docker-compose -p pirbudget-prod up -d
+docker compose -p pirbudget-prod up -d
 ```
 
 ---
@@ -129,13 +129,13 @@ docker-compose -p pirbudget-prod up -d
 
 ```bash
 # Запустить
-docker-compose -p pirbudget-dev -f docker-compose.dev.yml up -d mongodb
+docker compose -p pirbudget-dev -f docker-compose.dev.yml up -d mongodb
 
 # Остановить
-docker-compose -p pirbudget-dev -f docker-compose.dev.yml down
+docker compose -p pirbudget-dev -f docker-compose.dev.yml down
 
 # Просмотр логов
-docker-compose -p pirbudget-dev -f docker-compose.dev.yml logs -f mongodb
+docker compose -p pirbudget-dev -f docker-compose.dev.yml logs -f mongodb
 
 # Подключиться к MongoDB
 docker exec -it pirbudget-mongodb-dev mongosh -u admin -p 'password' --authenticationDatabase admin
@@ -145,24 +145,24 @@ docker exec -it pirbudget-mongodb-dev mongosh -u admin -p 'password' --authentic
 
 ```bash
 # Запустить все сервисы
-docker-compose -p pirbudget-prod up -d
+docker compose -p pirbudget-prod up -d
 
 # Остановить все сервисы
-docker-compose -p pirbudget-prod down
+docker compose -p pirbudget-prod down
 
 # Пересобрать и запустить
-docker-compose -p pirbudget-prod up -d --build
+docker compose -p pirbudget-prod up -d --build
 
 # Просмотр логов
-docker-compose -p pirbudget-prod logs -f
+docker compose -p pirbudget-prod logs -f
 
 # Просмотр логов конкретного сервиса
-docker-compose -p pirbudget-prod logs -f backend
-docker-compose -p pirbudget-prod logs -f frontend
-docker-compose -p pirbudget-prod logs -f mongodb
+docker compose -p pirbudget-prod logs -f backend
+docker compose -p pirbudget-prod logs -f frontend
+docker compose -p pirbudget-prod logs -f mongodb
 
 # Остановить и удалить volumes
-docker-compose -p pirbudget-prod down -v
+docker compose -p pirbudget-prod down -v
 ```
 
 ---
@@ -185,8 +185,8 @@ docker-compose -p pirbudget-prod down -v
 
 ```bash
 # В корне проекта
-docker-compose -p pirbudget-dev -f docker-compose.dev.yml down -v
-docker-compose -p pirbudget-dev -f docker-compose.dev.yml up -d mongodb mongo-express
+docker compose -p pirbudget-dev -f docker-compose.dev.yml down -v
+docker compose -p pirbudget-dev -f docker-compose.dev.yml up -d mongodb mongo-express
 ```
 
 Подождите 5–10 секунд, пока MongoDB полностью запустится, затем снова запустите приложение:
@@ -282,11 +282,11 @@ kill <PID>
 
 ```bash
 # Проверить логи
-docker-compose -p pirbudget-dev -f docker-compose.dev.yml logs mongodb
+docker compose -p pirbudget-dev -f docker-compose.dev.yml logs mongodb
 
 # Пересоздать контейнер
-docker-compose -p pirbudget-dev -f docker-compose.dev.yml down -v
-docker-compose -p pirbudget-dev -f docker-compose.dev.yml up -d mongodb
+docker compose -p pirbudget-dev -f docker-compose.dev.yml down -v
+docker compose -p pirbudget-dev -f docker-compose.dev.yml up -d mongodb
 ```
 
 ### Ошибки подключения к БД
@@ -301,10 +301,10 @@ docker ps | grep mongodb
 3. Проверьте логи:
 ```bash
 # Для dev окружения:
-docker-compose -p pirbudget-dev -f docker-compose.dev.yml logs mongodb
+docker compose -p pirbudget-dev -f docker-compose.dev.yml logs mongodb
 
 # Для prod окружения:
-docker-compose -p pirbudget-prod logs mongodb
+docker compose -p pirbudget-prod logs mongodb
 ```
 
 ---
@@ -324,7 +324,8 @@ docker-compose -p pirbudget-prod logs mongodb
     <string>com.pirbudget.mongodb</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/docker-compose</string>
+        <string>/usr/local/bin/docker</string>
+        <string>compose</string>
         <string>-f</string>
         <string>/Users/YOUR_USERNAME/Repos/pirbudget/docker-compose.dev.yml</string>
         <string>up</string>
