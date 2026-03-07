@@ -14,6 +14,12 @@ export type {
   RecurrenceByDate,
   RecurrenceRule,
 } from "./recurrence.js";
+export { expandRecurrence } from "./recurrence-expand.js";
+export type {
+  PlannedItem,
+  PlannedItemRecurring,
+  PlannedItemInstant,
+} from "./planned.js";
 export type {
   BaseExpensePayment,
   InstantExpensePayment,

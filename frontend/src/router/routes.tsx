@@ -6,6 +6,7 @@ import { ProtectedGroups } from './ProtectedGroups';
 import { ProtectedIncomes } from './ProtectedIncomes';
 import { ProtectedExpenses } from './ProtectedExpenses';
 import { ProtectedHistory } from './ProtectedHistory';
+import { ProtectedPlan } from './ProtectedPlan';
 import { LoginPage } from '../modules/registration/LoginPage';
 import { RegisterPage } from '../modules/registration/RegisterPage';
 
@@ -62,6 +63,17 @@ export const historyRoute = createRoute({
     }
   },
   component: ProtectedHistory,
+});
+
+export const planRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/plan',
+  beforeLoad: () => {
+    if (shouldRedirectToLogin()) {
+      throw redirect({ to: '/login' });
+    }
+  },
+  component: ProtectedPlan,
 });
 
 export const loginRoute = createRoute({

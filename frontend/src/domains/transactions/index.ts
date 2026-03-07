@@ -1,6 +1,13 @@
 /**
- * Домен: операции (доходы и расходы). История за период.
+ * Домен: операции (доходы и расходы). История и план за период.
  */
 
 export * from './types';
-export { fetchHistory, isTransactionArray, type HistoryParams } from './api';
+export {
+  fetchHistory,
+  isTransactionArray,
+  type HistoryParams,
+  fetchPlan,
+  isPlannedItemArray,
+  type PlanParams,
+} from './api';

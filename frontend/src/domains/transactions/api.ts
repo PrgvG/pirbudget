@@ -1,8 +1,9 @@
 /**
- * API операций (история за период).
+ * API операций (история и план за период).
  */
 
 import type { Transaction } from 'shared/transactions';
+import type { PlannedItem } from 'shared';
 import { apiJson } from '../../api/client';
 
 export type HistoryParams = {
@@ -64,4 +65,40 @@ function buildHistoryUrl(params: HistoryParams): string {
 export async function fetchHistory(params: HistoryParams): Promise<Transaction[]> {
   const url = buildHistoryUrl(params);
   return apiJson(url, {}, isTransactionArray);
+}
+
+// --- Plan ---
+
+export type PlanParams = {
+  from: string;
+  to: string;
+};
+
+function isPlannedItem(obj: unknown): obj is PlannedItem {
+  if (typeof obj !== 'object' || obj === null) return false;
+  const o = obj as Record<string, unknown>;
+  if (o.kind !== 'recurring' && o.kind !== 'instant') return false;
+  return (
+    typeof o.paymentId === 'string' &&
+    typeof o.groupId === 'string' &&
+    typeof o.scheduledDate === 'string' &&
+    typeof o.amount === 'number' &&
+    (o.note === undefined || typeof o.note === 'string')
+  );
+}
+
+export function isPlannedItemArray(data: unknown): data is PlannedItem[] {
+  return Array.isArray(data) && data.every(isPlannedItem);
+}
+
+function buildPlanUrl(params: PlanParams): string {
+  const search = new URLSearchParams();
+  search.set('from', params.from);
+  search.set('to', params.to);
+  return `/api/transactions/plan?${search.toString()}`;
+}
+
+export async function fetchPlan(params: PlanParams): Promise<PlannedItem[]> {
+  const url = buildPlanUrl(params);
+  return apiJson(url, {}, isPlannedItemArray);
 }

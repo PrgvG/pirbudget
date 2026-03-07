@@ -6,6 +6,7 @@ import {
   incomesRoute,
   expensesRoute,
   historyRoute,
+  planRoute,
   loginRoute,
   registerRoute,
 } from './routes';
@@ -16,6 +17,7 @@ const routeTree = rootRoute.addChildren([
   incomesRoute,
   expensesRoute,
   historyRoute,
+  planRoute,
   loginRoute,
   registerRoute,
 ]);
