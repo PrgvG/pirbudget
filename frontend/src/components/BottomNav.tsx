@@ -12,9 +12,7 @@ const items: NavItem[] = [
   { to: '/groups', label: 'Группы', icon: '📁' },
   { to: '/incomes', label: 'Поступления', icon: '💰' },
   { to: '/expenses', label: 'Платежи', icon: '💳' },
-  { to: '/history', label: 'История', icon: '📋' },
-  { to: '/plan', label: 'План', icon: '📅' },
-  { to: '/stats', label: 'Статистика', icon: '📊' },
+  { to: '/month', label: 'Месяц', icon: '📅' },
 ];
 
 export function BottomNav() {

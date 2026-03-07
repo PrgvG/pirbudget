@@ -1,7 +1,7 @@
 import { useAuth } from '../contexts/useAuth';
-import { PlanPage } from '../pages/PlanPage';
+import { MonthPage } from '../pages/MonthPage';
 
-export function ProtectedPlan() {
+export function ProtectedMonth() {
   const { isLoading, isAuthenticated } = useAuth();
 
   if (isLoading) {
@@ -14,5 +14,5 @@ export function ProtectedPlan() {
     return null;
   }
 
-  return <PlanPage />;
+  return <MonthPage />;
 }

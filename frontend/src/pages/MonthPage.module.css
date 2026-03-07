@@ -28,11 +28,113 @@
   text-decoration: underline;
 }
 
+.monthSection {
+  margin-bottom: 1.5rem;
+}
+
+.totals {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  gap: 1rem;
+}
+
+.totalsBlock {
+  margin: 0;
+}
+
+.totalRow:not(:last-child) {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.balanceRow {
+  font-weight: 600;
+  padding-top: 0.75rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.totalLabel {
+  font-size: 0.9375rem;
+  color: #4b5563;
+}
+
+.totalValue {
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.totalValue.income {
+  color: #059669;
+}
+
+.totalValue.expense {
+  color: #dc2626;
+}
+
+.byGroup {
+  margin-bottom: 1.5rem;
+}
+
+.byGroupTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.groupList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.groupItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.4rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  gap: 0.75rem;
+}
+
+.groupName {
+  font-size: 0.9375rem;
+  color: #374151;
+}
+
+.groupSum {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #dc2626;
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.75rem;
+}
+
 .filters {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   align-items: flex-end;
 }
 
@@ -48,43 +150,12 @@
   color: #6b7280;
 }
 
-.filterGroup select,
-.filterGroup input {
+.filterGroup select {
   padding: 0.5rem 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 0.9375rem;
   min-width: 120px;
-}
-
-.monthNav {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.monthNav button {
-  padding: 0.35rem 0.6rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
-  cursor: pointer;
-  font-size: 1rem;
-}
-
-.monthNav button:hover:not(:disabled) {
-  background: #f3f4f6;
-}
-
-.monthNav button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.monthNav span {
-  min-width: 140px;
-  text-align: center;
-  font-weight: 500;
 }
 
 .status,
@@ -177,4 +248,12 @@
   font-size: 0.8125rem;
   color: #6b7280;
   margin-top: 0.25rem;
+}
+
+.historySection {
+  margin-bottom: 1.5rem;
+}
+
+.planSection {
+  margin-bottom: 1rem;
 }

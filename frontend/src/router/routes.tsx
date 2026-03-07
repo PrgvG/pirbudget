@@ -6,9 +6,7 @@ import { ProtectedDashboard } from './ProtectedDashboard';
 import { ProtectedGroups } from './ProtectedGroups';
 import { ProtectedIncomes } from './ProtectedIncomes';
 import { ProtectedExpenses } from './ProtectedExpenses';
-import { ProtectedHistory } from './ProtectedHistory';
-import { ProtectedPlan } from './ProtectedPlan';
-import { ProtectedStatistics } from './ProtectedStatistics';
+import { ProtectedMonth } from './ProtectedMonth';
 import { LoginPage } from '../modules/registration/LoginPage';
 import { RegisterPage } from '../modules/registration/RegisterPage';
 
@@ -47,22 +45,10 @@ export const expensesRoute = createRoute({
   component: ProtectedExpenses,
 });
 
-export const historyRoute = createRoute({
+export const monthRoute = createRoute({
   getParentRoute: () => authenticatedLayoutRoute,
-  path: '/history',
-  component: ProtectedHistory,
-});
-
-export const planRoute = createRoute({
-  getParentRoute: () => authenticatedLayoutRoute,
-  path: '/plan',
-  component: ProtectedPlan,
-});
-
-export const statisticsRoute = createRoute({
-  getParentRoute: () => authenticatedLayoutRoute,
-  path: '/stats',
-  component: ProtectedStatistics,
+  path: '/month',
+  component: ProtectedMonth,
 });
 
 export const loginRoute = createRoute({

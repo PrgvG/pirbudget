@@ -82,8 +82,8 @@ export function Dashboard() {
                 </span>
               </div>
             </div>
-            <Link to="/stats" className={styles.statsLink}>
-              Подробная статистика →
+            <Link to="/month" className={styles.statsLink}>
+              Подробнее за месяц →
             </Link>
           </>
         )}

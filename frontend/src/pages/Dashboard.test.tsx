@@ -59,7 +59,7 @@ describe('Dashboard', () => {
     );
     expect(await screen.findByText(/55 000 ₽/)).toBeInTheDocument();
     expect(
-      await screen.findByRole('link', { name: /подробная статистика/i })
-    ).toHaveAttribute('href', '/stats');
+      await screen.findByRole('link', { name: /подробнее за месяц/i })
+    ).toHaveAttribute('href', '/month');
   });
 });
