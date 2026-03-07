@@ -36,6 +36,10 @@
     "./entries": {
       "types": "./dist/entries.d.ts",
       "default": "./dist/entries.js"
+    },
+    "./recurring-income": {
+      "types": "./dist/recurring-income.d.ts",
+      "default": "./dist/recurring-income.js"
     }
   },
   "dependencies": {

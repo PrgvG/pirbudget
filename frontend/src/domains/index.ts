@@ -4,5 +4,5 @@
 
 export * from './payment-groups';
 export * from './entries';
-export * from './expenses';
+export * from './recurring-income';
 export * from './transactions';

@@ -9,6 +9,7 @@ import { expandRecurrence } from 'shared';
 import type { MonthStats } from './types.js';
 import { entriesService } from '../entries/service.js';
 import { recurringExpensesService } from '../expenses/service.js';
+import { recurringIncomeService } from '../recurring-income/service.js';
 
 function getMonthBounds(month: string): { from: string; to: string } {
   const [y, m] = month.split('-').map(Number);
@@ -63,7 +64,12 @@ function byScheduledDateThenKind(a: PlannedItem, b: PlannedItem): number {
   if (a.scheduledDate !== b.scheduledDate) {
     return a.scheduledDate.localeCompare(b.scheduledDate);
   }
-  return a.kind === 'recurring' && b.kind === 'instant' ? -1 : a.kind === 'instant' && b.kind === 'recurring' ? 1 : 0;
+  const order: Record<PlannedItem['kind'], number> = {
+    recurring: 0,
+    recurringIncome: 0,
+    instant: 1,
+  };
+  return order[a.kind] - order[b.kind];
 }
 
 export const transactionsService = {
@@ -82,14 +88,16 @@ export const transactionsService = {
   },
 
   async getPlan(userId: string, from: string, to: string): Promise<PlannedItem[]> {
-    const [recurringList, entriesList] = await Promise.all([
-      recurringExpensesService.list(userId),
-      entriesService.listByDateRange({ userId, from, to }),
-    ]);
+    const [recurringExpenseList, recurringIncomeList, entriesList] =
+      await Promise.all([
+        recurringExpensesService.list(userId),
+        recurringIncomeService.list(userId),
+        entriesService.listByDateRange({ userId, from, to }),
+      ]);
 
     const items: PlannedItem[] = [];
 
-    for (const rec of recurringList) {
+    for (const rec of recurringExpenseList) {
       const dates = expandRecurrence(
         rec.recurrence,
         from,
@@ -101,6 +109,25 @@ export const transactionsService = {
           kind: 'recurring',
           paymentId: rec.id,
           groupId: rec.groupId,
+          scheduledDate,
+          amount: rec.amountPerOccurrence,
+          ...(rec.note != null && rec.note !== '' && { note: rec.note }),
+        });
+      }
+    }
+
+    for (const rec of recurringIncomeList) {
+      const dates = expandRecurrence(
+        rec.recurrence,
+        from,
+        to,
+        rec.repeatCount ?? null
+      );
+      for (const scheduledDate of dates) {
+        items.push({
+          kind: 'recurringIncome',
+          paymentId: rec.id,
+          source: rec.source,
           scheduledDate,
           amount: rec.amountPerOccurrence,
           ...(rec.note != null && rec.note !== '' && { note: rec.note }),

@@ -24,11 +24,24 @@ export const plannedItemInstantSchema = z.object({
   note: z.string().optional(),
 });
 
+export const plannedItemRecurringIncomeSchema = z.object({
+  kind: z.literal('recurringIncome'),
+  paymentId: entityIdSchema,
+  source: z.string(),
+  scheduledDate: z.string(),
+  amount: z.number(),
+  note: z.string().optional(),
+});
+
 export const plannedItemSchema = z.discriminatedUnion('kind', [
   plannedItemRecurringSchema,
   plannedItemInstantSchema,
+  plannedItemRecurringIncomeSchema,
 ]);
 
 export type PlannedItemRecurring = z.infer<typeof plannedItemRecurringSchema>;
 export type PlannedItemInstant = z.infer<typeof plannedItemInstantSchema>;
+export type PlannedItemRecurringIncome = z.infer<
+  typeof plannedItemRecurringIncomeSchema
+>;
 export type PlannedItem = z.infer<typeof plannedItemSchema>;

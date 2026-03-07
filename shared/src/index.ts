@@ -19,7 +19,13 @@ export type {
   PlannedItem,
   PlannedItemRecurring,
   PlannedItemInstant,
+  PlannedItemRecurringIncome,
 } from "./planned.js";
+export type {
+  RecurringIncome,
+  RecurringIncomeCreate,
+  RecurringIncomeUpdate,
+} from "./recurring-income.js";
 export type {
   BaseExpensePayment,
   InstantExpensePayment,

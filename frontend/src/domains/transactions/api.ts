@@ -78,6 +78,15 @@ export type PlanParams = {
 function isPlannedItem(obj: unknown): obj is PlannedItem {
   if (typeof obj !== 'object' || obj === null) return false;
   const o = obj as Record<string, unknown>;
+  if (o.kind === 'recurringIncome') {
+    return (
+      typeof o.paymentId === 'string' &&
+      typeof o.source === 'string' &&
+      typeof o.scheduledDate === 'string' &&
+      typeof o.amount === 'number' &&
+      (o.note === undefined || typeof o.note === 'string')
+    );
+  }
   if (o.kind !== 'recurring' && o.kind !== 'instant') return false;
   return (
     typeof o.paymentId === 'string' &&

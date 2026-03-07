@@ -12,6 +12,7 @@ import apiRouter from './routes/api';
 import paymentGroupsRouter from './domains/payment-groups/routes.js';
 import { entriesRouter } from './domains/entries/index.js';
 import expensesRouter from './domains/expenses/routes.js';
+import { recurringIncomeRouter } from './domains/recurring-income/index.js';
 import { transactionsRouter } from './domains/transactions/index.js';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { rateLimiter, authRateLimiter } from './middleware/rateLimit';
@@ -44,6 +45,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/payment-groups', paymentGroupsRouter);
 app.use('/api/entries', entriesRouter);
 app.use('/api/expenses', expensesRouter);
+app.use('/api/recurring-income', recurringIncomeRouter);
 app.use('/api/transactions', transactionsRouter);
 app.use('/api', apiRouter);
 

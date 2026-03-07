@@ -368,7 +368,16 @@ export function MonthPage() {
                       <PlannedItemCard
                         key={`${item.kind}-${item.paymentId}-${dateKey}-${idx}`}
                         item={item}
-                        groupName={groupMap.get(item.groupId)?.name}
+                        groupName={
+                          item.kind === 'recurringIncome'
+                            ? undefined
+                            : groupMap.get(item.groupId)?.name
+                        }
+                        source={
+                          item.kind === 'recurringIncome'
+                            ? item.source
+                            : undefined
+                        }
                       />
                     ))}
                   </ul>
@@ -425,25 +434,45 @@ function TransactionCard({
 type PlannedItemCardProps = {
   item: PlannedItem;
   groupName?: string;
+  source?: string;
 };
 
-function PlannedItemCard({ item, groupName }: PlannedItemCardProps) {
+function PlannedItemCard({
+  item,
+  groupName,
+  source,
+}: PlannedItemCardProps) {
+  const isIncome = item.kind === 'recurringIncome';
   const typeLabel =
-    item.kind === 'recurring' ? 'Повторяющийся' : 'Разовый';
+    item.kind === 'recurring'
+      ? 'Повторяющийся'
+      : item.kind === 'recurringIncome'
+        ? 'Повторяющийся доход'
+        : 'Разовый';
 
   return (
     <li className={styles.card}>
       <div className={styles.cardMain}>
-        <div className={styles.cardType}>{typeLabel}</div>
-        {groupName && (
+        <div
+          className={`${styles.cardType} ${isIncome ? styles.income : styles.expense}`}
+        >
+          {typeLabel}
+        </div>
+        {source != null && source !== '' && (
+          <span className={styles.cardSource}>{source}</span>
+        )}
+        {groupName != null && groupName !== '' && (
           <span className={styles.cardGroup}>{groupName}</span>
         )}
         {item.note ? (
           <div className={styles.cardNote}>{item.note}</div>
         ) : null}
       </div>
-      <div className={styles.cardAmount}>
-        −{item.amount.toLocaleString('ru-RU')} ₽
+      <div
+        className={`${styles.cardAmount} ${isIncome ? styles.income : styles.expense}`}
+      >
+        {isIncome ? '+' : '−'}
+        {item.amount.toLocaleString('ru-RU')} ₽
       </div>
     </li>
   );

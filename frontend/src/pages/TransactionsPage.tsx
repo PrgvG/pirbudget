@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import type { Entry, EntryCreate, EntryUpdate } from 'shared/entries';
-import type { PaymentGroup } from 'shared/payment-groups';
 import type { RecurringExpensePayment } from 'shared/expenses';
+import type { RecurringIncome } from 'shared/recurring-income';
 import type { RecurrenceByInterval, RecurrenceByDate } from 'shared/recurrence';
 import { fetchPaymentGroups } from '../domains/payment-groups';
 import {
@@ -18,14 +18,22 @@ import {
   updateRecurringExpense,
   deleteRecurringExpense,
 } from '../domains/expenses';
+import {
+  fetchRecurringIncomes,
+  createRecurringIncome,
+  updateRecurringIncome,
+  deleteRecurringIncome,
+} from '../domains/recurring-income';
 import { formatApiError } from '../api/formatError';
 import styles from './TransactionsPage.module.css';
 
 const ENTRIES_QUERY_KEY = ['entries'] as const;
 const GROUPS_QUERY_KEY = ['payment-groups'] as const;
-const RECURRING_QUERY_KEY = ['expenses', 'recurring'] as const;
+const RECURRING_EXPENSE_QUERY_KEY = ['expenses', 'recurring'] as const;
+const RECURRING_INCOME_QUERY_KEY = ['recurring-income'] as const;
 
 type EntryFilterType = 'all' | 'income' | 'expense';
+type EditingType = 'entry' | 'recurringExpense' | 'recurringIncome' | null;
 
 function formatDate(isoDate: string): string {
   try {
@@ -44,6 +52,11 @@ function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+function toIsoDateTime(dateStr: string): string {
+  if (!dateStr || dateStr.length > 10) return dateStr;
+  return `${dateStr}T00:00:00.000Z`;
+}
+
 function describeRecurrence(r: RecurrenceByInterval | RecurrenceByDate): string {
   if (r.kind === 'date') {
     return formatDate(r.date);
@@ -59,26 +72,55 @@ function describeRecurrence(r: RecurrenceByInterval | RecurrenceByDate): string 
   return `${every} с ${formatDate(r.anchorDate)}`;
 }
 
-// --- Entry form (income / expense) ---
-type EntryFormState = {
+// --- Unified form state ---
+type UnifiedFormState = {
   direction: 'income' | 'expense';
-  date: string;
+  schedule: 'date' | 'interval';
   amount: number;
+  note: string;
   source: string;
   groupId: string;
-  note: string;
+  date: string;
+  unit: 'day' | 'week' | 'month' | 'year';
+  interval: number;
+  anchorDate: string;
+  endDate: string;
+  repeatCount: string;
+  recurrenceDate: string;
 };
 
-const emptyEntryForm: EntryFormState = {
-  direction: 'income',
-  date: todayISO(),
-  amount: 0,
-  source: '',
-  groupId: '',
-  note: '',
-};
+function emptyUnifiedForm(): UnifiedFormState {
+  return {
+    direction: 'income',
+    schedule: 'date',
+    amount: 0,
+    note: '',
+    source: '',
+    groupId: '',
+    date: todayISO(),
+    unit: 'month',
+    interval: 1,
+    anchorDate: todayISO(),
+    endDate: '',
+    repeatCount: '',
+    recurrenceDate: todayISO(),
+  };
+}
 
-function entryFormToCreate(f: EntryFormState, _groups: PaymentGroup[]): EntryCreate | null {
+function formToRecurrence(f: UnifiedFormState): RecurrenceByInterval | RecurrenceByDate {
+  if (f.schedule === 'date') {
+    return { kind: 'date', date: toIsoDateTime(f.date) };
+  }
+  return {
+    kind: 'interval',
+    unit: f.unit,
+    interval: f.interval,
+    anchorDate: toIsoDateTime(f.anchorDate),
+    ...(f.endDate.trim() && { endDate: toIsoDateTime(f.endDate) }),
+  };
+}
+
+function formToEntryCreate(f: UnifiedFormState): EntryCreate | null {
   if (f.direction === 'income') {
     if (!f.source.trim()) return null;
     return {
@@ -99,7 +141,7 @@ function entryFormToCreate(f: EntryFormState, _groups: PaymentGroup[]): EntryCre
   };
 }
 
-function entryFormToUpdate(f: EntryFormState): EntryUpdate {
+function formToEntryUpdate(f: UnifiedFormState): EntryUpdate {
   const u: EntryUpdate = {};
   if (f.amount !== undefined) u.amount = f.amount;
   if (f.date.trim()) u.date = f.date.trim();
@@ -112,76 +154,75 @@ function entryFormToUpdate(f: EntryFormState): EntryUpdate {
   return u;
 }
 
-// --- Recurring form (from ExpensesPage) ---
-type RecurringFormState = {
-  groupId: string;
-  amount: number;
-  note: string;
-  recurrenceKind: 'interval' | 'date';
-  unit: 'day' | 'week' | 'month' | 'year';
-  interval: number;
-  anchorDate: string;
-  endDate: string;
-  repeatCount: string;
-  recurrenceDate: string;
-};
-
-const emptyRecurringForm: RecurringFormState = {
-  groupId: '',
-  amount: 0,
-  note: '',
-  recurrenceKind: 'interval',
-  unit: 'month',
-  interval: 1,
-  anchorDate: todayISO(),
-  endDate: '',
-  repeatCount: '',
-  recurrenceDate: todayISO(),
-};
-
-function recurringFormToCreate(
-  f: RecurringFormState
+function formToRecurringExpenseCreate(
+  f: UnifiedFormState
 ): Parameters<typeof createRecurringExpense>[0] | null {
   if (!f.groupId.trim()) return null;
-  const recurrence: RecurrenceByInterval | RecurrenceByDate =
-    f.recurrenceKind === 'date'
-      ? { kind: 'date', date: f.recurrenceDate.trim().length <= 10 ? f.recurrenceDate.trim() + 'T00:00:00.000Z' : f.recurrenceDate.trim() }
-      : {
-          kind: 'interval',
-          unit: f.unit,
-          interval: f.interval,
-          anchorDate: f.anchorDate.trim().length <= 10 ? f.anchorDate.trim() + 'T00:00:00.000Z' : f.anchorDate.trim(),
-          ...(f.endDate.trim() && { endDate: f.endDate.trim().length <= 10 ? f.endDate.trim() + 'T00:00:00.000Z' : f.endDate.trim() }),
-        };
-  const repeatCount = f.repeatCount.trim() === '' ? null : parseInt(f.repeatCount, 10);
-  const validRepeat = repeatCount === null || (Number.isInteger(repeatCount) && repeatCount >= 0);
+  const repeatCount =
+    f.repeatCount.trim() === '' ? null : parseInt(f.repeatCount, 10);
+  const validRepeat =
+    repeatCount === null ||
+    (Number.isInteger(repeatCount) && repeatCount >= 0);
   return {
     kind: 'recurring',
     groupId: f.groupId.trim(),
     amountPerOccurrence: f.amount,
-    recurrence,
+    recurrence: formToRecurrence(f),
     repeatCount: validRepeat ? repeatCount : null,
     ...(f.note.trim() && { note: f.note.trim() }),
   };
 }
 
-function recurringFormToUpdate(f: RecurringFormState): Parameters<typeof updateRecurringExpense>[1] {
-  const recurrence: RecurrenceByInterval | RecurrenceByDate =
-    f.recurrenceKind === 'date'
-      ? { kind: 'date', date: f.recurrenceDate.trim().length <= 10 ? f.recurrenceDate.trim() + 'T00:00:00.000Z' : f.recurrenceDate.trim() }
-      : {
-          kind: 'interval',
-          unit: f.unit,
-          interval: f.interval,
-          anchorDate: f.anchorDate.trim().length <= 10 ? f.anchorDate.trim() + 'T00:00:00.000Z' : f.anchorDate.trim(),
-          ...(f.endDate.trim() && { endDate: f.endDate.trim().length <= 10 ? f.endDate.trim() + 'T00:00:00.000Z' : f.endDate.trim() }),
-        };
-  const repeatCount = f.repeatCount.trim() === '' ? null : parseInt(f.repeatCount, 10);
+function formToRecurringExpenseUpdate(
+  f: UnifiedFormState
+): Parameters<typeof updateRecurringExpense>[1] {
+  const repeatCount =
+    f.repeatCount.trim() === '' ? null : parseInt(f.repeatCount, 10);
   return {
     groupId: f.groupId.trim(),
     amountPerOccurrence: f.amount,
-    recurrence,
-    repeatCount: repeatCount === null || (Number.isInteger(repeatCount) && repeatCount >= 0) ? repeatCount : undefined,
+    recurrence: formToRecurrence(f),
+    repeatCount:
+      repeatCount === null ||
+      (Number.isInteger(repeatCount) && repeatCount >= 0)
+        ? repeatCount
+        : undefined,
+    note: f.note.trim() || undefined,
+  };
+}
+
+function formToRecurringIncomeCreate(
+  f: UnifiedFormState
+): Parameters<typeof createRecurringIncome>[0] | null {
+  if (!f.source.trim()) return null;
+  const repeatCount =
+    f.repeatCount.trim() === '' ? null : parseInt(f.repeatCount, 10);
+  const validRepeat =
+    repeatCount === null ||
+    (Number.isInteger(repeatCount) && repeatCount >= 0);
+  return {
+    source: f.source.trim(),
+    amountPerOccurrence: f.amount,
+    recurrence: formToRecurrence(f),
+    repeatCount: validRepeat ? repeatCount : null,
+    ...(f.note.trim() && { note: f.note.trim() }),
+  };
+}
+
+function formToRecurringIncomeUpdate(
+  f: UnifiedFormState
+): Parameters<typeof updateRecurringIncome>[1] {
+  const repeatCount =
+    f.repeatCount.trim() === '' ? null : parseInt(f.repeatCount, 10);
+  return {
+    source: f.source.trim(),
+    amountPerOccurrence: f.amount,
+    recurrence: formToRecurrence(f),
+    repeatCount:
+      repeatCount === null ||
+      (Number.isInteger(repeatCount) && repeatCount >= 0)
+        ? repeatCount
+        : undefined,
     note: f.note.trim() || undefined,
   };
 }
@@ -189,14 +230,13 @@ function recurringFormToUpdate(f: RecurringFormState): Parameters<typeof updateR
 export function TransactionsPage() {
   const queryClient = useQueryClient();
   const [entryFilter, setEntryFilter] = useState<EntryFilterType>('all');
-  const [entryForm, setEntryForm] = useState<EntryFormState>(emptyEntryForm);
-  const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
-  const [entryCreateMode, setEntryCreateMode] = useState(false);
+  const [unifiedForm, setUnifiedForm] = useState<UnifiedFormState>(emptyUnifiedForm);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingType, setEditingType] = useState<EditingType>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [entryDeleteConfirmId, setEntryDeleteConfirmId] = useState<string | null>(null);
-  const [recurringForm, setRecurringForm] = useState<RecurringFormState>(emptyRecurringForm);
-  const [editingRecurringId, setEditingRecurringId] = useState<string | null>(null);
-  const [recurringCreateMode, setRecurringCreateMode] = useState(false);
-  const [recurringDeleteConfirmId, setRecurringDeleteConfirmId] = useState<string | null>(null);
+  const [recurringExpenseDeleteId, setRecurringExpenseDeleteId] = useState<string | null>(null);
+  const [recurringIncomeDeleteId, setRecurringIncomeDeleteId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const groupsQuery = useQuery({
@@ -205,34 +245,47 @@ export function TransactionsPage() {
   });
   const entriesQuery = useQuery({
     queryKey: [...ENTRIES_QUERY_KEY, entryFilter],
-    queryFn: () => fetchEntries({ type: entryFilter === 'all' ? undefined : entryFilter }),
+    queryFn: () =>
+      fetchEntries({
+        type: entryFilter === 'all' ? undefined : entryFilter,
+      }),
   });
-  const recurringQuery = useQuery({
-    queryKey: RECURRING_QUERY_KEY,
+  const recurringExpenseQuery = useQuery({
+    queryKey: RECURRING_EXPENSE_QUERY_KEY,
     queryFn: fetchRecurringExpenses,
+  });
+  const recurringIncomeQuery = useQuery({
+    queryKey: RECURRING_INCOME_QUERY_KEY,
+    queryFn: fetchRecurringIncomes,
   });
 
   const groups = groupsQuery.data ?? [];
   const entries = entriesQuery.data ?? [];
-  const recurringList = recurringQuery.data ?? [];
+  const recurringExpenseList = recurringExpenseQuery.data ?? [];
+  const recurringIncomeList = recurringIncomeQuery.data ?? [];
 
   const createEntryMutation = useMutation({
     mutationFn: createEntry,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ENTRIES_QUERY_KEY });
-      setEntryForm({ ...emptyEntryForm, date: todayISO() });
-      setEntryCreateMode(false);
+      setUnifiedForm(emptyUnifiedForm());
+      setFormOpen(false);
+      setEditingType(null);
+      setEditingId(null);
       setError(null);
     },
     onError: err => setError(formatApiError(err)),
   });
 
   const updateEntryMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: EntryUpdate }) => updateEntry(id, data),
+    mutationFn: ({ id, data }: { id: string; data: EntryUpdate }) =>
+      updateEntry(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ENTRIES_QUERY_KEY });
-      setEditingEntryId(null);
-      setEntryForm(emptyEntryForm);
+      setEditingType(null);
+      setEditingId(null);
+      setUnifiedForm(emptyUnifiedForm());
+      setFormOpen(false);
       setError(null);
     },
     onError: err => setError(formatApiError(err)),
@@ -248,58 +301,114 @@ export function TransactionsPage() {
     onError: err => setError(formatApiError(err)),
   });
 
-  const createRecurringMutation = useMutation({
+  const createRecurringExpenseMutation = useMutation({
     mutationFn: createRecurringExpense,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: RECURRING_QUERY_KEY });
-      setRecurringForm(emptyRecurringForm);
-      setRecurringCreateMode(false);
+      queryClient.invalidateQueries({ queryKey: RECURRING_EXPENSE_QUERY_KEY });
+      setUnifiedForm(emptyUnifiedForm());
+      setFormOpen(false);
+      setEditingType(null);
+      setEditingId(null);
       setError(null);
     },
     onError: err => setError(formatApiError(err)),
   });
 
-  const updateRecurringMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof updateRecurringExpense>[1] }) =>
-      updateRecurringExpense(id, data),
+  const updateRecurringExpenseMutation = useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Parameters<typeof updateRecurringExpense>[1];
+    }) => updateRecurringExpense(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: RECURRING_QUERY_KEY });
-      setEditingRecurringId(null);
-      setRecurringForm(emptyRecurringForm);
+      queryClient.invalidateQueries({ queryKey: RECURRING_EXPENSE_QUERY_KEY });
+      setEditingType(null);
+      setEditingId(null);
+      setUnifiedForm(emptyUnifiedForm());
+      setFormOpen(false);
       setError(null);
     },
     onError: err => setError(formatApiError(err)),
   });
 
-  const deleteRecurringMutation = useMutation({
+  const deleteRecurringExpenseMutation = useMutation({
     mutationFn: deleteRecurringExpense,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: RECURRING_QUERY_KEY });
-      setRecurringDeleteConfirmId(null);
+      queryClient.invalidateQueries({ queryKey: RECURRING_EXPENSE_QUERY_KEY });
+      setRecurringExpenseDeleteId(null);
       setError(null);
     },
     onError: err => setError(formatApiError(err)),
   });
 
-  const handleStartEntryCreate = (direction: 'income' | 'expense') => {
-    setEditingEntryId(null);
-    setEntryCreateMode(true);
-    setEntryForm({
-      ...emptyEntryForm,
-      direction,
+  const createRecurringIncomeMutation = useMutation({
+    mutationFn: createRecurringIncome,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: RECURRING_INCOME_QUERY_KEY });
+      setUnifiedForm(emptyUnifiedForm());
+      setFormOpen(false);
+      setEditingType(null);
+      setEditingId(null);
+      setError(null);
+    },
+    onError: err => setError(formatApiError(err)),
+  });
+
+  const updateRecurringIncomeMutation = useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Parameters<typeof updateRecurringIncome>[1];
+    }) => updateRecurringIncome(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: RECURRING_INCOME_QUERY_KEY });
+      setEditingType(null);
+      setEditingId(null);
+      setUnifiedForm(emptyUnifiedForm());
+      setFormOpen(false);
+      setError(null);
+    },
+    onError: err => setError(formatApiError(err)),
+  });
+
+  const deleteRecurringIncomeMutation = useMutation({
+    mutationFn: deleteRecurringIncome,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: RECURRING_INCOME_QUERY_KEY });
+      setRecurringIncomeDeleteId(null);
+      setError(null);
+    },
+    onError: err => setError(formatApiError(err)),
+  });
+
+  const handleOpenCreate = () => {
+    setEditingType(null);
+    setEditingId(null);
+    setFormOpen(true);
+    setUnifiedForm({
+      ...emptyUnifiedForm(),
       date: todayISO(),
-      groupId: direction === 'expense' ? groups[0]?.id ?? '' : '',
+      anchorDate: todayISO(),
+      recurrenceDate: todayISO(),
+      groupId: groups[0]?.id ?? '',
     });
     setError(null);
   };
 
-  const handleStartEntryEdit = (entry: Entry) => {
-    setEditingEntryId(entry.id);
-    setEntryCreateMode(false);
-    setEntryForm({
+  const handleOpenEditEntry = (entry: Entry) => {
+    setEditingType('entry');
+    setEditingId(entry.id);
+    setFormOpen(true);
+    setUnifiedForm({
+      ...emptyUnifiedForm(),
       direction: entry.direction,
-      date: entry.date,
+      schedule: 'date',
       amount: entry.amount,
+      date: entry.date,
       source: entry.direction === 'income' ? entry.source : '',
       groupId: entry.direction === 'expense' ? entry.groupId : '',
       note: entry.note ?? '',
@@ -307,52 +416,19 @@ export function TransactionsPage() {
     setError(null);
   };
 
-  const handleCancelEntryForm = () => {
-    setEditingEntryId(null);
-    setEntryCreateMode(false);
-    setEntryForm(emptyEntryForm);
-    setError(null);
-  };
-
-  const handleEntrySubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (entryForm.direction === 'income' && !entryForm.source.trim()) {
-      setError('Укажите источник');
-      return;
-    }
-    if (entryForm.direction === 'expense' && !entryForm.groupId.trim()) {
-      setError('Выберите группу');
-      return;
-    }
-    if (entryForm.amount <= 0) {
-      setError('Сумма должна быть больше нуля');
-      return;
-    }
-    if (editingEntryId) {
-      updateEntryMutation.mutate({ id: editingEntryId, data: entryFormToUpdate(entryForm) });
-    } else {
-      const data = entryFormToCreate(entryForm, groups);
-      if (data) createEntryMutation.mutate(data);
-    }
-  };
-
-  const handleStartRecurringCreate = () => {
-    setEditingRecurringId(null);
-    setRecurringCreateMode(true);
-    setRecurringForm({ ...emptyRecurringForm, anchorDate: todayISO(), recurrenceDate: todayISO(), groupId: groups[0]?.id ?? '' });
-    setError(null);
-  };
-
-  const handleStartRecurringEdit = (p: RecurringExpensePayment) => {
-    setEditingRecurringId(p.id);
-    setRecurringCreateMode(false);
+  const handleOpenEditRecurringExpense = (p: RecurringExpensePayment) => {
+    setEditingType('recurringExpense');
+    setEditingId(p.id);
+    setFormOpen(true);
     const r = p.recurrence;
-    setRecurringForm({
-      ...emptyRecurringForm,
-      groupId: p.groupId,
+    setUnifiedForm({
+      ...emptyUnifiedForm(),
+      direction: 'expense',
+      schedule: r.kind === 'date' ? 'date' : 'interval',
       amount: p.amountPerOccurrence,
+      groupId: p.groupId,
       note: p.note ?? '',
-      recurrenceKind: r.kind === 'date' ? 'date' : 'interval',
+      date: r.kind === 'date' ? r.date.slice(0, 10) : todayISO(),
       unit: r.kind === 'interval' ? r.unit : 'month',
       interval: r.kind === 'interval' ? r.interval : 1,
       anchorDate: r.kind === 'interval' ? r.anchorDate.slice(0, 10) : todayISO(),
@@ -363,39 +439,125 @@ export function TransactionsPage() {
     setError(null);
   };
 
-  const handleCancelRecurringForm = () => {
-    setEditingRecurringId(null);
-    setRecurringCreateMode(false);
-    setRecurringForm(emptyRecurringForm);
+  const handleOpenEditRecurringIncome = (p: RecurringIncome) => {
+    setEditingType('recurringIncome');
+    setEditingId(p.id);
+    setFormOpen(true);
+    const r = p.recurrence;
+    setUnifiedForm({
+      ...emptyUnifiedForm(),
+      direction: 'income',
+      schedule: r.kind === 'date' ? 'date' : 'interval',
+      amount: p.amountPerOccurrence,
+      source: p.source,
+      note: p.note ?? '',
+      date: r.kind === 'date' ? r.date.slice(0, 10) : todayISO(),
+      unit: r.kind === 'interval' ? r.unit : 'month',
+      interval: r.kind === 'interval' ? r.interval : 1,
+      anchorDate: r.kind === 'interval' ? r.anchorDate.slice(0, 10) : todayISO(),
+      endDate: r.kind === 'interval' && r.endDate ? r.endDate.slice(0, 10) : '',
+      repeatCount: p.repeatCount != null ? String(p.repeatCount) : '',
+      recurrenceDate: r.kind === 'date' ? r.date.slice(0, 10) : todayISO(),
+    });
     setError(null);
   };
 
-  const handleRecurringSubmit = (e: React.FormEvent) => {
+  const handleCancelForm = () => {
+    setFormOpen(false);
+    setEditingType(null);
+    setEditingId(null);
+    setUnifiedForm(emptyUnifiedForm());
+    setError(null);
+  };
+
+  const handleUnifiedSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!recurringForm.groupId.trim()) {
-      setError('Выберите группу');
-      return;
-    }
-    if (recurringForm.amount <= 0) {
+    const f = unifiedForm;
+    if (f.amount <= 0) {
       setError('Сумма должна быть больше нуля');
       return;
     }
-    if (editingRecurringId) {
-      updateRecurringMutation.mutate({ id: editingRecurringId, data: recurringFormToUpdate(recurringForm) });
-    } else {
-      const data = recurringFormToCreate(recurringForm);
-      if (data) createRecurringMutation.mutate(data);
+    if (editingType && editingId) {
+      if (editingType === 'entry') {
+        if (f.direction === 'income' && !f.source.trim()) {
+          setError('Укажите источник');
+          return;
+        }
+        if (f.direction === 'expense' && !f.groupId.trim()) {
+          setError('Выберите группу');
+          return;
+        }
+        updateEntryMutation.mutate({ id: editingId, data: formToEntryUpdate(f) });
+        return;
+      }
+      if (editingType === 'recurringExpense') {
+        if (!f.groupId.trim()) {
+          setError('Выберите группу');
+          return;
+        }
+        updateRecurringExpenseMutation.mutate({
+          id: editingId,
+          data: formToRecurringExpenseUpdate(f),
+        });
+        return;
+      }
+      if (editingType === 'recurringIncome') {
+        if (!f.source.trim()) {
+          setError('Укажите источник');
+          return;
+        }
+        updateRecurringIncomeMutation.mutate({
+          id: editingId,
+          data: formToRecurringIncomeUpdate(f),
+        });
+        return;
+      }
     }
+    // Create
+    if (f.schedule === 'date') {
+      if (f.direction === 'income' && !f.source.trim()) {
+        setError('Укажите источник');
+        return;
+      }
+      if (f.direction === 'expense' && !f.groupId.trim()) {
+        setError('Выберите группу');
+        return;
+      }
+      const entryData = formToEntryCreate(f);
+      if (entryData) createEntryMutation.mutate(entryData);
+      return;
+    }
+    if (f.direction === 'expense') {
+      if (!f.groupId.trim()) {
+        setError('Выберите группу');
+        return;
+      }
+      const recExp = formToRecurringExpenseCreate(f);
+      if (recExp) createRecurringExpenseMutation.mutate(recExp);
+      return;
+    }
+    if (!f.source.trim()) {
+      setError('Укажите источник');
+      return;
+    }
+    const recInc = formToRecurringIncomeCreate(f);
+    if (recInc) createRecurringIncomeMutation.mutate(recInc);
   };
 
-  const showEntryForm = entryCreateMode || editingEntryId !== null;
-  const showRecurringForm = recurringCreateMode || editingRecurringId !== null;
+  const showForm = formOpen || editingType !== null;
   const entriesLoading = entriesQuery.isPending;
   const entriesListError = entriesQuery.error
     ? entriesQuery.error instanceof Error
       ? entriesQuery.error.message
       : 'Не удалось загрузить записи'
     : null;
+  const isFormPending =
+    createEntryMutation.isPending ||
+    updateEntryMutation.isPending ||
+    createRecurringExpenseMutation.isPending ||
+    updateRecurringExpenseMutation.isPending ||
+    createRecurringIncomeMutation.isPending ||
+    updateRecurringIncomeMutation.isPending;
 
   return (
     <div className={styles.page}>
@@ -407,28 +569,21 @@ export function TransactionsPage() {
       </header>
 
       <section className={styles.formSection}>
-        {!editingEntryId && !editingRecurringId ? (
+        {!showForm ? (
           <div className={styles.addButtonRow}>
             <button
               type="button"
-              onClick={() => handleStartEntryCreate('income')}
+              onClick={handleOpenCreate}
               className={styles.addButton}
             >
-              Добавить поступление
-            </button>
-            <button
-              type="button"
-              onClick={handleStartRecurringCreate}
-              className={styles.addButton}
-            >
-              Добавить повторяющийся платёж
+              Добавить запись
             </button>
           </div>
         ) : null}
-        {showEntryForm ? (
-          <form onSubmit={handleEntrySubmit} className={styles.form}>
+        {showForm ? (
+          <form onSubmit={handleUnifiedSubmit} className={styles.form}>
             <h2 className={styles.formTitle}>
-              {editingEntryId ? 'Редактировать запись' : 'Новая запись'}
+              {editingType ? 'Редактировать запись' : 'Новая запись'}
             </h2>
             <div className={styles.field}>
               <span className={styles.label}>Тип</span>
@@ -436,76 +591,123 @@ export function TransactionsPage() {
                 <label className={styles.radioLabel}>
                   <input
                     type="radio"
-                    name="entry-direction"
-                    checked={entryForm.direction === 'income'}
-                    onChange={() => setEntryForm(f => ({ ...f, direction: 'income' }))}
-                    disabled={!!editingEntryId}
+                    name="unified-direction"
+                    checked={unifiedForm.direction === 'income'}
+                    onChange={() =>
+                      setUnifiedForm(prev => ({ ...prev, direction: 'income' }))
+                    }
+                    disabled={!!editingType}
                   />
                   Доход
                 </label>
                 <label className={styles.radioLabel}>
                   <input
                     type="radio"
-                    name="entry-direction"
-                    checked={entryForm.direction === 'expense'}
-                    onChange={() => setEntryForm(f => ({ ...f, direction: 'expense' }))}
-                    disabled={!!editingEntryId}
+                    name="unified-direction"
+                    checked={unifiedForm.direction === 'expense'}
+                    onChange={() =>
+                      setUnifiedForm(prev => ({ ...prev, direction: 'expense' }))
+                    }
+                    disabled={!!editingType}
                   />
                   Расход
                 </label>
               </div>
             </div>
             <div className={styles.field}>
-              <label htmlFor="entry-date" className={styles.label}>
-                Дата
-              </label>
-              <input
-                id="entry-date"
-                type="date"
-                value={entryForm.date}
-                onChange={e => setEntryForm(f => ({ ...f, date: e.target.value }))}
-                className={styles.input}
-              />
+              <span className={styles.label}>Повторение</span>
+              <div className={styles.radioGroup}>
+                <label className={styles.radioLabel}>
+                  <input
+                    type="radio"
+                    name="unified-schedule"
+                    checked={unifiedForm.schedule === 'date'}
+                    onChange={() =>
+                      setUnifiedForm(prev => ({ ...prev, schedule: 'date' }))
+                    }
+                    disabled={!!editingType}
+                  />
+                  Одна дата
+                </label>
+                <label className={styles.radioLabel}>
+                  <input
+                    type="radio"
+                    name="unified-schedule"
+                    checked={unifiedForm.schedule === 'interval'}
+                    onChange={() =>
+                      setUnifiedForm(prev => ({ ...prev, schedule: 'interval' }))
+                    }
+                    disabled={!!editingType}
+                  />
+                  По интервалу
+                </label>
+              </div>
             </div>
+            {unifiedForm.schedule === 'date' ? (
+              <div className={styles.field}>
+                <label htmlFor="unified-date" className={styles.label}>
+                  Дата
+                </label>
+                <input
+                  id="unified-date"
+                  type="date"
+                  value={unifiedForm.date}
+                  onChange={e =>
+                    setUnifiedForm(prev => ({ ...prev, date: e.target.value }))
+                  }
+                  className={styles.input}
+                />
+              </div>
+            ) : null}
             <div className={styles.field}>
-              <label htmlFor="entry-amount" className={styles.label}>
+              <label htmlFor="unified-amount" className={styles.label}>
                 Сумма
+                {unifiedForm.schedule !== 'date' ? ' за одно вхождение' : ''}
               </label>
               <input
-                id="entry-amount"
+                id="unified-amount"
                 type="number"
                 min={0}
                 step={0.01}
-                value={entryForm.amount || ''}
-                onChange={e => setEntryForm(f => ({ ...f, amount: parseFloat(e.target.value) || 0 }))}
+                value={unifiedForm.amount || ''}
+                onChange={e =>
+                  setUnifiedForm(prev => ({
+                    ...prev,
+                    amount: parseFloat(e.target.value) || 0,
+                  }))
+                }
                 placeholder="0"
                 className={styles.input}
               />
             </div>
-            {entryForm.direction === 'income' ? (
+            {unifiedForm.direction === 'income' ? (
               <div className={styles.field}>
-                <label htmlFor="entry-source" className={styles.label}>
+                <label htmlFor="unified-source" className={styles.label}>
                   Источник
                 </label>
                 <input
-                  id="entry-source"
+                  id="unified-source"
                   type="text"
-                  value={entryForm.source}
-                  onChange={e => setEntryForm(f => ({ ...f, source: e.target.value }))}
+                  value={unifiedForm.source}
+                  onChange={e =>
+                    setUnifiedForm(prev => ({ ...prev, source: e.target.value }))
+                  }
                   placeholder="Например: Зарплата"
                   className={styles.input}
                 />
               </div>
             ) : (
               <div className={styles.field}>
-                <label htmlFor="entry-group" className={styles.label}>
+                <label htmlFor="unified-group" className={styles.label}>
                   Группа
                 </label>
                 <select
-                  id="entry-group"
+                  id="unified-group"
                   className={styles.select}
-                  value={entryForm.groupId}
-                  onChange={e => setEntryForm(f => ({ ...f, groupId: e.target.value }))}
+                  value={unifiedForm.groupId}
+                  onChange={e =>
+                    setUnifiedForm(prev => ({ ...prev, groupId: e.target.value }))
+                  }
                 >
                   <option value="">— Выберите группу —</option>
                   {groups.map(g => (
@@ -516,15 +718,110 @@ export function TransactionsPage() {
                 </select>
               </div>
             )}
+            {unifiedForm.schedule === 'interval' ? (
+              <>
+                <div className={styles.field}>
+                  <label htmlFor="unified-unit" className={styles.label}>
+                    Единица
+                  </label>
+                  <select
+                    id="unified-unit"
+                    className={styles.select}
+                    value={unifiedForm.unit}
+                    onChange={e =>
+                      setUnifiedForm(prev => ({
+                        ...prev,
+                        unit: e.target.value as UnifiedFormState['unit'],
+                      }))
+                    }
+                  >
+                    <option value="day">День</option>
+                    <option value="week">Неделя</option>
+                    <option value="month">Месяц</option>
+                    <option value="year">Год</option>
+                  </select>
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="unified-interval" className={styles.label}>
+                    Каждые (число)
+                  </label>
+                  <input
+                    id="unified-interval"
+                    type="number"
+                    min={1}
+                    value={unifiedForm.interval}
+                    onChange={e =>
+                      setUnifiedForm(prev => ({
+                        ...prev,
+                        interval: parseInt(e.target.value, 10) || 1,
+                      }))
+                    }
+                    className={styles.input}
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="unified-anchorDate" className={styles.label}>
+                    Дата начала
+                  </label>
+                  <input
+                    id="unified-anchorDate"
+                    type="date"
+                    value={unifiedForm.anchorDate}
+                    onChange={e =>
+                      setUnifiedForm(prev => ({
+                        ...prev,
+                        anchorDate: e.target.value,
+                      }))
+                    }
+                    className={styles.input}
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="unified-endDate" className={styles.label}>
+                    Дата окончания (необязательно)
+                  </label>
+                  <input
+                    id="unified-endDate"
+                    type="date"
+                    value={unifiedForm.endDate}
+                    onChange={e =>
+                      setUnifiedForm(prev => ({ ...prev, endDate: e.target.value }))
+                    }
+                    className={styles.input}
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="unified-repeatCount" className={styles.label}>
+                    Количество повторов (пусто = бесконечно)
+                  </label>
+                  <input
+                    id="unified-repeatCount"
+                    type="number"
+                    min={0}
+                    value={unifiedForm.repeatCount}
+                    onChange={e =>
+                      setUnifiedForm(prev => ({
+                        ...prev,
+                        repeatCount: e.target.value,
+                      }))
+                    }
+                    className={styles.input}
+                    placeholder="Пусто — без ограничения"
+                  />
+                </div>
+              </>
+            ) : null}
             <div className={styles.field}>
-              <label htmlFor="entry-note" className={styles.label}>
+              <label htmlFor="unified-note" className={styles.label}>
                 Примечание (опционально)
               </label>
               <input
-                id="entry-note"
+                id="unified-note"
                 type="text"
-                value={entryForm.note}
-                onChange={e => setEntryForm(f => ({ ...f, note: e.target.value }))}
+                value={unifiedForm.note}
+                onChange={e =>
+                  setUnifiedForm(prev => ({ ...prev, note: e.target.value }))
+                }
                 className={styles.input}
               />
             </div>
@@ -532,12 +829,16 @@ export function TransactionsPage() {
             <div className={styles.formActions}>
               <button
                 type="submit"
-                disabled={createEntryMutation.isPending || updateEntryMutation.isPending}
+                disabled={isFormPending}
                 className={styles.submitButton}
               >
-                {editingEntryId ? 'Сохранить' : 'Добавить'}
+                {editingType ? 'Сохранить' : 'Добавить'}
               </button>
-              <button type="button" onClick={handleCancelEntryForm} className={styles.cancelButton}>
+              <button
+                type="button"
+                onClick={handleCancelForm}
+                className={styles.cancelButton}
+              >
                 Отмена
               </button>
             </div>
@@ -551,7 +852,9 @@ export function TransactionsPage() {
           <select
             className={styles.filterSelect}
             value={entryFilter}
-            onChange={e => setEntryFilter(e.target.value as EntryFilterType)}
+            onChange={e =>
+              setEntryFilter(e.target.value as EntryFilterType)
+            }
             aria-label="Фильтр по типу"
           >
             <option value="all">Все</option>
@@ -560,28 +863,43 @@ export function TransactionsPage() {
           </select>
         </div>
         {entriesLoading && <p className={styles.status}>Загрузка...</p>}
-        {entriesListError && <p className={styles.error}>{entriesListError}</p>}
+        {entriesListError && (
+          <p className={styles.error}>{entriesListError}</p>
+        )}
         {!entriesLoading && !entriesListError && entries.length === 0 ? (
           <p className={styles.empty}>Записей пока нет. Добавьте первую.</p>
         ) : null}
         {!entriesLoading && !entriesListError && entries.length > 0 ? (
           <ul className={styles.list}>
             {entries.map(entry => {
-              const group = entry.direction === 'expense' ? groups.find(g => g.id === entry.groupId) : null;
+              const group =
+                entry.direction === 'expense'
+                  ? groups.find(g => g.id === entry.groupId)
+                  : null;
               return (
                 <li key={entry.id} className={styles.card}>
                   {group ? (
                     <span
                       className={styles.colorSwatch}
-                      style={{ backgroundColor: group.color || '#6b7280' }}
+                      style={{
+                        backgroundColor: group.color || '#6b7280',
+                      }}
                       aria-hidden
                     />
                   ) : null}
                   <div className={styles.cardMain}>
-                    <span className={entry.direction === 'income' ? styles.badgeIncome : styles.badgeExpense}>
+                    <span
+                      className={
+                        entry.direction === 'income'
+                          ? styles.badgeIncome
+                          : styles.badgeExpense
+                      }
+                    >
                       {entry.direction === 'income' ? 'Доход' : 'Расход'}
                     </span>
-                    <span className={styles.cardDate}>{formatDate(entry.date)}</span>
+                    <span className={styles.cardDate}>
+                      {formatDate(entry.date)}
+                    </span>
                     <span className={styles.cardAmount}>
                       {entry.direction === 'income' ? '+' : '−'}
                       {entry.amount.toLocaleString('ru-RU')} ₽
@@ -589,14 +907,18 @@ export function TransactionsPage() {
                     {entry.direction === 'income' ? (
                       <span className={styles.cardSource}>{entry.source}</span>
                     ) : group ? (
-                      <span>{group.icon ? `${group.icon} ` : ''}{group.name}</span>
+                      <span>
+                        {group.icon ? `${group.icon} ` : ''}{group.name}
+                      </span>
                     ) : null}
-                    {entry.note ? <span className={styles.cardNote}>{entry.note}</span> : null}
+                    {entry.note ? (
+                      <span className={styles.cardNote}>{entry.note}</span>
+                    ) : null}
                   </div>
                   <div className={styles.cardActions}>
                     <button
                       type="button"
-                      onClick={() => handleStartEntryEdit(entry)}
+                      onClick={() => handleOpenEditEntry(entry)}
                       className={styles.iconButton}
                       title="Редактировать"
                       aria-label="Редактировать"
@@ -608,7 +930,9 @@ export function TransactionsPage() {
                         <span className={styles.confirmText}>Удалить?</span>
                         <button
                           type="button"
-                          onClick={() => deleteEntryMutation.mutate(entry.id)}
+                          onClick={() =>
+                            deleteEntryMutation.mutate(entry.id)
+                          }
                           disabled={deleteEntryMutation.isPending}
                           className={styles.dangerButton}
                         >
@@ -643,196 +967,35 @@ export function TransactionsPage() {
 
       <section className={styles.recurringSection}>
         <h2 className={styles.listTitle}>Повторяющиеся платежи</h2>
-        {showRecurringForm ? (
-          <form onSubmit={handleRecurringSubmit} className={styles.form}>
-            <h3 className={styles.formTitle}>
-              {editingRecurringId ? 'Редактировать' : 'Новый повторяющийся платёж'}
-            </h3>
-            <div className={styles.field}>
-              <label htmlFor="rec-group" className={styles.label}>
-                Группа
-              </label>
-              <select
-                id="rec-group"
-                className={styles.select}
-                value={recurringForm.groupId}
-                onChange={e => setRecurringForm(f => ({ ...f, groupId: e.target.value }))}
-              >
-                <option value="">— Выберите группу —</option>
-                {groups.map(g => (
-                  <option key={g.id} value={g.id}>
-                    {g.icon ? `${g.icon} ` : ''}{g.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="rec-amount" className={styles.label}>
-                Сумма за одно вхождение
-              </label>
-              <input
-                id="rec-amount"
-                type="number"
-                min={0}
-                step={0.01}
-                value={recurringForm.amount || ''}
-                onChange={e => setRecurringForm(f => ({ ...f, amount: parseFloat(e.target.value) || 0 }))}
-                className={styles.input}
-              />
-            </div>
-            <div className={styles.field}>
-              <span className={styles.label}>Повторение</span>
-              <div className={styles.radioGroup}>
-                <label className={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    name="rec-kind"
-                    checked={recurringForm.recurrenceKind === 'interval'}
-                    onChange={() => setRecurringForm(f => ({ ...f, recurrenceKind: 'interval' }))}
-                  />
-                  По интервалу
-                </label>
-                <label className={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    name="rec-kind"
-                    checked={recurringForm.recurrenceKind === 'date'}
-                    onChange={() => setRecurringForm(f => ({ ...f, recurrenceKind: 'date' }))}
-                  />
-                  Одна дата
-                </label>
-              </div>
-            </div>
-            {recurringForm.recurrenceKind === 'interval' ? (
-              <>
-                <div className={styles.field}>
-                  <label htmlFor="rec-unit" className={styles.label}>
-                    Единица
-                  </label>
-                  <select
-                    id="rec-unit"
-                    className={styles.select}
-                    value={recurringForm.unit}
-                    onChange={e => setRecurringForm(f => ({ ...f, unit: e.target.value as RecurringFormState['unit'] }))}
-                  >
-                    <option value="day">День</option>
-                    <option value="week">Неделя</option>
-                    <option value="month">Месяц</option>
-                    <option value="year">Год</option>
-                  </select>
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor="rec-interval" className={styles.label}>
-                    Каждые (число)
-                  </label>
-                  <input
-                    id="rec-interval"
-                    type="number"
-                    min={1}
-                    value={recurringForm.interval}
-                    onChange={e => setRecurringForm(f => ({ ...f, interval: parseInt(e.target.value, 10) || 1 }))}
-                    className={styles.input}
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor="rec-anchorDate" className={styles.label}>
-                    Дата начала
-                  </label>
-                  <input
-                    id="rec-anchorDate"
-                    type="date"
-                    value={recurringForm.anchorDate}
-                    onChange={e => setRecurringForm(f => ({ ...f, anchorDate: e.target.value }))}
-                    className={styles.input}
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor="rec-endDate" className={styles.label}>
-                    Дата окончания (необязательно)
-                  </label>
-                  <input
-                    id="rec-endDate"
-                    type="date"
-                    value={recurringForm.endDate}
-                    onChange={e => setRecurringForm(f => ({ ...f, endDate: e.target.value }))}
-                    className={styles.input}
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor="rec-repeatCount" className={styles.label}>
-                    Количество повторов (пусто = бесконечно)
-                  </label>
-                  <input
-                    id="rec-repeatCount"
-                    type="number"
-                    min={0}
-                    value={recurringForm.repeatCount}
-                    onChange={e => setRecurringForm(f => ({ ...f, repeatCount: e.target.value }))}
-                    className={styles.input}
-                    placeholder="Пусто — без ограничения"
-                  />
-                </div>
-              </>
-            ) : (
-              <div className={styles.field}>
-                <label htmlFor="rec-recurrenceDate" className={styles.label}>
-                  Дата платежа
-                </label>
-                <input
-                  id="rec-recurrenceDate"
-                  type="date"
-                  value={recurringForm.recurrenceDate}
-                  onChange={e => setRecurringForm(f => ({ ...f, recurrenceDate: e.target.value }))}
-                  className={styles.input}
-                />
-              </div>
-            )}
-            <div className={styles.field}>
-              <label htmlFor="rec-note" className={styles.label}>
-                Примечание (необязательно)
-              </label>
-              <input
-                id="rec-note"
-                type="text"
-                value={recurringForm.note}
-                onChange={e => setRecurringForm(f => ({ ...f, note: e.target.value }))}
-                className={styles.input}
-              />
-            </div>
-            {error ? <p className={styles.error}>{error}</p> : null}
-            <div className={styles.formActions}>
-              <button
-                type="submit"
-                disabled={createRecurringMutation.isPending || updateRecurringMutation.isPending}
-                className={styles.submitButton}
-              >
-                {editingRecurringId ? 'Сохранить' : 'Добавить'}
-              </button>
-              <button type="button" onClick={handleCancelRecurringForm} className={styles.cancelButton}>
-                Отмена
-              </button>
-            </div>
-          </form>
-        ) : null}
-        {recurringQuery.isPending && <p className={styles.status}>Загрузка...</p>}
-        {recurringQuery.error && (
+        {recurringExpenseQuery.isPending && (
+          <p className={styles.status}>Загрузка...</p>
+        )}
+        {recurringExpenseQuery.error && (
           <p className={styles.error}>
-            {recurringQuery.error instanceof Error ? recurringQuery.error.message : 'Не удалось загрузить'}
+            {recurringExpenseQuery.error instanceof Error
+              ? recurringExpenseQuery.error.message
+              : 'Не удалось загрузить'}
           </p>
         )}
-        {!recurringQuery.isPending && !recurringQuery.error && recurringList.length === 0 ? (
+        {!recurringExpenseQuery.isPending &&
+        !recurringExpenseQuery.error &&
+        recurringExpenseList.length === 0 ? (
           <p className={styles.empty}>Повторяющихся платежей нет.</p>
         ) : null}
-        {!recurringQuery.isPending && !recurringQuery.error && recurringList.length > 0 ? (
+        {!recurringExpenseQuery.isPending &&
+        !recurringExpenseQuery.error &&
+        recurringExpenseList.length > 0 ? (
           <ul className={styles.list}>
-            {recurringList.map(p => {
+            {recurringExpenseList.map(p => {
               const group = groups.find(g => g.id === p.groupId);
               return (
                 <li key={p.id} className={styles.card}>
                   {group ? (
                     <span
                       className={styles.colorSwatch}
-                      style={{ backgroundColor: group.color || '#6b7280' }}
+                      style={{
+                        backgroundColor: group.color || '#6b7280',
+                      }}
                       aria-hidden
                     />
                   ) : null}
@@ -841,36 +1004,44 @@ export function TransactionsPage() {
                     <span className={styles.cardAmount}>
                       {p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
                     </span>
-                    <span className={styles.cardRecurrence}>{describeRecurrence(p.recurrence)}</span>
+                    <span className={styles.cardRecurrence}>
+                      {describeRecurrence(p.recurrence)}
+                    </span>
                     {group ? (
-                      <span>{group.icon ? `${group.icon} ` : ''}{group.name}</span>
+                      <span>
+                        {group.icon ? `${group.icon} ` : ''}{group.name}
+                      </span>
                     ) : null}
-                    {p.note ? <span className={styles.cardNote}>{p.note}</span> : null}
+                    {p.note ? (
+                      <span className={styles.cardNote}>{p.note}</span>
+                    ) : null}
                   </div>
                   <div className={styles.cardActions}>
                     <button
                       type="button"
-                      onClick={() => handleStartRecurringEdit(p)}
+                      onClick={() => handleOpenEditRecurringExpense(p)}
                       className={styles.iconButton}
                       title="Редактировать"
                       aria-label="Редактировать"
                     >
                       ✎
                     </button>
-                    {recurringDeleteConfirmId === p.id ? (
+                    {recurringExpenseDeleteId === p.id ? (
                       <>
                         <span className={styles.confirmText}>Удалить?</span>
                         <button
                           type="button"
-                          onClick={() => deleteRecurringMutation.mutate(p.id)}
-                          disabled={deleteRecurringMutation.isPending}
+                          onClick={() =>
+                            deleteRecurringExpenseMutation.mutate(p.id)
+                          }
+                          disabled={deleteRecurringExpenseMutation.isPending}
                           className={styles.dangerButton}
                         >
                           Да
                         </button>
                         <button
                           type="button"
-                          onClick={() => setRecurringDeleteConfirmId(null)}
+                          onClick={() => setRecurringExpenseDeleteId(null)}
                           className={styles.cancelButton}
                         >
                           Нет
@@ -879,7 +1050,7 @@ export function TransactionsPage() {
                     ) : (
                       <button
                         type="button"
-                        onClick={() => setRecurringDeleteConfirmId(p.id)}
+                        onClick={() => setRecurringExpenseDeleteId(p.id)}
                         className={styles.iconButton}
                         title="Удалить"
                         aria-label="Удалить"
@@ -891,6 +1062,92 @@ export function TransactionsPage() {
                 </li>
               );
             })}
+          </ul>
+        ) : null}
+      </section>
+
+      <section className={styles.recurringSection}>
+        <h2 className={styles.listTitle}>Повторяющиеся поступления</h2>
+        {recurringIncomeQuery.isPending && (
+          <p className={styles.status}>Загрузка...</p>
+        )}
+        {recurringIncomeQuery.error && (
+          <p className={styles.error}>
+            {recurringIncomeQuery.error instanceof Error
+              ? recurringIncomeQuery.error.message
+              : 'Не удалось загрузить'}
+          </p>
+        )}
+        {!recurringIncomeQuery.isPending &&
+        !recurringIncomeQuery.error &&
+        recurringIncomeList.length === 0 ? (
+          <p className={styles.empty}>Повторяющихся поступлений нет.</p>
+        ) : null}
+        {!recurringIncomeQuery.isPending &&
+        !recurringIncomeQuery.error &&
+        recurringIncomeList.length > 0 ? (
+          <ul className={styles.list}>
+            {recurringIncomeList.map(p => (
+              <li key={p.id} className={styles.card}>
+                <div className={styles.cardMain}>
+                  <span className={styles.badgeIncome}>Доход</span>
+                  <span className={styles.kindBadge}>Повторяющийся</span>
+                  <span className={styles.cardAmount}>
+                    +{p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
+                  </span>
+                  <span className={styles.cardRecurrence}>
+                    {describeRecurrence(p.recurrence)}
+                  </span>
+                  <span className={styles.cardSource}>{p.source}</span>
+                  {p.note ? (
+                    <span className={styles.cardNote}>{p.note}</span>
+                  ) : null}
+                </div>
+                <div className={styles.cardActions}>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenEditRecurringIncome(p)}
+                    className={styles.iconButton}
+                    title="Редактировать"
+                    aria-label="Редактировать"
+                  >
+                    ✎
+                  </button>
+                  {recurringIncomeDeleteId === p.id ? (
+                    <>
+                      <span className={styles.confirmText}>Удалить?</span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          deleteRecurringIncomeMutation.mutate(p.id)
+                        }
+                        disabled={deleteRecurringIncomeMutation.isPending}
+                        className={styles.dangerButton}
+                      >
+                        Да
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setRecurringIncomeDeleteId(null)}
+                        className={styles.cancelButton}
+                      >
+                        Нет
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setRecurringIncomeDeleteId(p.id)}
+                      className={styles.iconButton}
+                      title="Удалить"
+                      aria-label="Удалить"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </li>
+            ))}
           </ul>
         ) : null}
       </section>
