@@ -6,7 +6,7 @@
 import { z } from 'zod';
 
 /** Схема идентификатора сущности (UUID v4 в ответах API). */
-export const entityIdSchema = z.string().uuid();
+export const entityIdSchema = z.uuid();
 
 /** Схема локального id в DTO создания (для офлайн/синхронизации до получения id с сервера). */
 export const localIdSchema = z.string();

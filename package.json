@@ -9,6 +9,7 @@
     "shared"
   ],
   "scripts": {
+    "predev": "npm run build --workspace=shared",
     "dev": "concurrently \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\"",
     "build": "npm run build --workspace=shared && npm run build --workspace=backend && npm run build --workspace=frontend",
     "test": "npm run test --workspace=backend && npm run test --workspace=frontend",

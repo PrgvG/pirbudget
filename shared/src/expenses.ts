@@ -19,7 +19,7 @@ export const instantExpensePaymentSchema = baseExpensePaymentSchema.extend({
   kind: z.literal('instant'),
   amount: z.number(),
   /** ISO date */
-  date: z.string(),
+  date: z.iso.datetime(),
 });
 
 export const recurringExpensePaymentSchema = baseExpensePaymentSchema.extend({
