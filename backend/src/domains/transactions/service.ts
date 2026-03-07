@@ -2,16 +2,13 @@
  * Сервис операций (история и план: доходы, разовые и повторяющиеся расходы за период).
  */
 
-import type { Transaction, IncomeEntry } from 'shared/transactions';
+import type { Transaction } from 'shared/transactions';
+import type { Entry } from 'shared/entries';
 import type { PlannedItem } from 'shared';
 import { expandRecurrence } from 'shared';
-import type { InstantExpensePayment } from '../expenses/types.js';
 import type { MonthStats } from './types.js';
-import { incomeEntriesService } from '../income-entries/service.js';
-import {
-  instantExpensesService,
-  recurringExpensesService,
-} from '../expenses/service.js';
+import { entriesService } from '../entries/service.js';
+import { recurringExpensesService } from '../expenses/service.js';
 
 function getMonthBounds(month: string): { from: string; to: string } {
   const [y, m] = month.split('-').map(Number);
@@ -31,16 +28,31 @@ export type GetHistoryParams = {
   groupId?: string;
 };
 
-function instantToExpenseEntry(instant: InstantExpensePayment): Transaction {
+function toIsoDateTime(dateStr: string): string {
+  if (!dateStr || dateStr.length > 10) return dateStr;
+  return `${dateStr}T00:00:00.000Z`;
+}
+
+function entryToTransaction(entry: Entry): Transaction {
+  if (entry.direction === 'income') {
+    return entry;
+  }
   return {
-    ...instant,
+    kind: 'instant',
     direction: 'expense',
+    id: entry.id,
+    groupId: entry.groupId,
+    amount: entry.amount,
+    date: toIsoDateTime(entry.date),
+    ...(entry.note != null && entry.note !== '' && { note: entry.note }),
+    createdAt: entry.createdAt,
+    updatedAt: entry.updatedAt,
   };
 }
 
 function byDateThenCreated(a: Transaction, b: Transaction): number {
-  const dateA = 'date' in a ? a.date : '';
-  const dateB = 'date' in b ? b.date : '';
+  const dateA = 'date' in a ? (typeof a.date === 'string' ? a.date.slice(0, 10) : '') : '';
+  const dateB = 'date' in b ? (typeof b.date === 'string' ? b.date.slice(0, 10) : '') : '';
   if (dateA !== dateB) return dateB.localeCompare(dateA);
   const createdA = 'createdAt' in a ? a.createdAt : '';
   const createdB = 'createdAt' in b ? b.createdAt : '';
@@ -57,26 +69,22 @@ function byScheduledDateThenKind(a: PlannedItem, b: PlannedItem): number {
 export const transactionsService = {
   async getHistory(params: GetHistoryParams): Promise<Transaction[]> {
     const { userId, from, to, type = 'all', groupId } = params;
-
-    const [incomes, instantExpenses] = await Promise.all([
-      type === 'expense'
-        ? Promise.resolve([] as IncomeEntry[])
-        : incomeEntriesService.listByDateRange(userId, from, to),
-      type === 'income'
-        ? Promise.resolve([] as InstantExpensePayment[])
-        : instantExpensesService.listByDateRange(userId, from, to, groupId),
-    ]);
-
-    const expenseEntries: Transaction[] = instantExpenses.map(instantToExpenseEntry);
-    const all: Transaction[] = [...incomes, ...expenseEntries];
+    const entries = await entriesService.listByDateRange({
+      userId,
+      from,
+      to,
+      type,
+      groupId,
+    });
+    const all = entries.map(entryToTransaction);
     all.sort(byDateThenCreated);
     return all;
   },
 
   async getPlan(userId: string, from: string, to: string): Promise<PlannedItem[]> {
-    const [recurringList, instantList] = await Promise.all([
+    const [recurringList, entriesList] = await Promise.all([
       recurringExpensesService.list(userId),
-      instantExpensesService.listByDateRange(userId, from, to),
+      entriesService.listByDateRange({ userId, from, to }),
     ]);
 
     const items: PlannedItem[] = [];
@@ -100,16 +108,17 @@ export const transactionsService = {
       }
     }
 
-    for (const inst of instantList) {
-      const scheduledDate = inst.date.slice(0, 10);
-      items.push({
-        kind: 'instant',
-        paymentId: inst.id,
-        groupId: inst.groupId,
-        scheduledDate,
-        amount: inst.amount,
-        ...(inst.note != null && inst.note !== '' && { note: inst.note }),
-      });
+    for (const entry of entriesList) {
+      if (entry.direction === 'expense') {
+        items.push({
+          kind: 'instant',
+          paymentId: entry.id,
+          groupId: entry.groupId,
+          scheduledDate: entry.date,
+          amount: entry.amount,
+          ...(entry.note != null && entry.note !== '' && { note: entry.note }),
+        });
+      }
     }
 
     items.sort(byScheduledDateThenKind);
@@ -118,20 +127,20 @@ export const transactionsService = {
 
   async getMonthStats(userId: string, month: string): Promise<MonthStats> {
     const { from, to } = getMonthBounds(month);
+    const entries = await entriesService.listByDateRange({ userId, from, to });
 
-    const [incomes, instantExpenses] = await Promise.all([
-      incomeEntriesService.listByDateRange(userId, from, to),
-      instantExpensesService.listByDateRange(userId, from, to),
-    ]);
-
-    const totalIncome = incomes.reduce((acc, e) => acc + e.amount, 0);
-
+    let totalIncome = 0;
     const groupSums = new Map<string, number>();
     let totalExpense = 0;
-    for (const e of instantExpenses) {
-      totalExpense += e.amount;
-      const gid = e.groupId;
-      groupSums.set(gid, (groupSums.get(gid) ?? 0) + e.amount);
+
+    for (const e of entries) {
+      if (e.direction === 'income') {
+        totalIncome += e.amount;
+      } else {
+        totalExpense += e.amount;
+        const gid = e.groupId;
+        groupSums.set(gid, (groupSums.get(gid) ?? 0) + e.amount);
+      }
     }
 
     const expensesByGroup = Array.from(groupSums.entries()).map(

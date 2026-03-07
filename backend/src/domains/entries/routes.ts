@@ -1,6 +1,5 @@
 /**
- * Роуты CRUD для поступлений (доходов).
- * Требуют авторизации; все операции привязаны к userId из JWT.
+ * Роуты CRUD для записей (доходы и разовые расходы).
  */
 
 import { Router, Response, NextFunction } from 'express';
@@ -9,12 +8,11 @@ import {
   type AuthenticatedRequest,
 } from '../../middleware/auth.js';
 import { wrapAsync } from '../../middleware/asyncHandler.js';
-import { incomeEntriesService } from './service.js';
-import {
-  validateIncomeEntryCreate,
-  validateIncomeEntryUpdate,
-} from './validation.js';
+import { entriesService } from './service.js';
+import { validateEntryCreate, validateEntryUpdate } from './validation.js';
 import { AppError } from '../../lib/errors.js';
+
+const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
 const router = Router();
 
@@ -29,8 +27,33 @@ router.get(
       _next: NextFunction
     ): Promise<void> => {
       const userId = req.user!.userId;
-      const list = await incomeEntriesService.list(userId);
-      res.json(list);
+      const from = req.query.from;
+      const to = req.query.to;
+      const type = req.query.type as string | undefined;
+      const groupId = req.query.groupId as string | undefined;
+
+      if (
+        typeof from === 'string' &&
+        typeof to === 'string' &&
+        dateRegex.test(from) &&
+        dateRegex.test(to) &&
+        from <= to
+      ) {
+        const list = await entriesService.listByDateRange({
+          userId,
+          from,
+          to,
+          type:
+            type === 'income' || type === 'expense' || type === 'all'
+              ? type
+              : 'all',
+          groupId,
+        });
+        res.json(list);
+      } else {
+        const list = await entriesService.list(userId);
+        res.json(list);
+      }
     }
   )
 );
@@ -46,7 +69,7 @@ router.get(
       const userId = req.user!.userId;
       const id = req.params.id;
       try {
-        const entry = await incomeEntriesService.getById(userId, id);
+        const entry = await entriesService.getById(userId, id);
         res.json(entry);
       } catch (err) {
         if (err instanceof AppError && err.statusCode === 404) {
@@ -67,7 +90,7 @@ router.post(
       res: Response,
       next: NextFunction
     ): Promise<void> => {
-      const validation = validateIncomeEntryCreate(req.body);
+      const validation = validateEntryCreate(req.body);
       if (!validation.ok) {
         next(
           new AppError(validation.error, {
@@ -78,10 +101,7 @@ router.post(
         return;
       }
       const userId = req.user!.userId;
-      const created = await incomeEntriesService.create(
-        userId,
-        validation.data
-      );
+      const created = await entriesService.create(userId, validation.data);
       res.status(201).json(created);
     }
   )
@@ -95,7 +115,7 @@ router.patch(
       res: Response,
       next: NextFunction
     ): Promise<void> => {
-      const validation = validateIncomeEntryUpdate(req.body);
+      const validation = validateEntryUpdate(req.body);
       if (!validation.ok) {
         next(
           new AppError(validation.error, {
@@ -108,7 +128,7 @@ router.patch(
       const userId = req.user!.userId;
       const id = req.params.id;
       try {
-        const updated = await incomeEntriesService.update(
+        const updated = await entriesService.update(
           userId,
           id,
           validation.data
@@ -136,7 +156,7 @@ router.delete(
       const userId = req.user!.userId;
       const id = req.params.id;
       try {
-        await incomeEntriesService.delete(userId, id);
+        await entriesService.delete(userId, id);
         res.status(204).send();
       } catch (err) {
         if (err instanceof AppError && err.statusCode === 404) {

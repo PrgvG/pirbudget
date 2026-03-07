@@ -1,16 +1,9 @@
 /**
- * Домен: расходы (платежи).
+ * Домен: повторяющиеся расходы. Разовые — в домене entries.
  */
 
 export * from './types';
 export {
-  fetchInstantExpenses,
-  fetchInstantExpense,
-  createInstantExpense,
-  updateInstantExpense,
-  deleteInstantExpense,
-  isInstantExpensePayment,
-  isInstantExpensePaymentArray,
   fetchRecurringExpenses,
   fetchRecurringExpense,
   createRecurringExpense,

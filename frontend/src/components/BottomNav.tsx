@@ -10,8 +10,7 @@ type NavItem = {
 const items: NavItem[] = [
   { to: '/', label: 'Главная', icon: '🏠' },
   { to: '/groups', label: 'Группы', icon: '📁' },
-  { to: '/incomes', label: 'Поступления', icon: '💰' },
-  { to: '/expenses', label: 'Платежи', icon: '💳' },
+  { to: '/transactions', label: 'Платежи и поступления', icon: '💳' },
   { to: '/month', label: 'Месяц', icon: '📅' },
 ];
 

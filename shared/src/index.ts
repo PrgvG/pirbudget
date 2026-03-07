@@ -41,3 +41,5 @@ export type {
   IncomeEntryCreate,
   IncomeEntryUpdate,
 } from "./transactions.js";
+export type { Entry, EntryCreate, EntryUpdate } from "./entries.js";
+export { entrySchema, entryCreateSchema, entryUpdateSchema } from "./entries.js";

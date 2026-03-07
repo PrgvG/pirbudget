@@ -1,32 +1,13 @@
 /**
- * API расходов (разовые и повторяющиеся платежи). Вызовы к бэкенду и type guards.
+ * API повторяющихся расходов. Разовые расходы — в домене entries.
  */
 
 import type {
-  InstantExpensePayment,
   RecurringExpensePayment,
-  InstantExpensePaymentCreate,
-  InstantExpensePaymentUpdate,
   RecurringExpensePaymentCreate,
   RecurringExpensePaymentUpdate,
 } from 'shared/expenses';
 import { apiJson, apiFetch } from '../../api/client';
-
-function isInstantExpensePaymentObject(
-  obj: object
-): obj is InstantExpensePayment {
-  const o = obj as Record<string, unknown>;
-  return (
-    o.kind === 'instant' &&
-    typeof o.id === 'string' &&
-    typeof o.groupId === 'string' &&
-    typeof o.amount === 'number' &&
-    typeof o.date === 'string' &&
-    typeof o.createdAt === 'string' &&
-    typeof o.updatedAt === 'string' &&
-    (o.note === undefined || typeof o.note === 'string')
-  );
-}
 
 function isRecurringExpensePaymentObject(
   obj: object
@@ -49,14 +30,6 @@ function isRecurringExpensePaymentObject(
   );
 }
 
-export function isInstantExpensePayment(
-  data: unknown
-): data is InstantExpensePayment {
-  return (
-    typeof data === 'object' && data !== null && isInstantExpensePaymentObject(data)
-  );
-}
-
 export function isRecurringExpensePayment(
   data: unknown
 ): data is RecurringExpensePayment {
@@ -67,73 +40,12 @@ export function isRecurringExpensePayment(
   );
 }
 
-export function isInstantExpensePaymentArray(
-  data: unknown
-): data is InstantExpensePayment[] {
-  return Array.isArray(data) && data.every(isInstantExpensePayment);
-}
-
 export function isRecurringExpensePaymentArray(
   data: unknown
 ): data is RecurringExpensePayment[] {
   return Array.isArray(data) && data.every(isRecurringExpensePayment);
 }
 
-// --- Instant ---
-export async function fetchInstantExpenses(): Promise<InstantExpensePayment[]> {
-  return apiJson('/api/expenses/instant', {}, isInstantExpensePaymentArray);
-}
-
-export async function fetchInstantExpense(
-  id: string
-): Promise<InstantExpensePayment> {
-  return apiJson(
-    `/api/expenses/instant/${encodeURIComponent(id)}`,
-    {},
-    isInstantExpensePayment
-  );
-}
-
-export async function createInstantExpense(
-  data: InstantExpensePaymentCreate
-): Promise<InstantExpensePayment> {
-  return apiJson(
-    '/api/expenses/instant',
-    { method: 'POST', body: data },
-    isInstantExpensePayment
-  );
-}
-
-export async function updateInstantExpense(
-  id: string,
-  data: InstantExpensePaymentUpdate
-): Promise<InstantExpensePayment> {
-  return apiJson(
-    `/api/expenses/instant/${encodeURIComponent(id)}`,
-    { method: 'PATCH', body: data },
-    isInstantExpensePayment
-  );
-}
-
-export async function deleteInstantExpense(id: string): Promise<void> {
-  const res = await apiFetch(
-    `/api/expenses/instant/${encodeURIComponent(id)}`,
-    { method: 'DELETE' }
-  );
-  if (!res.ok) {
-    const data: unknown = await res.json().catch(() => ({}));
-    const msg =
-      typeof data === 'object' &&
-      data !== null &&
-      'error' in data &&
-      typeof (data as Record<string, unknown>).error === 'string'
-        ? (data as { error: string }).error
-        : `Request failed: ${res.status}`;
-    throw new Error(msg);
-  }
-}
-
-// --- Recurring ---
 export async function fetchRecurringExpenses(): Promise<
   RecurringExpensePayment[]
 > {

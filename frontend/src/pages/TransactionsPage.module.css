@@ -32,6 +32,13 @@
   margin-bottom: 2rem;
 }
 
+.addButtonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
 .addButton {
   padding: 0.5rem 1rem;
   background-color: #2563eb;
@@ -40,7 +47,6 @@
   border-radius: 6px;
   font-weight: 500;
   cursor: pointer;
-  margin-bottom: 1rem;
 }
 
 .addButton:hover {
@@ -133,27 +139,39 @@
 }
 
 .cancelButton {
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 0.5rem;
   background-color: #e5e7eb;
   color: #374151;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
+  font-size: 0.875rem;
 }
 
 .listSection {
-  margin-top: 1.5rem;
+  margin-top: 1rem;
+}
+
+.listHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .listTitle {
-  margin: 0 0 0.75rem;
+  margin: 0;
   font-size: 1.1rem;
 }
 
-.subListTitle {
-  margin: 1rem 0 0.5rem;
-  font-size: 1rem;
-  color: #6b7280;
+.filterSelect {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: #fff;
 }
 
 .status,
@@ -196,11 +214,19 @@
   align-items: baseline;
 }
 
+.cardDate {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
 .cardAmount {
   font-weight: 600;
 }
 
-.cardDate,
+.cardSource {
+  font-weight: 500;
+}
+
 .cardRecurrence {
   font-size: 0.875rem;
   color: #6b7280;
@@ -210,6 +236,22 @@
   font-size: 0.875rem;
   color: #6b7280;
   width: 100%;
+}
+
+.badgeIncome {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badgeExpense {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .kindBadge {
@@ -263,4 +305,18 @@
 .dangerButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.recurringSection {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.recurringSection .listTitle {
+  margin-bottom: 0.75rem;
+}
+
+.recurringSection .addButton {
+  margin-bottom: 1rem;
 }

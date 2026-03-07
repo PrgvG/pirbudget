@@ -1,7 +1,7 @@
 import { useAuth } from '../contexts/useAuth';
-import { IncomesPage } from '../pages/IncomesPage';
+import { TransactionsPage } from '../pages/TransactionsPage';
 
-export function ProtectedIncomes() {
+export function ProtectedTransactions() {
   const { isLoading, isAuthenticated } = useAuth();
 
   if (isLoading) {
@@ -14,5 +14,5 @@ export function ProtectedIncomes() {
     return null;
   }
 
-  return <IncomesPage />;
+  return <TransactionsPage />;
 }

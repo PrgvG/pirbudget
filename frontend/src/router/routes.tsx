@@ -4,8 +4,7 @@ import { rootRoute } from './root';
 import { AuthenticatedLayout } from '../layouts/AuthenticatedLayout';
 import { ProtectedDashboard } from './ProtectedDashboard';
 import { ProtectedGroups } from './ProtectedGroups';
-import { ProtectedIncomes } from './ProtectedIncomes';
-import { ProtectedExpenses } from './ProtectedExpenses';
+import { ProtectedTransactions } from './ProtectedTransactions';
 import { ProtectedMonth } from './ProtectedMonth';
 import { LoginPage } from '../modules/registration/LoginPage';
 import { RegisterPage } from '../modules/registration/RegisterPage';
@@ -33,16 +32,10 @@ export const groupsRoute = createRoute({
   component: ProtectedGroups,
 });
 
-export const incomesRoute = createRoute({
+export const transactionsRoute = createRoute({
   getParentRoute: () => authenticatedLayoutRoute,
-  path: '/incomes',
-  component: ProtectedIncomes,
-});
-
-export const expensesRoute = createRoute({
-  getParentRoute: () => authenticatedLayoutRoute,
-  path: '/expenses',
-  component: ProtectedExpenses,
+  path: '/transactions',
+  component: ProtectedTransactions,
 });
 
 export const monthRoute = createRoute({
