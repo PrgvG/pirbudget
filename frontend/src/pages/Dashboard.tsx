@@ -90,6 +90,9 @@ export function Dashboard() {
         <Link to="/incomes" className={styles.navLink}>
           Поступления
         </Link>
+        <Link to="/expenses" className={styles.navLink}>
+          Платежи
+        </Link>
       </nav>
 
       <HealthStatusBar dbStatus={dbStatus} onRefresh={onRefresh} />

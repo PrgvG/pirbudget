@@ -4,6 +4,7 @@ import { rootRoute } from './root';
 import { ProtectedDashboard } from './ProtectedDashboard';
 import { ProtectedGroups } from './ProtectedGroups';
 import { ProtectedIncomes } from './ProtectedIncomes';
+import { ProtectedExpenses } from './ProtectedExpenses';
 import { LoginPage } from '../modules/registration/LoginPage';
 import { RegisterPage } from '../modules/registration/RegisterPage';
 
@@ -38,6 +39,17 @@ export const incomesRoute = createRoute({
     }
   },
   component: ProtectedIncomes,
+});
+
+export const expensesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/expenses',
+  beforeLoad: () => {
+    if (shouldRedirectToLogin()) {
+      throw redirect({ to: '/login' });
+    }
+  },
+  component: ProtectedExpenses,
 });
 
 export const loginRoute = createRoute({
