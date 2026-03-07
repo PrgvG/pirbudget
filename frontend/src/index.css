@@ -22,3 +22,12 @@ body {
   }
 }
 
+/* Предотвращение авто-зума при фокусе на инпутах в iOS/Android */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
