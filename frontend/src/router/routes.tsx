@@ -14,7 +14,7 @@ import { RegisterPage } from '../modules/registration/RegisterPage';
 
 export const authenticatedLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/',
+  id: 'authenticated',
   beforeLoad: () => {
     if (shouldRedirectToLogin()) {
       throw redirect({ to: '/login' });
@@ -25,7 +25,7 @@ export const authenticatedLayoutRoute = createRoute({
 
 export const indexRoute = createRoute({
   getParentRoute: () => authenticatedLayoutRoute,
-  path: '.',
+  path: '/',
   component: ProtectedDashboard,
 });
 

@@ -1,10 +1,18 @@
-import { Outlet } from '@tanstack/react-router';
+import { useEffect } from 'react';
+import { Outlet, useNavigate } from '@tanstack/react-router';
 import { useAuth } from '../contexts/useAuth';
 import { BottomNav } from '../components/BottomNav';
 import styles from './AuthenticatedLayout.module.css';
 
 export function AuthenticatedLayout() {
+  const navigate = useNavigate();
   const { user, logout, isLoading, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      navigate({ to: '/login', replace: true });
+    }
+  }, [isLoading, isAuthenticated, navigate]);
 
   if (isLoading) {
     return (
@@ -15,7 +23,11 @@ export function AuthenticatedLayout() {
   }
 
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div className={styles.loading} role="status" aria-label="Перенаправление">
+        Перенаправление...
+      </div>
+    );
   }
 
   return (
