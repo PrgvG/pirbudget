@@ -1,33 +1,29 @@
 /**
  * Единая сущность «запись»: доход или расход с полем direction.
  * Объединяет поступления (income) и разовые платежи (expense).
+ * Оба типа ссылаются на категорию через categoryId.
  */
 
 import { z } from 'zod';
 import { entityIdSchema, localIdSchema } from './ids.js';
 
-const entryIncomeSchema = z.object({
-  direction: z.literal('income'),
+const entryBaseSchema = z.object({
   id: entityIdSchema,
   amount: z.number(),
   /** ISO date YYYY-MM-DD */
   date: z.string(),
-  source: z.string(),
+  categoryId: entityIdSchema,
   note: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
 
-const entryExpenseSchema = z.object({
+const entryIncomeSchema = entryBaseSchema.extend({
+  direction: z.literal('income'),
+});
+
+const entryExpenseSchema = entryBaseSchema.extend({
   direction: z.literal('expense'),
-  id: entityIdSchema,
-  groupId: entityIdSchema,
-  amount: z.number(),
-  /** ISO date YYYY-MM-DD */
-  date: z.string(),
-  note: z.string().optional(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
 });
 
 export const entrySchema = z.discriminatedUnion('direction', [
@@ -40,23 +36,15 @@ const entryCreateBase = z.object({
   amount: z.number(),
   date: z.string(),
   note: z.string().optional(),
-  source: z.string().optional(),
-  groupId: entityIdSchema.optional(),
+  categoryId: entityIdSchema.optional(),
 });
 
 export const entryCreateSchema = entryCreateBase
   .extend({ localId: localIdSchema.optional() })
-  .refine(
-    data =>
-      (data.direction === 'income' &&
-        data.source != null &&
-        data.source.trim() !== '') ||
-      (data.direction === 'expense' && data.groupId != null),
-    {
-      message: 'Доход требует source, расход — groupId',
-      path: ['direction'],
-    }
-  );
+  .refine(data => data.categoryId != null && data.categoryId.trim() !== '', {
+    message: 'Укажите категорию',
+    path: ['categoryId'],
+  });
 
 export const entryUpdateSchema = entryCreateBase.partial();
 

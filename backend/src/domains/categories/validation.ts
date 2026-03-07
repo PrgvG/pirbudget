@@ -1,31 +1,31 @@
 /**
- * Валидация тела запросов для групп платежей.
+ * Валидация тела запросов для категорий.
  * Схемы — из shared; здесь только обёртки с кодами ошибок.
  */
 
 import { z } from 'zod';
 import {
-  paymentGroupCreateSchema,
-  paymentGroupUpdateSchema,
-} from 'shared/payment-groups';
+  categoryCreateSchema,
+  categoryUpdateSchema,
+} from 'shared/categories';
 
-export type PaymentGroupCreateValid = {
+export type CategoryCreateValid = {
   ok: true;
-  data: z.infer<typeof paymentGroupCreateSchema>;
+  data: z.infer<typeof categoryCreateSchema>;
 };
 
-export type PaymentGroupCreateInvalid = {
+export type CategoryCreateInvalid = {
   ok: false;
   error: string;
   code: string;
 };
 
-export type PaymentGroupUpdateValid = {
+export type CategoryUpdateValid = {
   ok: true;
-  data: z.infer<typeof paymentGroupUpdateSchema>;
+  data: z.infer<typeof categoryUpdateSchema>;
 };
 
-export type PaymentGroupUpdateInvalid = {
+export type CategoryUpdateInvalid = {
   ok: false;
   error: string;
   code: string;
@@ -36,10 +36,10 @@ function getFirstIssuePath(issues: z.ZodIssue[]): string | undefined {
   return typeof raw === 'string' ? raw : undefined;
 }
 
-export function validatePaymentGroupCreate(
+export function validateCategoryCreate(
   body: unknown
-): PaymentGroupCreateValid | PaymentGroupCreateInvalid {
-  const result = paymentGroupCreateSchema.safeParse(body);
+): CategoryCreateValid | CategoryCreateInvalid {
+  const result = categoryCreateSchema.safeParse(body);
   if (result.success) {
     return { ok: true, data: result.data };
   }
@@ -50,7 +50,9 @@ export function validatePaymentGroupCreate(
       ? 'NAME_REQUIRED'
       : path === 'sortOrder'
         ? 'SORT_ORDER_INVALID'
-        : 'INVALID_BODY';
+        : path === 'direction'
+          ? 'DIRECTION_INVALID'
+          : 'INVALID_BODY';
   return {
     ok: false,
     error: issue?.message ?? 'Invalid body',
@@ -58,10 +60,10 @@ export function validatePaymentGroupCreate(
   };
 }
 
-export function validatePaymentGroupUpdate(
+export function validateCategoryUpdate(
   body: unknown
-): PaymentGroupUpdateValid | PaymentGroupUpdateInvalid {
-  const result = paymentGroupUpdateSchema.safeParse(body);
+): CategoryUpdateValid | CategoryUpdateInvalid {
+  const result = categoryUpdateSchema.safeParse(body);
   if (result.success) {
     return { ok: true, data: result.data };
   }

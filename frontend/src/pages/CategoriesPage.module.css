@@ -28,6 +28,41 @@
   text-decoration: underline;
 }
 
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.tab {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  color: #374151;
+}
+
+.tab:hover {
+  background-color: #f9fafb;
+}
+
+.tabActive {
+  padding: 0.5rem 1rem;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  background-color: #2563eb;
+  color: white;
+  cursor: pointer;
+  font-size: 0.9375rem;
+}
+
+.tabActive:hover {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
 .formSection {
   margin-bottom: 2rem;
 }

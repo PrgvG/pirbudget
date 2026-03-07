@@ -22,7 +22,7 @@ function toObjectId(id: string): mongoose.Types.ObjectId {
 
 function docToRecurring(doc: {
   _id: mongoose.Types.ObjectId;
-  groupId: mongoose.Types.ObjectId;
+  categoryId: mongoose.Types.ObjectId;
   note?: string;
   amountPerOccurrence: number;
   recurrence: RecurrenceDoc;
@@ -33,7 +33,7 @@ function docToRecurring(doc: {
   return {
     kind: 'recurring',
     id: String(doc._id),
-    groupId: String(doc.groupId),
+    categoryId: String(doc.categoryId),
     ...(doc.note != null && doc.note !== '' && { note: doc.note }),
     amountPerOccurrence: doc.amountPerOccurrence,
     recurrence: doc.recurrence as RecurringExpensePayment['recurrence'],
@@ -75,10 +75,15 @@ export const recurringExpensesService = {
     data: RecurringExpensePaymentCreate
   ): Promise<RecurringExpensePayment> {
     const uid = toObjectId(userId);
-    const groupId = toObjectId(data.groupId);
+    if (data.categoryId == null || data.categoryId.trim() === '') {
+      throw new AppError('categoryId required', {
+        statusCode: 400,
+        code: 'CATEGORY_ID_REQUIRED',
+      });
+    }
     const doc = await RecurringExpensePaymentModel.create({
       userId: uid,
-      groupId,
+      categoryId: toObjectId(data.categoryId),
       ...(data.note != null && data.note !== '' && { note: data.note.trim() }),
       amountPerOccurrence: data.amountPerOccurrence,
       recurrence: data.recurrence,
@@ -94,7 +99,15 @@ export const recurringExpensesService = {
   ): Promise<RecurringExpensePayment> {
     const uid = toObjectId(userId);
     const update: Record<string, unknown> = {};
-    if (data.groupId !== undefined) update.groupId = toObjectId(data.groupId);
+    if (data.categoryId !== undefined) {
+      if (data.categoryId == null || data.categoryId.trim() === '') {
+        throw new AppError('categoryId required', {
+          statusCode: 400,
+          code: 'CATEGORY_ID_REQUIRED',
+        });
+      }
+      update.categoryId = toObjectId(data.categoryId);
+    }
     if (data.note !== undefined) update.note = data.note?.trim() ?? null;
     if (data.amountPerOccurrence !== undefined)
       update.amountPerOccurrence = data.amountPerOccurrence;

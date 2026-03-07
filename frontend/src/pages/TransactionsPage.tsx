@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import type { Entry, EntryCreate, EntryUpdate } from 'shared/entries';
 import type { RecurringExpensePayment } from 'shared/expenses';
 import type { RecurringIncome } from 'shared/recurring-income';
 import type { RecurrenceByInterval, RecurrenceByDate } from 'shared/recurrence';
-import { fetchPaymentGroups } from '../domains/payment-groups';
+import { fetchCategories } from '../domains/categories';
 import {
   fetchEntries,
   createEntry,
@@ -28,7 +28,7 @@ import { formatApiError } from '../api/formatError';
 import styles from './TransactionsPage.module.css';
 
 const ENTRIES_QUERY_KEY = ['entries'] as const;
-const GROUPS_QUERY_KEY = ['payment-groups'] as const;
+const CATEGORIES_QUERY_KEY = ['categories'] as const;
 const RECURRING_EXPENSE_QUERY_KEY = ['expenses', 'recurring'] as const;
 const RECURRING_INCOME_QUERY_KEY = ['recurring-income'] as const;
 
@@ -78,8 +78,7 @@ type UnifiedFormState = {
   schedule: 'date' | 'interval';
   amount: number;
   note: string;
-  source: string;
-  groupId: string;
+  categoryId: string;
   date: string;
   unit: 'day' | 'week' | 'month' | 'year';
   interval: number;
@@ -95,8 +94,7 @@ function emptyUnifiedForm(): UnifiedFormState {
     schedule: 'date',
     amount: 0,
     note: '',
-    source: '',
-    groupId: '',
+    categoryId: '',
     date: todayISO(),
     unit: 'month',
     interval: 1,
@@ -121,22 +119,12 @@ function formToRecurrence(f: UnifiedFormState): RecurrenceByInterval | Recurrenc
 }
 
 function formToEntryCreate(f: UnifiedFormState): EntryCreate | null {
-  if (f.direction === 'income') {
-    if (!f.source.trim()) return null;
-    return {
-      direction: 'income',
-      amount: f.amount,
-      date: f.date.trim(),
-      source: f.source.trim(),
-      ...(f.note.trim() && { note: f.note.trim() }),
-    };
-  }
-  if (!f.groupId.trim()) return null;
+  if (!f.categoryId.trim()) return null;
   return {
-    direction: 'expense',
+    direction: f.direction,
     amount: f.amount,
     date: f.date.trim(),
-    groupId: f.groupId.trim(),
+    categoryId: f.categoryId.trim(),
     ...(f.note.trim() && { note: f.note.trim() }),
   };
 }
@@ -145,11 +133,7 @@ function formToEntryUpdate(f: UnifiedFormState): EntryUpdate {
   const u: EntryUpdate = {};
   if (f.amount !== undefined) u.amount = f.amount;
   if (f.date.trim()) u.date = f.date.trim();
-  if (f.direction === 'income') {
-    if (f.source.trim()) u.source = f.source.trim();
-  } else {
-    if (f.groupId.trim()) u.groupId = f.groupId.trim();
-  }
+  if (f.categoryId.trim()) u.categoryId = f.categoryId.trim();
   u.note = f.note.trim() || undefined;
   return u;
 }
@@ -157,7 +141,7 @@ function formToEntryUpdate(f: UnifiedFormState): EntryUpdate {
 function formToRecurringExpenseCreate(
   f: UnifiedFormState
 ): Parameters<typeof createRecurringExpense>[0] | null {
-  if (!f.groupId.trim()) return null;
+  if (!f.categoryId.trim()) return null;
   const repeatCount =
     f.repeatCount.trim() === '' ? null : parseInt(f.repeatCount, 10);
   const validRepeat =
@@ -165,7 +149,7 @@ function formToRecurringExpenseCreate(
     (Number.isInteger(repeatCount) && repeatCount >= 0);
   return {
     kind: 'recurring',
-    groupId: f.groupId.trim(),
+    categoryId: f.categoryId.trim(),
     amountPerOccurrence: f.amount,
     recurrence: formToRecurrence(f),
     repeatCount: validRepeat ? repeatCount : null,
@@ -179,7 +163,7 @@ function formToRecurringExpenseUpdate(
   const repeatCount =
     f.repeatCount.trim() === '' ? null : parseInt(f.repeatCount, 10);
   return {
-    groupId: f.groupId.trim(),
+    categoryId: f.categoryId.trim(),
     amountPerOccurrence: f.amount,
     recurrence: formToRecurrence(f),
     repeatCount:
@@ -194,14 +178,14 @@ function formToRecurringExpenseUpdate(
 function formToRecurringIncomeCreate(
   f: UnifiedFormState
 ): Parameters<typeof createRecurringIncome>[0] | null {
-  if (!f.source.trim()) return null;
+  if (!f.categoryId.trim()) return null;
   const repeatCount =
     f.repeatCount.trim() === '' ? null : parseInt(f.repeatCount, 10);
   const validRepeat =
     repeatCount === null ||
     (Number.isInteger(repeatCount) && repeatCount >= 0);
   return {
-    source: f.source.trim(),
+    categoryId: f.categoryId.trim(),
     amountPerOccurrence: f.amount,
     recurrence: formToRecurrence(f),
     repeatCount: validRepeat ? repeatCount : null,
@@ -215,7 +199,7 @@ function formToRecurringIncomeUpdate(
   const repeatCount =
     f.repeatCount.trim() === '' ? null : parseInt(f.repeatCount, 10);
   return {
-    source: f.source.trim(),
+    categoryId: f.categoryId.trim(),
     amountPerOccurrence: f.amount,
     recurrence: formToRecurrence(f),
     repeatCount:
@@ -239,10 +223,28 @@ export function TransactionsPage() {
   const [recurringIncomeDeleteId, setRecurringIncomeDeleteId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const groupsQuery = useQuery({
-    queryKey: GROUPS_QUERY_KEY,
-    queryFn: fetchPaymentGroups,
+  const categoriesIncomeQuery = useQuery({
+    queryKey: [...CATEGORIES_QUERY_KEY, 'income'],
+    queryFn: () => fetchCategories('income'),
   });
+  const categoriesExpenseQuery = useQuery({
+    queryKey: [...CATEGORIES_QUERY_KEY, 'expense'],
+    queryFn: () => fetchCategories('expense'),
+  });
+  const categories =
+    unifiedForm.direction === 'income'
+      ? categoriesIncomeQuery.data ?? []
+      : categoriesExpenseQuery.data ?? [];
+  const categoryMap = useMemo(() => {
+    const m = new Map<string, { name: string; color?: string; icon?: string }>();
+    for (const c of categoriesIncomeQuery.data ?? []) {
+      m.set(c.id, { name: c.name, color: c.color, icon: c.icon });
+    }
+    for (const c of categoriesExpenseQuery.data ?? []) {
+      m.set(c.id, { name: c.name, color: c.color, icon: c.icon });
+    }
+    return m;
+  }, [categoriesIncomeQuery.data, categoriesExpenseQuery.data]);
   const entriesQuery = useQuery({
     queryKey: [...ENTRIES_QUERY_KEY, entryFilter],
     queryFn: () =>
@@ -259,7 +261,6 @@ export function TransactionsPage() {
     queryFn: fetchRecurringIncomes,
   });
 
-  const groups = groupsQuery.data ?? [];
   const entries = entriesQuery.data ?? [];
   const recurringExpenseList = recurringExpenseQuery.data ?? [];
   const recurringIncomeList = recurringIncomeQuery.data ?? [];
@@ -394,7 +395,7 @@ export function TransactionsPage() {
       date: todayISO(),
       anchorDate: todayISO(),
       recurrenceDate: todayISO(),
-      groupId: groups[0]?.id ?? '',
+      categoryId: (categoriesIncomeQuery.data ?? [])[0]?.id ?? '',
     });
     setError(null);
   };
@@ -409,8 +410,7 @@ export function TransactionsPage() {
       schedule: 'date',
       amount: entry.amount,
       date: entry.date,
-      source: entry.direction === 'income' ? entry.source : '',
-      groupId: entry.direction === 'expense' ? entry.groupId : '',
+      categoryId: entry.categoryId,
       note: entry.note ?? '',
     });
     setError(null);
@@ -426,7 +426,7 @@ export function TransactionsPage() {
       direction: 'expense',
       schedule: r.kind === 'date' ? 'date' : 'interval',
       amount: p.amountPerOccurrence,
-      groupId: p.groupId,
+      categoryId: p.categoryId,
       note: p.note ?? '',
       date: r.kind === 'date' ? r.date.slice(0, 10) : todayISO(),
       unit: r.kind === 'interval' ? r.unit : 'month',
@@ -449,7 +449,7 @@ export function TransactionsPage() {
       direction: 'income',
       schedule: r.kind === 'date' ? 'date' : 'interval',
       amount: p.amountPerOccurrence,
-      source: p.source,
+      categoryId: p.categoryId,
       note: p.note ?? '',
       date: r.kind === 'date' ? r.date.slice(0, 10) : todayISO(),
       unit: r.kind === 'interval' ? r.unit : 'month',
@@ -479,20 +479,16 @@ export function TransactionsPage() {
     }
     if (editingType && editingId) {
       if (editingType === 'entry') {
-        if (f.direction === 'income' && !f.source.trim()) {
-          setError('Укажите источник');
-          return;
-        }
-        if (f.direction === 'expense' && !f.groupId.trim()) {
-          setError('Выберите группу');
+        if (!f.categoryId.trim()) {
+          setError('Выберите категорию');
           return;
         }
         updateEntryMutation.mutate({ id: editingId, data: formToEntryUpdate(f) });
         return;
       }
       if (editingType === 'recurringExpense') {
-        if (!f.groupId.trim()) {
-          setError('Выберите группу');
+        if (!f.categoryId.trim()) {
+          setError('Выберите категорию');
           return;
         }
         updateRecurringExpenseMutation.mutate({
@@ -502,8 +498,8 @@ export function TransactionsPage() {
         return;
       }
       if (editingType === 'recurringIncome') {
-        if (!f.source.trim()) {
-          setError('Укажите источник');
+        if (!f.categoryId.trim()) {
+          setError('Выберите категорию');
           return;
         }
         updateRecurringIncomeMutation.mutate({
@@ -515,12 +511,8 @@ export function TransactionsPage() {
     }
     // Create
     if (f.schedule === 'date') {
-      if (f.direction === 'income' && !f.source.trim()) {
-        setError('Укажите источник');
-        return;
-      }
-      if (f.direction === 'expense' && !f.groupId.trim()) {
-        setError('Выберите группу');
+      if (!f.categoryId.trim()) {
+        setError('Выберите категорию');
         return;
       }
       const entryData = formToEntryCreate(f);
@@ -528,16 +520,16 @@ export function TransactionsPage() {
       return;
     }
     if (f.direction === 'expense') {
-      if (!f.groupId.trim()) {
-        setError('Выберите группу');
+      if (!f.categoryId.trim()) {
+        setError('Выберите категорию');
         return;
       }
       const recExp = formToRecurringExpenseCreate(f);
       if (recExp) createRecurringExpenseMutation.mutate(recExp);
       return;
     }
-    if (!f.source.trim()) {
-      setError('Укажите источник');
+    if (!f.categoryId.trim()) {
+      setError('Выберите категорию');
       return;
     }
     const recInc = formToRecurringIncomeCreate(f);
@@ -594,7 +586,7 @@ export function TransactionsPage() {
                     name="unified-direction"
                     checked={unifiedForm.direction === 'income'}
                     onChange={() =>
-                      setUnifiedForm(prev => ({ ...prev, direction: 'income' }))
+                      setUnifiedForm(prev => ({ ...prev, direction: 'income', categoryId: '' }))
                     }
                     disabled={!!editingType}
                   />
@@ -606,7 +598,7 @@ export function TransactionsPage() {
                     name="unified-direction"
                     checked={unifiedForm.direction === 'expense'}
                     onChange={() =>
-                      setUnifiedForm(prev => ({ ...prev, direction: 'expense' }))
+                      setUnifiedForm(prev => ({ ...prev, direction: 'expense', categoryId: '' }))
                     }
                     disabled={!!editingType}
                   />
@@ -680,44 +672,26 @@ export function TransactionsPage() {
                 className={styles.input}
               />
             </div>
-            {unifiedForm.direction === 'income' ? (
-              <div className={styles.field}>
-                <label htmlFor="unified-source" className={styles.label}>
-                  Источник
-                </label>
-                <input
-                  id="unified-source"
-                  type="text"
-                  value={unifiedForm.source}
-                  onChange={e =>
-                    setUnifiedForm(prev => ({ ...prev, source: e.target.value }))
-                  }
-                  placeholder="Например: Зарплата"
-                  className={styles.input}
-                />
-              </div>
-            ) : (
-              <div className={styles.field}>
-                <label htmlFor="unified-group" className={styles.label}>
-                  Группа
-                </label>
-                <select
-                  id="unified-group"
-                  className={styles.select}
-                  value={unifiedForm.groupId}
-                  onChange={e =>
-                    setUnifiedForm(prev => ({ ...prev, groupId: e.target.value }))
-                  }
-                >
-                  <option value="">— Выберите группу —</option>
-                  {groups.map(g => (
-                    <option key={g.id} value={g.id}>
-                      {g.icon ? `${g.icon} ` : ''}{g.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+            <div className={styles.field}>
+              <label htmlFor="unified-category" className={styles.label}>
+                Категория
+              </label>
+              <select
+                id="unified-category"
+                className={styles.select}
+                value={unifiedForm.categoryId}
+                onChange={e =>
+                  setUnifiedForm(prev => ({ ...prev, categoryId: e.target.value }))
+                }
+              >
+                <option value="">— Выберите категорию —</option>
+                {categories.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.icon ? `${c.icon} ` : ''}{c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             {unifiedForm.schedule === 'interval' ? (
               <>
                 <div className={styles.field}>
@@ -872,17 +846,14 @@ export function TransactionsPage() {
         {!entriesLoading && !entriesListError && entries.length > 0 ? (
           <ul className={styles.list}>
             {entries.map(entry => {
-              const group =
-                entry.direction === 'expense'
-                  ? groups.find(g => g.id === entry.groupId)
-                  : null;
+              const cat = categoryMap.get(entry.categoryId);
               return (
                 <li key={entry.id} className={styles.card}>
-                  {group ? (
+                  {cat ? (
                     <span
                       className={styles.colorSwatch}
                       style={{
-                        backgroundColor: group.color || '#6b7280',
+                        backgroundColor: cat.color || '#6b7280',
                       }}
                       aria-hidden
                     />
@@ -904,11 +875,9 @@ export function TransactionsPage() {
                       {entry.direction === 'income' ? '+' : '−'}
                       {entry.amount.toLocaleString('ru-RU')} ₽
                     </span>
-                    {entry.direction === 'income' ? (
-                      <span className={styles.cardSource}>{entry.source}</span>
-                    ) : group ? (
+                    {cat ? (
                       <span>
-                        {group.icon ? `${group.icon} ` : ''}{group.name}
+                        {cat.icon ? `${cat.icon} ` : ''}{cat.name}
                       </span>
                     ) : null}
                     {entry.note ? (
@@ -987,14 +956,14 @@ export function TransactionsPage() {
         recurringExpenseList.length > 0 ? (
           <ul className={styles.list}>
             {recurringExpenseList.map(p => {
-              const group = groups.find(g => g.id === p.groupId);
+              const cat = categoryMap.get(p.categoryId);
               return (
                 <li key={p.id} className={styles.card}>
-                  {group ? (
+                  {cat ? (
                     <span
                       className={styles.colorSwatch}
                       style={{
-                        backgroundColor: group.color || '#6b7280',
+                        backgroundColor: cat.color || '#6b7280',
                       }}
                       aria-hidden
                     />
@@ -1007,9 +976,9 @@ export function TransactionsPage() {
                     <span className={styles.cardRecurrence}>
                       {describeRecurrence(p.recurrence)}
                     </span>
-                    {group ? (
+                    {cat ? (
                       <span>
-                        {group.icon ? `${group.icon} ` : ''}{group.name}
+                        {cat.icon ? `${cat.icon} ` : ''}{cat.name}
                       </span>
                     ) : null}
                     {p.note ? (
@@ -1087,18 +1056,24 @@ export function TransactionsPage() {
         !recurringIncomeQuery.error &&
         recurringIncomeList.length > 0 ? (
           <ul className={styles.list}>
-            {recurringIncomeList.map(p => (
-              <li key={p.id} className={styles.card}>
-                <div className={styles.cardMain}>
-                  <span className={styles.badgeIncome}>Доход</span>
-                  <span className={styles.kindBadge}>Повторяющийся</span>
-                  <span className={styles.cardAmount}>
-                    +{p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
-                  </span>
-                  <span className={styles.cardRecurrence}>
-                    {describeRecurrence(p.recurrence)}
-                  </span>
-                  <span className={styles.cardSource}>{p.source}</span>
+            {recurringIncomeList.map(p => {
+              const cat = categoryMap.get(p.categoryId);
+              return (
+                <li key={p.id} className={styles.card}>
+                  <div className={styles.cardMain}>
+                    <span className={styles.badgeIncome}>Доход</span>
+                    <span className={styles.kindBadge}>Повторяющийся</span>
+                    <span className={styles.cardAmount}>
+                      +{p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
+                    </span>
+                    <span className={styles.cardRecurrence}>
+                      {describeRecurrence(p.recurrence)}
+                    </span>
+                    {cat ? (
+                      <span>
+                        {cat.icon ? `${cat.icon} ` : ''}{cat.name}
+                      </span>
+                    ) : null}
                   {p.note ? (
                     <span className={styles.cardNote}>{p.note}</span>
                   ) : null}
@@ -1147,7 +1122,8 @@ export function TransactionsPage() {
                   )}
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         ) : null}
       </section>

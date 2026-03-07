@@ -3,7 +3,7 @@ import { rootRoute } from './root';
 import {
   authenticatedLayoutRoute,
   indexRoute,
-  groupsRoute,
+  categoriesRoute,
   transactionsRoute,
   monthRoute,
   loginRoute,
@@ -13,7 +13,7 @@ import {
 const routeTree = rootRoute.addChildren([
   authenticatedLayoutRoute.addChildren([
     indexRoute,
-    groupsRoute,
+    categoriesRoute,
     transactionsRoute,
     monthRoute,
   ]),

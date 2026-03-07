@@ -44,7 +44,7 @@ export function validateEntryCreate(body: unknown): EntryCreateValid | EntryCrea
       ? 'AMOUNT_INVALID'
       : path === 'date'
         ? 'DATE_INVALID'
-        : path === 'source' || path === 'groupId'
+        : path === 'categoryId'
           ? 'REQUIRED_FIELD'
           : 'INVALID_BODY';
   return {

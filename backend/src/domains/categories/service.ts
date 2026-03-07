@@ -1,27 +1,29 @@
 /**
- * Доменный сервис групп платежей.
+ * Доменный сервис категорий.
  * Вся работа с БД и правила владения (userId) — здесь.
  */
 
 import mongoose from 'mongoose';
 import type {
-  PaymentGroup,
-  PaymentGroupCreate,
-  PaymentGroupUpdate,
+  Category,
+  CategoryCreate,
+  CategoryUpdate,
+  CategoryDirection,
 } from './types.js';
-import PaymentGroupModel from './model.js';
+import CategoryModel from './model.js';
 import { AppError } from '../../lib/errors.js';
 
-function docToPaymentGroup(doc: {
+function docToCategory(doc: {
   _id: mongoose.Types.ObjectId;
   name: string;
   sortOrder: number;
   color?: string;
   icon?: string;
   archived?: boolean;
+  direction: 'income' | 'expense';
   createdAt: Date;
   updatedAt: Date;
-}): PaymentGroup {
+}): Category {
   return {
     id: String(doc._id),
     name: doc.name,
@@ -29,6 +31,7 @@ function docToPaymentGroup(doc: {
     ...(doc.color != null && { color: doc.color }),
     ...(doc.icon != null && { icon: doc.icon }),
     ...(doc.archived === true && { archived: true }),
+    direction: doc.direction,
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
   };
@@ -41,95 +44,111 @@ function toObjectId(id: string): mongoose.Types.ObjectId {
   return new mongoose.Types.ObjectId(id);
 }
 
-export const paymentGroupsService = {
-  async list(userId: string): Promise<PaymentGroup[]> {
+export const categoriesService = {
+  async list(
+    userId: string,
+    direction?: CategoryDirection
+  ): Promise<Category[]> {
     const uid = toObjectId(userId);
-    const docs = await PaymentGroupModel.find({
+    const filter: Record<string, unknown> = {
       userId: uid,
       archived: { $ne: true },
-    })
-      .sort({ sortOrder: 1 })
+    };
+    if (direction != null) {
+      filter.direction = direction;
+    }
+    const docs = await CategoryModel.find(filter)
+      .sort({ direction: 1, sortOrder: 1 })
       .lean();
-    return docs.map(doc => docToPaymentGroup(doc));
+    return docs.map(doc => docToCategory(doc));
   },
 
-  async listArchived(userId: string): Promise<PaymentGroup[]> {
+  async listArchived(
+    userId: string,
+    direction?: CategoryDirection
+  ): Promise<Category[]> {
     const uid = toObjectId(userId);
-    const docs = await PaymentGroupModel.find({
+    const filter: Record<string, unknown> = {
       userId: uid,
       archived: true,
-    })
-      .sort({ sortOrder: 1 })
+    };
+    if (direction != null) {
+      filter.direction = direction;
+    }
+    const docs = await CategoryModel.find(filter)
+      .sort({ direction: 1, sortOrder: 1 })
       .lean();
-    return docs.map(doc => docToPaymentGroup(doc));
+    return docs.map(doc => docToCategory(doc));
   },
 
-  async getById(userId: string, id: string): Promise<PaymentGroup> {
+  async getById(userId: string, id: string): Promise<Category> {
     const uid = toObjectId(userId);
-    const doc = await PaymentGroupModel.findOne({
+    const doc = await CategoryModel.findOne({
       _id: toObjectId(id),
       userId: uid,
     }).lean();
     if (!doc) {
-      throw new AppError('Group not found', {
+      throw new AppError('Category not found', {
         statusCode: 404,
         code: 'NOT_FOUND',
       });
     }
-    return docToPaymentGroup(doc);
+    return docToCategory(doc);
   },
 
   async create(
     userId: string,
-    data: PaymentGroupCreate
-  ): Promise<PaymentGroup> {
+    data: CategoryCreate
+  ): Promise<Category> {
     const uid = toObjectId(userId);
-    const doc = await PaymentGroupModel.create({
+    const doc = await CategoryModel.create({
       userId: uid,
       name: data.name.trim(),
       sortOrder: data.sortOrder,
+      direction: data.direction,
       ...(data.color != null &&
         data.color !== '' && { color: data.color.trim() }),
       ...(data.icon != null && data.icon !== '' && { icon: data.icon.trim() }),
     });
-    return docToPaymentGroup(doc);
+    return docToCategory(doc);
   },
 
   async update(
     userId: string,
     id: string,
-    data: PaymentGroupUpdate
-  ): Promise<PaymentGroup> {
+    data: CategoryUpdate
+  ): Promise<Category> {
     const uid = toObjectId(userId);
     const update: Record<string, unknown> = {};
     if (data.name !== undefined) update.name = data.name.trim();
     if (data.sortOrder !== undefined) update.sortOrder = data.sortOrder;
     if (data.color !== undefined) update.color = data.color?.trim() ?? null;
     if (data.icon !== undefined) update.icon = data.icon?.trim() ?? null;
+    if (data.direction !== undefined) update.direction = data.direction;
 
-    const doc = await PaymentGroupModel.findOneAndUpdate(
+    const doc = await CategoryModel.findOneAndUpdate(
       { _id: toObjectId(id), userId: uid },
       { $set: update },
       { new: true }
     ).lean();
 
     if (!doc) {
-      throw new AppError('Group not found', {
+      throw new AppError('Category not found', {
         statusCode: 404,
         code: 'NOT_FOUND',
       });
     }
-    return docToPaymentGroup(doc);
+    return docToCategory(doc);
   },
 
   async delete(userId: string, id: string): Promise<void> {
     const uid = toObjectId(userId);
-    const result = await PaymentGroupModel.findOneAndUpdate(
+    const result = await CategoryModel.findOneAndUpdate(
       { _id: toObjectId(id), userId: uid },
       { $set: { archived: true } }
     );
     if (!result) {
-      throw new AppError('Group not found', {
+      throw new AppError('Category not found', {
         statusCode: 404,
         code: 'NOT_FOUND',
       });

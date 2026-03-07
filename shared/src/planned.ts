@@ -9,7 +9,7 @@ import { entityIdSchema } from './ids.js';
 export const plannedItemRecurringSchema = z.object({
   kind: z.literal('recurring'),
   paymentId: entityIdSchema,
-  groupId: entityIdSchema,
+  categoryId: entityIdSchema,
   scheduledDate: z.string(),
   amount: z.number(),
   note: z.string().optional(),
@@ -18,7 +18,7 @@ export const plannedItemRecurringSchema = z.object({
 export const plannedItemInstantSchema = z.object({
   kind: z.literal('instant'),
   paymentId: entityIdSchema,
-  groupId: entityIdSchema,
+  categoryId: entityIdSchema,
   scheduledDate: z.string(),
   amount: z.number(),
   note: z.string().optional(),
@@ -27,7 +27,7 @@ export const plannedItemInstantSchema = z.object({
 export const plannedItemRecurringIncomeSchema = z.object({
   kind: z.literal('recurringIncome'),
   paymentId: entityIdSchema,
-  source: z.string(),
+  categoryId: entityIdSchema,
   scheduledDate: z.string(),
   amount: z.number(),
   note: z.string().optional(),

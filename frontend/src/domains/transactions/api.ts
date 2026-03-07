@@ -11,7 +11,7 @@ export type HistoryParams = {
   from: string;
   to: string;
   type?: 'income' | 'expense' | 'all';
-  groupId?: string;
+  categoryId?: string;
 };
 
 function isIncomeEntryObject(obj: object): obj is Transaction {
@@ -21,7 +21,7 @@ function isIncomeEntryObject(obj: object): obj is Transaction {
     typeof o.id === 'string' &&
     typeof o.amount === 'number' &&
     typeof o.date === 'string' &&
-    typeof o.source === 'string' &&
+    typeof o.categoryId === 'string' &&
     typeof o.createdAt === 'string' &&
     typeof o.updatedAt === 'string' &&
     (o.note === undefined || typeof o.note === 'string')
@@ -33,7 +33,7 @@ function isExpenseEntryObject(obj: object): obj is Transaction {
   if (o.direction !== 'expense' || o.kind !== 'instant') return false;
   return (
     typeof o.id === 'string' &&
-    typeof o.groupId === 'string' &&
+    typeof o.categoryId === 'string' &&
     typeof o.amount === 'number' &&
     typeof o.date === 'string' &&
     typeof o.createdAt === 'string' &&
@@ -59,7 +59,7 @@ function buildHistoryUrl(params: HistoryParams): string {
   search.set('from', params.from);
   search.set('to', params.to);
   if (params.type && params.type !== 'all') search.set('type', params.type);
-  if (params.groupId) search.set('groupId', params.groupId);
+  if (params.categoryId) search.set('categoryId', params.categoryId);
   return `/api/transactions/history?${search.toString()}`;
 }
 
@@ -81,7 +81,7 @@ function isPlannedItem(obj: unknown): obj is PlannedItem {
   if (o.kind === 'recurringIncome') {
     return (
       typeof o.paymentId === 'string' &&
-      typeof o.source === 'string' &&
+      typeof o.categoryId === 'string' &&
       typeof o.scheduledDate === 'string' &&
       typeof o.amount === 'number' &&
       (o.note === undefined || typeof o.note === 'string')
@@ -90,7 +90,7 @@ function isPlannedItem(obj: unknown): obj is PlannedItem {
   if (o.kind !== 'recurring' && o.kind !== 'instant') return false;
   return (
     typeof o.paymentId === 'string' &&
-    typeof o.groupId === 'string' &&
+    typeof o.categoryId === 'string' &&
     typeof o.scheduledDate === 'string' &&
     typeof o.amount === 'number' &&
     (o.note === undefined || typeof o.note === 'string')
@@ -122,11 +122,17 @@ function isMonthStats(data: unknown): data is MonthStats {
   if (typeof o.totalIncome !== 'number') return false;
   if (typeof o.totalExpense !== 'number') return false;
   if (typeof o.balance !== 'number') return false;
-  if (!Array.isArray(o.expensesByGroup)) return false;
-  for (const item of o.expensesByGroup) {
+  if (!Array.isArray(o.incomeByCategory)) return false;
+  if (!Array.isArray(o.expensesByCategory)) return false;
+  for (const item of o.incomeByCategory) {
     if (typeof item !== 'object' || item === null) return false;
     const i = item as Record<string, unknown>;
-    if (typeof i.groupId !== 'string' || typeof i.sum !== 'number') return false;
+    if (typeof i.categoryId !== 'string' || typeof i.sum !== 'number') return false;
+  }
+  for (const item of o.expensesByCategory) {
+    if (typeof item !== 'object' || item === null) return false;
+    const i = item as Record<string, unknown>;
+    if (typeof i.categoryId !== 'string' || typeof i.sum !== 'number') return false;
   }
   return true;
 }

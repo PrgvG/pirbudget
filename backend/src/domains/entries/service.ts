@@ -20,8 +20,7 @@ function docToEntry(doc: {
   amount: number;
   date: string;
   note?: string;
-  source?: string;
-  groupId?: mongoose.Types.ObjectId;
+  categoryId: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }): Entry {
@@ -32,28 +31,17 @@ function docToEntry(doc: {
   const updatedAt = doc.updatedAt.toISOString();
   const note =
     doc.note != null && doc.note !== '' ? doc.note : undefined;
-  if (doc.direction === 'income') {
-    return {
-      direction: 'income',
-      id,
-      amount,
-      date,
-      source: doc.source ?? '',
-      createdAt,
-      updatedAt,
-      ...(note != null && { note }),
-    };
-  }
+  const categoryId = String(doc.categoryId);
   return {
-    direction: 'expense',
+    direction: doc.direction,
     id,
-    groupId: String(doc.groupId),
     amount,
     date,
+    categoryId,
     createdAt,
     updatedAt,
     ...(note != null && { note }),
-  };
+  } as Entry;
 }
 
 export type ListByDateRangeParams = {
@@ -61,7 +49,7 @@ export type ListByDateRangeParams = {
   from: string;
   to: string;
   type?: 'income' | 'expense' | 'all';
-  groupId?: string;
+  categoryId?: string;
 };
 
 export const entriesService = {
@@ -74,7 +62,7 @@ export const entriesService = {
   },
 
   async listByDateRange(params: ListByDateRangeParams): Promise<Entry[]> {
-    const { userId, from, to, type = 'all', groupId } = params;
+    const { userId, from, to, type = 'all', categoryId } = params;
     const uid = toObjectId(userId);
     const filter: Record<string, unknown> = {
       userId: uid,
@@ -83,8 +71,8 @@ export const entriesService = {
     if (type !== 'all') {
       filter.direction = type;
     }
-    if (groupId != null && groupId.trim() !== '') {
-      filter.groupId = toObjectId(groupId);
+    if (categoryId != null && categoryId.trim() !== '') {
+      filter.categoryId = toObjectId(categoryId);
     }
     const docs = await EntryModel.find(filter)
       .sort({ date: -1, createdAt: -1 })
@@ -109,30 +97,20 @@ export const entriesService = {
 
   async create(userId: string, data: EntryCreate): Promise<Entry> {
     const uid = toObjectId(userId);
-    const payload: Record<string, unknown> = {
+    if (data.categoryId == null || data.categoryId.trim() === '') {
+      throw new AppError('categoryId required', {
+        statusCode: 400,
+        code: 'CATEGORY_ID_REQUIRED',
+      });
+    }
+    const payload = {
       userId: uid,
       direction: data.direction,
       amount: data.amount,
       date: data.date.trim(),
+      categoryId: toObjectId(data.categoryId),
       ...(data.note != null && data.note !== '' && { note: data.note.trim() }),
     };
-    if (data.direction === 'income') {
-      if (data.source == null || data.source.trim() === '') {
-        throw new AppError('source required for income', {
-          statusCode: 400,
-          code: 'SOURCE_REQUIRED',
-        });
-      }
-      payload.source = data.source.trim();
-    } else {
-      if (data.groupId == null) {
-        throw new AppError('groupId required for expense', {
-          statusCode: 400,
-          code: 'GROUP_ID_REQUIRED',
-        });
-      }
-      payload.groupId = toObjectId(data.groupId);
-    }
     const doc = await EntryModel.create(payload);
     return docToEntry(doc);
   },
@@ -143,31 +121,15 @@ export const entriesService = {
     if (data.amount !== undefined) update.amount = data.amount;
     if (data.date !== undefined) update.date = data.date.trim();
     if (data.note !== undefined) update.note = data.note?.trim() ?? null;
-    if (data.direction !== undefined) {
-      update.direction = data.direction;
-      if (data.direction === 'income') {
-        if (data.source == null || data.source.trim() === '') {
-          throw new AppError('source required for income', {
-            statusCode: 400,
-            code: 'SOURCE_REQUIRED',
-          });
-        }
-        update.source = data.source.trim();
-        update.groupId = null;
-      } else {
-        if (data.groupId == null) {
-          throw new AppError('groupId required for expense', {
-            statusCode: 400,
-            code: 'GROUP_ID_REQUIRED',
-          });
-        }
-        update.groupId = toObjectId(data.groupId);
-        update.source = null;
+    if (data.direction !== undefined) update.direction = data.direction;
+    if (data.categoryId !== undefined) {
+      if (data.categoryId == null || data.categoryId.trim() === '') {
+        throw new AppError('categoryId required', {
+          statusCode: 400,
+          code: 'CATEGORY_ID_REQUIRED',
+        });
       }
-    } else {
-      if (data.source !== undefined) update.source = data.source?.trim() ?? null;
-      if (data.groupId !== undefined)
-        update.groupId = data.groupId != null ? toObjectId(data.groupId) : null;
+      update.categoryId = toObjectId(data.categoryId);
     }
 
     const doc = await EntryModel.findOneAndUpdate(

@@ -45,8 +45,8 @@ export function validateRecurringExpensePaymentCreate(
   const issue = result.error.issues[0];
   const path = getFirstIssuePath(result.error.issues);
   const code =
-    path === 'groupId'
-      ? 'GROUP_REQUIRED'
+    path === 'categoryId'
+      ? 'CATEGORY_REQUIRED'
       : path === 'amountPerOccurrence'
         ? 'AMOUNT_INVALID'
         : path === 'recurrence'

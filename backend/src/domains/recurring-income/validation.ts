@@ -45,8 +45,8 @@ export function validateRecurringIncomeCreate(
   const issue = result.error.issues[0];
   const path = getFirstIssuePath(result.error.issues);
   const code =
-    path === 'source'
-      ? 'SOURCE_REQUIRED'
+    path === 'categoryId'
+      ? 'CATEGORY_ID_REQUIRED'
       : path === 'amountPerOccurrence'
         ? 'AMOUNT_INVALID'
         : path === 'recurrence'

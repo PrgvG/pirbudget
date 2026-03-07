@@ -30,7 +30,7 @@ router.get(
       const from = req.query.from;
       const to = req.query.to;
       const type = req.query.type as string | undefined;
-      const groupId = req.query.groupId as string | undefined;
+      const categoryId = req.query.categoryId as string | undefined;
 
       if (
         typeof from === 'string' &&
@@ -47,7 +47,7 @@ router.get(
             type === 'income' || type === 'expense' || type === 'all'
               ? type
               : 'all',
-          groupId,
+          categoryId,
         });
         res.json(list);
       } else {

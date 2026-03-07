@@ -11,11 +11,12 @@ export type {
   IncomeEntryUpdate,
 } from 'shared/transactions';
 
-/** Агрегация за месяц: доходы, расходы, баланс, разбивка по группам. */
+/** Агрегация за месяц: доходы, расходы, баланс, разбивка по категориям. */
 export type MonthStats = {
   month: string;
   totalIncome: number;
   totalExpense: number;
   balance: number;
-  expensesByGroup: { groupId: string; sum: number }[];
+  incomeByCategory: { categoryId: string; sum: number }[];
+  expensesByCategory: { categoryId: string; sum: number }[];
 };

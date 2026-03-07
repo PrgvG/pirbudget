@@ -13,7 +13,7 @@ function isRecurringIncomeObject(obj: object): obj is RecurringIncome {
   const o = obj as Record<string, unknown>;
   return (
     typeof o.id === 'string' &&
-    typeof o.source === 'string' &&
+    typeof o.categoryId === 'string' &&
     typeof o.amountPerOccurrence === 'number' &&
     typeof o.recurrence === 'object' &&
     o.recurrence !== null &&

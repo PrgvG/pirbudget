@@ -1,22 +1,23 @@
 /**
- * Модель Mongoose для групп платежей (категорий).
+ * Модель Mongoose для категорий (доходы и расходы).
  * Все документы привязаны к userId.
  */
 
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
-export type IPaymentGroupDoc = Document & {
+export type ICategoryDoc = Document & {
   userId: mongoose.Types.ObjectId;
   name: string;
   sortOrder: number;
   color?: string;
   icon?: string;
   archived?: boolean;
+  direction: 'income' | 'expense';
   createdAt: Date;
   updatedAt: Date;
 };
 
-const PaymentGroupSchema = new Schema<IPaymentGroupDoc>(
+const CategorySchema = new Schema<ICategoryDoc>(
   {
     userId: {
       type: Schema.Types.ObjectId,
@@ -45,15 +46,23 @@ const PaymentGroupSchema = new Schema<IPaymentGroupDoc>(
       type: Boolean,
       default: false,
     },
+    direction: {
+      type: String,
+      enum: ['income', 'expense'],
+      required: true,
+      index: true,
+    },
   },
   {
     timestamps: true,
-    collection: 'payment_groups',
+    collection: 'categories',
   }
 );
 
-const PaymentGroup: Model<IPaymentGroupDoc> =
-  mongoose.models.PaymentGroup ||
-  mongoose.model<IPaymentGroupDoc>('PaymentGroup', PaymentGroupSchema);
+CategorySchema.index({ userId: 1, direction: 1, sortOrder: 1 });
 
-export default PaymentGroup;
+const Category: Model<ICategoryDoc> =
+  mongoose.models.Category ||
+  mongoose.model<ICategoryDoc>('Category', CategorySchema);
+
+export default Category;

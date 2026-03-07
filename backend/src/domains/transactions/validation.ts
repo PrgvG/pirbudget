@@ -39,7 +39,7 @@ export type HistoryQueryValid = {
     from: string;
     to: string;
     type: 'income' | 'expense' | 'all';
-    groupId?: string;
+    categoryId?: string;
   };
 };
 
@@ -68,14 +68,14 @@ export function validateHistoryQuery(query: Record<string, unknown>): HistoryQue
     }
     type = query.type as 'income' | 'expense' | 'all';
   }
-  let groupId: string | undefined;
-  if (query.groupId !== undefined && query.groupId !== '') {
-    if (typeof query.groupId !== 'string') {
-      return { ok: false, error: 'groupId must be a string', code: 'INVALID_GROUP_ID' };
+  let categoryId: string | undefined;
+  if (query.categoryId !== undefined && query.categoryId !== '') {
+    if (typeof query.categoryId !== 'string') {
+      return { ok: false, error: 'categoryId must be a string', code: 'INVALID_CATEGORY_ID' };
     }
-    groupId = query.groupId;
+    categoryId = query.categoryId;
   }
-  return { ok: true, data: { from, to, type, groupId } };
+  return { ok: true, data: { from, to, type, categoryId } };
 }
 
 const monthRegex = /^\d{4}-\d{2}$/;

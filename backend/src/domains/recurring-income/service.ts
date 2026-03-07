@@ -21,7 +21,7 @@ function toObjectId(id: string): mongoose.Types.ObjectId {
 
 function docToRecurringIncome(doc: {
   _id: mongoose.Types.ObjectId;
-  source: string;
+  categoryId: mongoose.Types.ObjectId;
   amountPerOccurrence: number;
   recurrence: RecurrenceDoc;
   repeatCount: number | null;
@@ -31,7 +31,7 @@ function docToRecurringIncome(doc: {
 }): RecurringIncome {
   return {
     id: String(doc._id),
-    source: doc.source,
+    categoryId: String(doc.categoryId),
     amountPerOccurrence: doc.amountPerOccurrence,
     recurrence: doc.recurrence as RecurringIncome['recurrence'],
     repeatCount: doc.repeatCount,
@@ -70,9 +70,15 @@ export const recurringIncomeService = {
     data: RecurringIncomeCreate
   ): Promise<RecurringIncome> {
     const uid = toObjectId(userId);
+    if (data.categoryId == null || data.categoryId.trim() === '') {
+      throw new AppError('categoryId required', {
+        statusCode: 400,
+        code: 'CATEGORY_ID_REQUIRED',
+      });
+    }
     const doc = await RecurringIncomeModel.create({
       userId: uid,
-      source: data.source.trim(),
+      categoryId: toObjectId(data.categoryId),
       ...(data.note != null && data.note !== '' && { note: data.note.trim() }),
       amountPerOccurrence: data.amountPerOccurrence,
       recurrence: data.recurrence,
@@ -88,7 +94,15 @@ export const recurringIncomeService = {
   ): Promise<RecurringIncome> {
     const uid = toObjectId(userId);
     const update: Record<string, unknown> = {};
-    if (data.source !== undefined) update.source = data.source.trim();
+    if (data.categoryId !== undefined) {
+      if (data.categoryId == null || data.categoryId.trim() === '') {
+        throw new AppError('categoryId required', {
+          statusCode: 400,
+          code: 'CATEGORY_ID_REQUIRED',
+        });
+      }
+      update.categoryId = toObjectId(data.categoryId);
+    }
     if (data.note !== undefined) update.note = data.note?.trim() ?? null;
     if (data.amountPerOccurrence !== undefined)
       update.amountPerOccurrence = data.amountPerOccurrence;

@@ -26,7 +26,7 @@ export type GetHistoryParams = {
   from: string;
   to: string;
   type?: HistoryFilterType;
-  groupId?: string;
+  categoryId?: string;
 };
 
 function toIsoDateTime(dateStr: string): string {
@@ -36,13 +36,22 @@ function toIsoDateTime(dateStr: string): string {
 
 function entryToTransaction(entry: Entry): Transaction {
   if (entry.direction === 'income') {
-    return entry;
+    return {
+      direction: 'income',
+      id: entry.id,
+      amount: entry.amount,
+      date: toIsoDateTime(entry.date),
+      categoryId: entry.categoryId,
+      ...(entry.note != null && entry.note !== '' && { note: entry.note }),
+      createdAt: entry.createdAt,
+      updatedAt: entry.updatedAt,
+    };
   }
   return {
     kind: 'instant',
     direction: 'expense',
     id: entry.id,
-    groupId: entry.groupId,
+    categoryId: entry.categoryId,
     amount: entry.amount,
     date: toIsoDateTime(entry.date),
     ...(entry.note != null && entry.note !== '' && { note: entry.note }),
@@ -74,13 +83,13 @@ function byScheduledDateThenKind(a: PlannedItem, b: PlannedItem): number {
 
 export const transactionsService = {
   async getHistory(params: GetHistoryParams): Promise<Transaction[]> {
-    const { userId, from, to, type = 'all', groupId } = params;
+    const { userId, from, to, type = 'all', categoryId } = params;
     const entries = await entriesService.listByDateRange({
       userId,
       from,
       to,
       type,
-      groupId,
+      categoryId,
     });
     const all = entries.map(entryToTransaction);
     all.sort(byDateThenCreated);
@@ -108,7 +117,7 @@ export const transactionsService = {
         items.push({
           kind: 'recurring',
           paymentId: rec.id,
-          groupId: rec.groupId,
+          categoryId: rec.categoryId,
           scheduledDate,
           amount: rec.amountPerOccurrence,
           ...(rec.note != null && rec.note !== '' && { note: rec.note }),
@@ -127,7 +136,7 @@ export const transactionsService = {
         items.push({
           kind: 'recurringIncome',
           paymentId: rec.id,
-          source: rec.source,
+          categoryId: rec.categoryId,
           scheduledDate,
           amount: rec.amountPerOccurrence,
           ...(rec.note != null && rec.note !== '' && { note: rec.note }),
@@ -140,7 +149,7 @@ export const transactionsService = {
         items.push({
           kind: 'instant',
           paymentId: entry.id,
-          groupId: entry.groupId,
+          categoryId: entry.categoryId,
           scheduledDate: entry.date,
           amount: entry.amount,
           ...(entry.note != null && entry.note !== '' && { note: entry.note }),
@@ -157,21 +166,25 @@ export const transactionsService = {
     const entries = await entriesService.listByDateRange({ userId, from, to });
 
     let totalIncome = 0;
-    const groupSums = new Map<string, number>();
     let totalExpense = 0;
+    const incomeByCat = new Map<string, number>();
+    const expenseByCat = new Map<string, number>();
 
     for (const e of entries) {
       if (e.direction === 'income') {
         totalIncome += e.amount;
+        incomeByCat.set(e.categoryId, (incomeByCat.get(e.categoryId) ?? 0) + e.amount);
       } else {
         totalExpense += e.amount;
-        const gid = e.groupId;
-        groupSums.set(gid, (groupSums.get(gid) ?? 0) + e.amount);
+        expenseByCat.set(e.categoryId, (expenseByCat.get(e.categoryId) ?? 0) + e.amount);
       }
     }
 
-    const expensesByGroup = Array.from(groupSums.entries()).map(
-      ([groupId, sum]) => ({ groupId, sum })
+    const incomeByCategory = Array.from(incomeByCat.entries()).map(
+      ([categoryId, sum]) => ({ categoryId, sum })
+    );
+    const expensesByCategory = Array.from(expenseByCat.entries()).map(
+      ([categoryId, sum]) => ({ categoryId, sum })
     );
 
     return {
@@ -179,7 +192,8 @@ export const transactionsService = {
       totalIncome,
       totalExpense,
       balance: totalIncome - totalExpense,
-      expensesByGroup,
+      incomeByCategory,
+      expensesByCategory,
     };
   },
 };

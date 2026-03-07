@@ -3,21 +3,21 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import type { Transaction } from 'shared/transactions';
 import type { PlannedItem } from 'shared';
-import type { PaymentGroup } from 'shared/payment-groups';
+import type { Category } from 'shared/categories';
 import {
   fetchHistory,
   fetchPlan,
   fetchMonthStats,
   type HistoryParams,
 } from '../domains/transactions';
-import { fetchPaymentGroups } from '../domains/payment-groups';
+import { fetchCategories } from '../domains/categories';
 import { useMonthPicker, MonthPicker } from '../components/month-picker';
 import styles from './MonthPage.module.css';
 
 const STATS_QUERY_KEY = 'monthStats';
 const HISTORY_QUERY_KEY = 'history';
 const PLAN_QUERY_KEY = 'plan';
-const GROUPS_QUERY_KEY = ['payment-groups'] as const;
+const CATEGORIES_QUERY_KEY = ['categories'] as const;
 
 function formatMoney(value: number): string {
   return value.toLocaleString('ru-RU', {
@@ -76,12 +76,12 @@ function groupPlanItemsByDate(
 
 type HistoryFilters = {
   type: 'all' | 'income' | 'expense';
-  groupId: string;
+  categoryId: string;
 };
 
 const defaultHistoryFilters: HistoryFilters = {
   type: 'all',
-  groupId: '',
+  categoryId: '',
 };
 
 export function MonthPage() {
@@ -95,13 +95,13 @@ export function MonthPage() {
       from: monthPicker.from,
       to: monthPicker.to,
       type: historyFilters.type === 'all' ? undefined : historyFilters.type,
-      groupId: historyFilters.groupId || undefined,
+      categoryId: historyFilters.categoryId || undefined,
     }),
     [
       monthPicker.from,
       monthPicker.to,
       historyFilters.type,
-      historyFilters.groupId,
+      historyFilters.categoryId,
     ]
   );
 
@@ -120,30 +120,44 @@ export function MonthPage() {
     queryFn: () => fetchPlan({ from: monthPicker.from, to: monthPicker.to }),
   });
 
-  const groupsQuery = useQuery({
-    queryKey: GROUPS_QUERY_KEY,
-    queryFn: fetchPaymentGroups,
+  const categoriesQuery = useQuery({
+    queryKey: CATEGORIES_QUERY_KEY,
+    queryFn: () => fetchCategories(),
   });
 
-  const groups = groupsQuery.data ?? [];
-  const groupMap = useMemo(() => {
-    const m = new Map<string, PaymentGroup>();
-    for (const g of groups) m.set(g.id, g);
+  const allCategories = categoriesQuery.data ?? [];
+  const categoryMap = useMemo(() => {
+    const m = new Map<string, Category>();
+    for (const c of allCategories) m.set(c.id, c);
     return m;
-  }, [groups]);
+  }, [allCategories]);
 
   const stats = statsQuery.data;
-  const sortedByGroup = useMemo(() => {
-    if (!stats || stats.expensesByGroup.length === 0) return [];
-    return [...stats.expensesByGroup].sort((a, b) => {
-      const ga = groupMap.get(a.groupId);
-      const gb = groupMap.get(b.groupId);
-      const orderA = ga?.sortOrder ?? 999;
-      const orderB = gb?.sortOrder ?? 999;
+  const sortedByIncomeCategory = useMemo(() => {
+    if (!stats || !stats.incomeByCategory || stats.incomeByCategory.length === 0)
+      return [];
+    return [...stats.incomeByCategory].sort((a, b) => {
+      const ca = categoryMap.get(a.categoryId);
+      const cb = categoryMap.get(b.categoryId);
+      const orderA = ca?.sortOrder ?? 999;
+      const orderB = cb?.sortOrder ?? 999;
       if (orderA !== orderB) return orderA - orderB;
       return b.sum - a.sum;
     });
-  }, [stats, groupMap]);
+  }, [stats, categoryMap]);
+
+  const sortedByExpenseCategory = useMemo(() => {
+    if (!stats || !stats.expensesByCategory || stats.expensesByCategory.length === 0)
+      return [];
+    return [...stats.expensesByCategory].sort((a, b) => {
+      const ca = categoryMap.get(a.categoryId);
+      const cb = categoryMap.get(b.categoryId);
+      const orderA = ca?.sortOrder ?? 999;
+      const orderB = cb?.sortOrder ?? 999;
+      if (orderA !== orderB) return orderA - orderB;
+      return b.sum - a.sum;
+    });
+  }, [stats, categoryMap]);
 
   const transactions = historyQuery.data ?? [];
   const historyByDate = useMemo(
@@ -221,15 +235,34 @@ export function MonthPage() {
                 </span>
               </div>
             </div>
-            {sortedByGroup.length > 0 ? (
+            {sortedByIncomeCategory.length > 0 ? (
               <div className={styles.byGroup}>
-                <h3 className={styles.byGroupTitle}>Расходы по группам</h3>
+                <h3 className={styles.byGroupTitle}>Доходы по категориям</h3>
                 <ul className={styles.groupList}>
-                  {sortedByGroup.map(({ groupId, sum }) => {
-                    const group = groupMap.get(groupId);
-                    const name = group?.name ?? groupId;
+                  {sortedByIncomeCategory.map(({ categoryId, sum }) => {
+                    const cat = categoryMap.get(categoryId);
+                    const name = cat?.name ?? categoryId;
                     return (
-                      <li key={groupId} className={styles.groupItem}>
+                      <li key={categoryId} className={styles.groupItem}>
+                        <span className={styles.groupName}>{name}</span>
+                        <span className={styles.groupSum}>
+                          +{formatMoney(sum)} ₽
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ) : null}
+            {sortedByExpenseCategory.length > 0 ? (
+              <div className={styles.byGroup}>
+                <h3 className={styles.byGroupTitle}>Расходы по категориям</h3>
+                <ul className={styles.groupList}>
+                  {sortedByExpenseCategory.map(({ categoryId, sum }) => {
+                    const cat = categoryMap.get(categoryId);
+                    const name = cat?.name ?? categoryId;
+                    return (
+                      <li key={categoryId} className={styles.groupItem}>
                         <span className={styles.groupName}>{name}</span>
                         <span className={styles.groupSum}>
                           −{formatMoney(sum)} ₽
@@ -269,22 +302,31 @@ export function MonthPage() {
               <option value="expense">Расходы</option>
             </select>
           </div>
-          {(historyFilters.type === 'all' || historyFilters.type === 'expense') && (
+          {(historyFilters.type === 'all' ||
+            historyFilters.type === 'income' ||
+            historyFilters.type === 'expense') && (
             <div className={styles.filterGroup}>
-              <label htmlFor="month-history-group">Группа</label>
+              <label htmlFor="month-history-category">Категория</label>
               <select
-                id="month-history-group"
-                value={historyFilters.groupId}
+                id="month-history-category"
+                value={historyFilters.categoryId}
                 onChange={e =>
-                  setHistoryFilters(f => ({ ...f, groupId: e.target.value }))
+                  setHistoryFilters(f => ({ ...f, categoryId: e.target.value }))
                 }
               >
-                <option value="">Все группы</option>
-                {groups.map(g => (
-                  <option key={g.id} value={g.id}>
-                    {g.name}
-                  </option>
-                ))}
+                <option value="">Все категории</option>
+                {allCategories
+                  .filter(
+                    c =>
+                      historyFilters.type === 'all' ||
+                      (historyFilters.type === 'income' && c.direction === 'income') ||
+                      (historyFilters.type === 'expense' && c.direction === 'expense')
+                  )
+                  .map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
               </select>
             </div>
           )}
@@ -318,9 +360,9 @@ export function MonthPage() {
                       <TransactionCard
                         key={`${t.direction}-${t.id}`}
                         transaction={t}
-                        groupName={
-                          t.direction === 'expense' && 'groupId' in t
-                            ? groupMap.get(t.groupId)?.name ?? t.groupId
+                        categoryName={
+                          'categoryId' in t
+                            ? categoryMap.get(t.categoryId)?.name ?? t.categoryId
                             : undefined
                         }
                       />
@@ -368,16 +410,7 @@ export function MonthPage() {
                       <PlannedItemCard
                         key={`${item.kind}-${item.paymentId}-${dateKey}-${idx}`}
                         item={item}
-                        groupName={
-                          item.kind === 'recurringIncome'
-                            ? undefined
-                            : groupMap.get(item.groupId)?.name
-                        }
-                        source={
-                          item.kind === 'recurringIncome'
-                            ? item.source
-                            : undefined
-                        }
+                        categoryName={categoryMap.get(item.categoryId)?.name}
                       />
                     ))}
                   </ul>
@@ -392,12 +425,12 @@ export function MonthPage() {
 
 type TransactionCardProps = {
   transaction: Transaction;
-  groupName?: string;
+  categoryName?: string;
 };
 
 function TransactionCard({
   transaction,
-  groupName,
+  categoryName,
 }: TransactionCardProps) {
   const isIncome = transaction.direction === 'income';
   const amount = 'amount' in transaction ? transaction.amount : 0;
@@ -411,11 +444,8 @@ function TransactionCard({
         >
           {isIncome ? 'Доход' : 'Расход'}
         </div>
-        {isIncome && 'source' in transaction && (
-          <span className={styles.cardSource}>{transaction.source}</span>
-        )}
-        {!isIncome && groupName && (
-          <span className={styles.cardGroup}>{groupName}</span>
+        {categoryName && (
+          <span className={styles.cardGroup}>{categoryName}</span>
         )}
         {note ? (
           <div className={styles.cardNote}>{note}</div>
@@ -433,14 +463,12 @@ function TransactionCard({
 
 type PlannedItemCardProps = {
   item: PlannedItem;
-  groupName?: string;
-  source?: string;
+  categoryName?: string;
 };
 
 function PlannedItemCard({
   item,
-  groupName,
-  source,
+  categoryName,
 }: PlannedItemCardProps) {
   const isIncome = item.kind === 'recurringIncome';
   const typeLabel =
@@ -458,11 +486,8 @@ function PlannedItemCard({
         >
           {typeLabel}
         </div>
-        {source != null && source !== '' && (
-          <span className={styles.cardSource}>{source}</span>
-        )}
-        {groupName != null && groupName !== '' && (
-          <span className={styles.cardGroup}>{groupName}</span>
+        {categoryName != null && categoryName !== '' && (
+          <span className={styles.cardGroup}>{categoryName}</span>
         )}
         {item.note ? (
           <div className={styles.cardNote}>{item.note}</div>

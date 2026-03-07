@@ -16,7 +16,7 @@ function isRecurringExpensePaymentObject(
   return (
     o.kind === 'recurring' &&
     typeof o.id === 'string' &&
-    typeof o.groupId === 'string' &&
+    typeof o.categoryId === 'string' &&
     typeof o.amountPerOccurrence === 'number' &&
     typeof o.recurrence === 'object' &&
     o.recurrence !== null &&

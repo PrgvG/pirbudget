@@ -22,7 +22,7 @@ export type RecurrenceDoc = RecurrenceInterval | RecurrenceDate;
 
 export type IRecurringIncomeDoc = Document & {
   userId: mongoose.Types.ObjectId;
-  source: string;
+  categoryId: mongoose.Types.ObjectId;
   amountPerOccurrence: number;
   recurrence: RecurrenceDoc;
   repeatCount: number | null;
@@ -51,10 +51,10 @@ const RecurringIncomeSchema = new Schema<IRecurringIncomeDoc>(
       required: true,
       index: true,
     },
-    source: {
-      type: String,
+    categoryId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Category',
       required: true,
-      trim: true,
     },
     amountPerOccurrence: {
       type: Number,

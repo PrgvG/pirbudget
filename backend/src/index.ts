@@ -9,7 +9,7 @@ import authRouter from './routes/auth';
 import usersRouter from './routes/users';
 import healthRouter from './routes/health';
 import apiRouter from './routes/api';
-import paymentGroupsRouter from './domains/payment-groups/routes.js';
+import { categoriesRouter } from './domains/categories/index.js';
 import { entriesRouter } from './domains/entries/index.js';
 import expensesRouter from './domains/expenses/routes.js';
 import { recurringIncomeRouter } from './domains/recurring-income/index.js';
@@ -42,7 +42,7 @@ app.use(
 app.use('/health', healthRouter);
 app.use('/api/auth', authRateLimiter, authRouter);
 app.use('/api/users', usersRouter);
-app.use('/api/payment-groups', paymentGroupsRouter);
+app.use('/api/categories', categoriesRouter);
 app.use('/api/entries', entriesRouter);
 app.use('/api/expenses', expensesRouter);
 app.use('/api/recurring-income', recurringIncomeRouter);

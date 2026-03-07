@@ -1,14 +1,16 @@
 /**
  * Общие контракты данных для обмена между backend и frontend.
- * Типы по доменам: ids, payment-groups, recurrence, expenses, transactions.
+ * Типы по доменам: ids, categories, payment-groups (deprecated), recurrence, expenses, transactions.
  */
 
 export type { EntityId, LocalId } from "./ids.js";
 export type {
-  PaymentGroup,
-  PaymentGroupCreate,
-  PaymentGroupUpdate,
-} from "./payment-groups.js";
+  Category,
+  CategoryCreate,
+  CategoryUpdate,
+  CategoryDirection,
+} from "./categories.js";
+export { categorySchema, categoryCreateSchema, categoryUpdateSchema } from "./categories.js";
 export type {
   RecurrenceByInterval,
   RecurrenceByDate,

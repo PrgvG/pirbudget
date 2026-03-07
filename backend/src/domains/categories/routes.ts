@@ -1,5 +1,5 @@
 /**
- * Роуты CRUD для групп платежей.
+ * Роуты CRUD для категорий.
  * Требуют авторизации; все операции привязаны к userId из JWT.
  */
 
@@ -9,12 +9,13 @@ import {
   type AuthenticatedRequest,
 } from '../../middleware/auth.js';
 import { wrapAsync } from '../../middleware/asyncHandler.js';
-import { paymentGroupsService } from './service.js';
+import { categoriesService } from './service.js';
 import {
-  validatePaymentGroupCreate,
-  validatePaymentGroupUpdate,
+  validateCategoryCreate,
+  validateCategoryUpdate,
 } from './validation.js';
 import { AppError } from '../../lib/errors.js';
+import type { CategoryDirection } from './types.js';
 
 const router = Router();
 
@@ -29,7 +30,8 @@ router.get(
       _next: NextFunction
     ): Promise<void> => {
       const userId = req.user!.userId;
-      const list = await paymentGroupsService.list(userId);
+      const direction = req.query.direction as CategoryDirection | undefined;
+      const list = await categoriesService.list(userId, direction);
       res.json(list);
     }
   )
@@ -44,7 +46,8 @@ router.get(
       _next: NextFunction
     ): Promise<void> => {
       const userId = req.user!.userId;
-      const list = await paymentGroupsService.listArchived(userId);
+      const direction = req.query.direction as CategoryDirection | undefined;
+      const list = await categoriesService.listArchived(userId, direction);
       res.json(list);
     }
   )
@@ -61,8 +64,8 @@ router.get(
       const userId = req.user!.userId;
       const id = req.params.id;
       try {
-        const group = await paymentGroupsService.getById(userId, id);
-        res.json(group);
+        const category = await categoriesService.getById(userId, id);
+        res.json(category);
       } catch (err) {
         if (err instanceof AppError && err.statusCode === 404) {
           res.status(404).json({ error: err.message, code: err.code });
@@ -82,7 +85,7 @@ router.post(
       res: Response,
       next: NextFunction
     ): Promise<void> => {
-      const validation = validatePaymentGroupCreate(req.body);
+      const validation = validateCategoryCreate(req.body);
       if (!validation.ok) {
         next(
           new AppError(validation.error, {
@@ -93,7 +96,7 @@ router.post(
         return;
       }
       const userId = req.user!.userId;
-      const created = await paymentGroupsService.create(
+      const created = await categoriesService.create(
         userId,
         validation.data
       );
@@ -110,7 +113,7 @@ router.patch(
       res: Response,
       next: NextFunction
     ): Promise<void> => {
-      const validation = validatePaymentGroupUpdate(req.body);
+      const validation = validateCategoryUpdate(req.body);
       if (!validation.ok) {
         next(
           new AppError(validation.error, {
@@ -123,7 +126,7 @@ router.patch(
       const userId = req.user!.userId;
       const id = req.params.id;
       try {
-        const updated = await paymentGroupsService.update(
+        const updated = await categoriesService.update(
           userId,
           id,
           validation.data
@@ -151,7 +154,7 @@ router.delete(
       const userId = req.user!.userId;
       const id = req.params.id;
       try {
-        await paymentGroupsService.delete(userId, id);
+        await categoriesService.delete(userId, id);
         res.status(204).send();
       } catch (err) {
         if (err instanceof AppError && err.statusCode === 404) {

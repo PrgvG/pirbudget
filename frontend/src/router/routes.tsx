@@ -3,7 +3,7 @@ import { shouldRedirectToLogin } from './authRedirect';
 import { rootRoute } from './root';
 import { AuthenticatedLayout } from '../layouts/AuthenticatedLayout';
 import { ProtectedDashboard } from './ProtectedDashboard';
-import { ProtectedGroups } from './ProtectedGroups';
+import { ProtectedCategories } from './ProtectedGroups';
 import { ProtectedTransactions } from './ProtectedTransactions';
 import { ProtectedMonth } from './ProtectedMonth';
 import { LoginPage } from '../modules/registration/LoginPage';
@@ -26,10 +26,10 @@ export const indexRoute = createRoute({
   component: ProtectedDashboard,
 });
 
-export const groupsRoute = createRoute({
+export const categoriesRoute = createRoute({
   getParentRoute: () => authenticatedLayoutRoute,
-  path: '/groups',
-  component: ProtectedGroups,
+  path: '/categories',
+  component: ProtectedCategories,
 });
 
 export const transactionsRoute = createRoute({

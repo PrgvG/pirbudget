@@ -17,9 +17,9 @@
       "types": "./dist/ids.d.ts",
       "default": "./dist/ids.js"
     },
-    "./payment-groups": {
-      "types": "./dist/payment-groups.d.ts",
-      "default": "./dist/payment-groups.js"
+    "./categories": {
+      "types": "./dist/categories.d.ts",
+      "default": "./dist/categories.js"
     },
     "./recurrence": {
       "types": "./dist/recurrence.d.ts",

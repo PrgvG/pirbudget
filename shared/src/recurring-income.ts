@@ -9,7 +9,7 @@ import { recurrenceRuleSchema } from './recurrence.js';
 
 export const recurringIncomeSchema = z.object({
   id: entityIdSchema,
-  source: z.string(),
+  categoryId: entityIdSchema,
   amountPerOccurrence: z.number(),
   recurrence: recurrenceRuleSchema,
   /** null = бесконечно */

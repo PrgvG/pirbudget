@@ -1,7 +1,7 @@
 import { useAuth } from '../contexts/useAuth';
-import { GroupsPage } from '../pages/GroupsPage';
+import { CategoriesPage } from '../pages/CategoriesPage';
 
-export function ProtectedGroups() {
+export function ProtectedCategories() {
   const { isLoading, isAuthenticated } = useAuth();
 
   if (isLoading) {
@@ -14,5 +14,5 @@ export function ProtectedGroups() {
     return null;
   }
 
-  return <GroupsPage />;
+  return <CategoriesPage />;
 }

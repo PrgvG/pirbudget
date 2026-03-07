@@ -16,7 +16,7 @@ export const incomeEntrySchema = z.object({
   amount: z.number(),
   /** ISO date */
   date: z.string(),
-  source: z.string(),
+  categoryId: entityIdSchema,
   note: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),

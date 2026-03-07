@@ -12,8 +12,7 @@ export type IEntryDoc = Document & {
   /** ISO date string YYYY-MM-DD */
   date: string;
   note?: string;
-  source?: string;
-  groupId?: mongoose.Types.ObjectId;
+  categoryId: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -45,13 +44,10 @@ const EntrySchema = new Schema<IEntryDoc>(
       type: String,
       trim: true,
     },
-    source: {
-      type: String,
-      trim: true,
-    },
-    groupId: {
+    categoryId: {
       type: Schema.Types.ObjectId,
-      ref: 'PaymentGroup',
+      ref: 'Category',
+      required: true,
     },
   },
   {

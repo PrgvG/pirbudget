@@ -23,7 +23,7 @@ export type RecurrenceDoc = RecurrenceInterval | RecurrenceDate;
 
 export type IRecurringExpensePaymentDoc = Document & {
   userId: mongoose.Types.ObjectId;
-  groupId: mongoose.Types.ObjectId;
+  categoryId: mongoose.Types.ObjectId;
   note?: string;
   amountPerOccurrence: number;
   recurrence: RecurrenceDoc;
@@ -52,9 +52,9 @@ const RecurringExpensePaymentSchema = new Schema<IRecurringExpensePaymentDoc>(
       required: true,
       index: true,
     },
-    groupId: {
+    categoryId: {
       type: Schema.Types.ObjectId,
-      ref: 'PaymentGroup',
+      ref: 'Category',
       required: true,
       index: true,
     },

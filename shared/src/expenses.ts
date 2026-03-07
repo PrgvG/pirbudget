@@ -9,7 +9,7 @@ import { recurrenceRuleSchema } from './recurrence.js';
 
 const baseExpensePaymentSchema = z.object({
   id: entityIdSchema,
-  groupId: entityIdSchema,
+  categoryId: entityIdSchema,
   note: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),

@@ -9,7 +9,7 @@ export type FetchEntriesParams = {
   from?: string;
   to?: string;
   type?: 'income' | 'expense' | 'all';
-  groupId?: string;
+  categoryId?: string;
 };
 
 function isEntryObject(obj: object): obj is Entry {
@@ -17,10 +17,7 @@ function isEntryObject(obj: object): obj is Entry {
   if (o.direction !== 'income' && o.direction !== 'expense') return false;
   if (typeof o.id !== 'string' || typeof o.amount !== 'number' || typeof o.date !== 'string') return false;
   if (typeof o.createdAt !== 'string' || typeof o.updatedAt !== 'string') return false;
-  if (o.direction === 'income') {
-    return typeof o.source === 'string' && (o.note === undefined || typeof o.note === 'string');
-  }
-  return typeof o.groupId === 'string' && (o.note === undefined || typeof o.note === 'string');
+  return typeof o.categoryId === 'string' && (o.note === undefined || typeof o.note === 'string');
 }
 
 export function isEntry(data: unknown): data is Entry {
@@ -36,7 +33,7 @@ function buildQuery(params: FetchEntriesParams): string {
   if (params.from) search.set('from', params.from);
   if (params.to) search.set('to', params.to);
   if (params.type && params.type !== 'all') search.set('type', params.type);
-  if (params.groupId) search.set('groupId', params.groupId);
+  if (params.categoryId) search.set('categoryId', params.categoryId);
   const q = search.toString();
   return q ? `?${q}` : '';
 }

@@ -2,46 +2,50 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import type {
-  PaymentGroup,
-  PaymentGroupCreate,
-  PaymentGroupUpdate,
-} from 'shared/payment-groups';
+  Category,
+  CategoryCreate,
+  CategoryUpdate,
+  CategoryDirection,
+} from 'shared/categories';
 import {
-  fetchPaymentGroups,
-  createPaymentGroup,
-  updatePaymentGroup,
-  deletePaymentGroup,
-} from '../domains/payment-groups';
+  fetchCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+} from '../domains/categories';
 import { formatApiError } from '../api/formatError';
-import styles from './GroupsPage.module.css';
+import styles from './CategoriesPage.module.css';
 
-const PAYMENT_GROUPS_QUERY_KEY = ['payment-groups'] as const;
+const CATEGORIES_QUERY_KEY = ['categories'] as const;
 
 type FormState = {
   name: string;
   sortOrder: number;
   color: string;
   icon: string;
+  direction: CategoryDirection;
 };
 
-const emptyForm: FormState = {
+const emptyForm = (direction: CategoryDirection): FormState => ({
   name: '',
   sortOrder: 0,
   color: '',
   icon: '',
-};
+  direction,
+});
 
-function formToCreate(f: FormState): PaymentGroupCreate {
+function formToCreate(f: FormState): CategoryCreate {
   return {
     name: f.name.trim(),
     sortOrder: f.sortOrder,
+    direction: f.direction,
     ...(f.color.trim() && { color: f.color.trim() }),
     ...(f.icon.trim() && { icon: f.icon.trim() }),
   };
 }
 
-function formToUpdate(f: FormState): PaymentGroupUpdate {
-  const u: PaymentGroupUpdate = {
+function formToUpdate(f: FormState): CategoryUpdate {
+  const u: CategoryUpdate = {
     sortOrder: f.sortOrder,
   };
   if (f.name.trim()) u.name = f.name.trim();
@@ -52,24 +56,25 @@ function formToUpdate(f: FormState): PaymentGroupUpdate {
   return u;
 }
 
-export function GroupsPage() {
+export function CategoriesPage() {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState<FormState>(emptyForm);
+  const [direction, setDirection] = useState<CategoryDirection>('expense');
+  const [form, setForm] = useState<FormState>(emptyForm('expense'));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [createMode, setCreateMode] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const groupsQuery = useQuery({
-    queryKey: PAYMENT_GROUPS_QUERY_KEY,
-    queryFn: fetchPaymentGroups,
+  const categoriesQuery = useQuery({
+    queryKey: [...CATEGORIES_QUERY_KEY, direction],
+    queryFn: () => fetchCategories(direction),
   });
 
   const createMutation = useMutation({
-    mutationFn: createPaymentGroup,
+    mutationFn: createCategory,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: PAYMENT_GROUPS_QUERY_KEY });
-      setForm(emptyForm);
+      queryClient.invalidateQueries({ queryKey: CATEGORIES_QUERY_KEY });
+      setForm(emptyForm(direction));
       setCreateMode(false);
       setError(null);
     },
@@ -79,12 +84,12 @@ export function GroupsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: PaymentGroupUpdate }) =>
-      updatePaymentGroup(id, data),
+    mutationFn: ({ id, data }: { id: string; data: CategoryUpdate }) =>
+      updateCategory(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: PAYMENT_GROUPS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: CATEGORIES_QUERY_KEY });
       setEditingId(null);
-      setForm(emptyForm);
+      setForm(emptyForm(direction));
       setError(null);
     },
     onError: err => {
@@ -93,10 +98,10 @@ export function GroupsPage() {
   });
 
   const reorderMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: PaymentGroupUpdate }) =>
-      updatePaymentGroup(id, data),
+    mutationFn: ({ id, data }: { id: string; data: CategoryUpdate }) =>
+      updateCategory(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: PAYMENT_GROUPS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: CATEGORIES_QUERY_KEY });
       setError(null);
     },
     onError: err => {
@@ -105,9 +110,9 @@ export function GroupsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deletePaymentGroup,
+    mutationFn: deleteCategory,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: PAYMENT_GROUPS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: CATEGORIES_QUERY_KEY });
       setDeleteConfirmId(null);
       setError(null);
     },
@@ -116,21 +121,33 @@ export function GroupsPage() {
     },
   });
 
-  const handleStartCreate = () => {
+  const handleDirectionChange = (d: CategoryDirection) => {
+    setDirection(d);
     setEditingId(null);
-    setCreateMode(true);
-    setForm({ ...emptyForm, sortOrder: groupsQuery.data?.length ?? 0 });
+    setCreateMode(false);
+    setForm(emptyForm(d));
     setError(null);
   };
 
-  const handleStartEdit = (g: PaymentGroup) => {
-    setEditingId(g.id);
+  const handleStartCreate = () => {
+    setEditingId(null);
+    setCreateMode(true);
+    setForm({
+      ...emptyForm(direction),
+      sortOrder: categoriesQuery.data?.length ?? 0,
+    });
+    setError(null);
+  };
+
+  const handleStartEdit = (c: Category) => {
+    setEditingId(c.id);
     setCreateMode(false);
     setForm({
-      name: g.name,
-      sortOrder: g.sortOrder,
-      color: g.color ?? '',
-      icon: g.icon ?? '',
+      name: c.name,
+      sortOrder: c.sortOrder,
+      color: c.color ?? '',
+      icon: c.icon ?? '',
+      direction: c.direction,
     });
     setError(null);
   };
@@ -138,7 +155,7 @@ export function GroupsPage() {
   const handleCancelEdit = () => {
     setEditingId(null);
     setCreateMode(false);
-    setForm(emptyForm);
+    setForm(emptyForm(direction));
     setError(null);
   };
 
@@ -155,38 +172,55 @@ export function GroupsPage() {
     }
   };
 
-  const handleMove = (group: PaymentGroup, direction: 'up' | 'down') => {
-    const list = groupsQuery.data ?? [];
-    const idx = list.findIndex(x => x.id === group.id);
+  const handleMove = (category: Category, moveDirection: 'up' | 'down') => {
+    const list = categoriesQuery.data ?? [];
+    const idx = list.findIndex(x => x.id === category.id);
     if (idx < 0) return;
-    const other = direction === 'up' ? list[idx - 1] : list[idx + 1];
+    const other = moveDirection === 'up' ? list[idx - 1] : list[idx + 1];
     if (!other) return;
     reorderMutation.mutate({
-      id: group.id,
+      id: category.id,
       data: { sortOrder: other.sortOrder },
     });
     reorderMutation.mutate({
       id: other.id,
-      data: { sortOrder: group.sortOrder },
+      data: { sortOrder: category.sortOrder },
     });
   };
 
-  const groups = groupsQuery.data ?? [];
-  const loading = groupsQuery.isPending;
-  const listError = groupsQuery.error
-    ? groupsQuery.error instanceof Error
-      ? groupsQuery.error.message
-      : 'Не удалось загрузить группы'
+  const categories = categoriesQuery.data ?? [];
+  const loading = categoriesQuery.isPending;
+  const listError = categoriesQuery.error
+    ? categoriesQuery.error instanceof Error
+      ? categoriesQuery.error.message
+      : 'Не удалось загрузить категории'
     : null;
 
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Группы</h1>
+        <h1 className={styles.title}>Категории</h1>
         <Link to="/" className={styles.backLink}>
           На главную
         </Link>
       </header>
+
+      <div className={styles.tabs}>
+        <button
+          type="button"
+          className={direction === 'expense' ? styles.tabActive : styles.tab}
+          onClick={() => handleDirectionChange('expense')}
+        >
+          Расходы
+        </button>
+        <button
+          type="button"
+          className={direction === 'income' ? styles.tabActive : styles.tab}
+          onClick={() => handleDirectionChange('income')}
+        >
+          Доходы
+        </button>
+      </div>
 
       <section className={styles.formSection}>
         {!editingId ? (
@@ -195,34 +229,36 @@ export function GroupsPage() {
             onClick={handleStartCreate}
             className={styles.addButton}
           >
-            Добавить группу
+            Добавить категорию
           </button>
         ) : null}
         {editingId || createMode ? (
           <form onSubmit={handleSubmit} className={styles.form}>
             <h2 className={styles.formTitle}>
-              {editingId ? 'Редактировать группу' : 'Новая группа'}
+              {editingId ? 'Редактировать категорию' : 'Новая категория'}
             </h2>
             <div className={styles.field}>
-              <label htmlFor="group-name" className={styles.label}>
+              <label htmlFor="category-name" className={styles.label}>
                 Название
               </label>
               <input
-                id="group-name"
+                id="category-name"
                 type="text"
                 value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                placeholder="Например: Продукты"
+                placeholder={
+                  direction === 'expense' ? 'Например: Продукты' : 'Например: Зарплата'
+                }
                 className={styles.input}
                 autoFocus
               />
             </div>
             <div className={styles.field}>
-              <label htmlFor="group-sortOrder" className={styles.label}>
+              <label htmlFor="category-sortOrder" className={styles.label}>
                 Порядок
               </label>
               <input
-                id="group-sortOrder"
+                id="category-sortOrder"
                 type="number"
                 min={0}
                 value={form.sortOrder}
@@ -236,12 +272,12 @@ export function GroupsPage() {
               />
             </div>
             <div className={styles.field}>
-              <label htmlFor="group-color" className={styles.label}>
+              <label htmlFor="category-color" className={styles.label}>
                 Цвет
               </label>
               <div className={styles.colorRow}>
                 <input
-                  id="group-color"
+                  id="category-color"
                   type="color"
                   value={form.color || '#6b7280'}
                   onChange={e =>
@@ -261,11 +297,11 @@ export function GroupsPage() {
               </div>
             </div>
             <div className={styles.field}>
-              <label htmlFor="group-icon" className={styles.label}>
+              <label htmlFor="category-icon" className={styles.label}>
                 Иконка (опционально)
               </label>
               <input
-                id="group-icon"
+                id="category-icon"
                 type="text"
                 value={form.icon}
                 onChange={e => setForm(f => ({ ...f, icon: e.target.value }))}
@@ -297,35 +333,39 @@ export function GroupsPage() {
       </section>
 
       <section className={styles.listSection}>
-        <h2 className={styles.listTitle}>Список групп</h2>
+        <h2 className={styles.listTitle}>
+          {direction === 'expense' ? 'Категории расходов' : 'Категории доходов'}
+        </h2>
         {loading && <p className={styles.status}>Загрузка...</p>}
         {listError && <p className={styles.error}>{listError}</p>}
-        {!loading && !listError && groups.length === 0 ? (
-          <p className={styles.empty}>Групп пока нет. Добавьте первую.</p>
+        {!loading && !listError && categories.length === 0 ? (
+          <p className={styles.empty}>
+            Категорий пока нет. Добавьте первую.
+          </p>
         ) : null}
-        {!loading && !listError && groups.length > 0 ? (
+        {!loading && !listError && categories.length > 0 ? (
           <ul className={styles.list}>
-            {groups.map(g => (
-              <li key={g.id} className={styles.card}>
+            {categories.map(c => (
+              <li key={c.id} className={styles.card}>
                 <span
                   className={styles.colorSwatch}
-                  style={{ backgroundColor: g.color || '#6b7280' }}
+                  style={{ backgroundColor: c.color || '#6b7280' }}
                   aria-hidden
                 />
                 <span className={styles.cardName}>
-                  {g.icon ? (
-                    <span className={styles.cardIcon}>{g.icon}</span>
+                  {c.icon ? (
+                    <span className={styles.cardIcon}>{c.icon}</span>
                   ) : null}
-                  {g.name}
+                  {c.name}
                 </span>
-                <span className={styles.cardOrder}>{g.sortOrder}</span>
+                <span className={styles.cardOrder}>{c.sortOrder}</span>
                 <div className={styles.cardActions}>
                   <button
                     type="button"
-                    onClick={() => handleMove(g, 'up')}
+                    onClick={() => handleMove(c, 'up')}
                     disabled={
                       reorderMutation.isPending ||
-                      groupsQuery.data?.findIndex(x => x.id === g.id) === 0
+                      categoriesQuery.data?.findIndex(x => x.id === c.id) === 0
                     }
                     className={styles.iconButton}
                     title="Выше"
@@ -335,11 +375,11 @@ export function GroupsPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleMove(g, 'down')}
+                    onClick={() => handleMove(c, 'down')}
                     disabled={
                       reorderMutation.isPending ||
-                      groupsQuery.data?.findIndex(x => x.id === g.id) ===
-                        groups.length - 1
+                      categoriesQuery.data?.findIndex(x => x.id === c.id) ===
+                        categories.length - 1
                     }
                     className={styles.iconButton}
                     title="Ниже"
@@ -349,19 +389,19 @@ export function GroupsPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleStartEdit(g)}
+                    onClick={() => handleStartEdit(c)}
                     className={styles.iconButton}
                     title="Редактировать"
                     aria-label="Редактировать"
                   >
                     ✎
                   </button>
-                  {deleteConfirmId === g.id ? (
+                  {deleteConfirmId === c.id ? (
                     <>
                       <span className={styles.confirmText}>В архив?</span>
                       <button
                         type="button"
-                        onClick={() => deleteMutation.mutate(g.id)}
+                        onClick={() => deleteMutation.mutate(c.id)}
                         disabled={deleteMutation.isPending}
                         className={styles.dangerButton}
                       >
@@ -378,7 +418,7 @@ export function GroupsPage() {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => setDeleteConfirmId(g.id)}
+                      onClick={() => setDeleteConfirmId(c.id)}
                       className={styles.iconButton}
                       title="В архив"
                       aria-label="В архив"
