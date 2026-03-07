@@ -77,7 +77,7 @@ describe('Dashboard', () => {
     expect(
       screen.getByRole('heading', { name: /добро пожаловать/i })
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /группы платежей/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^группы$/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /поступления/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Платежи' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /история/i })).toBeInTheDocument();

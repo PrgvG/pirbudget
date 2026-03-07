@@ -12,6 +12,7 @@ import {
   updatePaymentGroup,
   deletePaymentGroup,
 } from '../domains/payment-groups';
+import { formatApiError } from '../api/formatError';
 import styles from './GroupsPage.module.css';
 
 const PAYMENT_GROUPS_QUERY_KEY = ['payment-groups'] as const;
@@ -73,7 +74,7 @@ export function GroupsPage() {
       setError(null);
     },
     onError: err => {
-      setError(err instanceof Error ? err.message : 'Ошибка создания');
+      setError(formatApiError(err));
     },
   });
 
@@ -87,7 +88,7 @@ export function GroupsPage() {
       setError(null);
     },
     onError: err => {
-      setError(err instanceof Error ? err.message : 'Ошибка сохранения');
+      setError(formatApiError(err));
     },
   });
 
@@ -99,7 +100,7 @@ export function GroupsPage() {
       setError(null);
     },
     onError: err => {
-      setError(err instanceof Error ? err.message : 'Ошибка смены порядка');
+      setError(formatApiError(err));
     },
   });
 
@@ -111,7 +112,7 @@ export function GroupsPage() {
       setError(null);
     },
     onError: err => {
-      setError(err instanceof Error ? err.message : 'Ошибка удаления');
+      setError(formatApiError(err));
     },
   });
 
@@ -181,7 +182,7 @@ export function GroupsPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Группы платежей</h1>
+        <h1 className={styles.title}>Группы</h1>
         <Link to="/" className={styles.backLink}>
           На главную
         </Link>

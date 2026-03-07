@@ -12,6 +12,7 @@ import {
   updateIncomeEntry,
   deleteIncomeEntry,
 } from '../domains/income-entries';
+import { formatApiError } from '../api/formatError';
 import styles from './IncomesPage.module.css';
 
 const INCOME_ENTRIES_QUERY_KEY = ['income-entries'] as const;
@@ -87,7 +88,7 @@ export function IncomesPage() {
       setError(null);
     },
     onError: err => {
-      setError(err instanceof Error ? err.message : 'Ошибка создания');
+      setError(formatApiError(err));
     },
   });
 
@@ -101,7 +102,7 @@ export function IncomesPage() {
       setError(null);
     },
     onError: err => {
-      setError(err instanceof Error ? err.message : 'Ошибка сохранения');
+      setError(formatApiError(err));
     },
   });
 
@@ -113,7 +114,7 @@ export function IncomesPage() {
       setError(null);
     },
     onError: err => {
-      setError(err instanceof Error ? err.message : 'Ошибка удаления');
+      setError(formatApiError(err));
     },
   });
 

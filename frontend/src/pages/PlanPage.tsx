@@ -1,22 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import type { PlannedItem } from 'shared';
 import type { PaymentGroup } from 'shared/payment-groups';
 import { fetchPlan, type PlanParams } from '../domains/transactions';
 import { fetchPaymentGroups } from '../domains/payment-groups';
+import { useMonthPicker, MonthPicker } from '../components/month-picker';
 import styles from './PlanPage.module.css';
 
 const PLAN_QUERY_KEY = 'plan';
 const GROUPS_QUERY_KEY = ['payment-groups'] as const;
-
-function getMonthBounds(monthStr: string): { from: string; to: string } {
-  const [y, m] = monthStr.split('-').map(Number);
-  const from = `${monthStr}-01`;
-  const lastDay = new Date(y, m, 0).getDate();
-  const to = `${monthStr}-${String(lastDay).padStart(2, '0')}`;
-  return { from, to };
-}
 
 function formatDateLabel(isoDate: string): string {
   try {
@@ -29,10 +22,6 @@ function formatDateLabel(isoDate: string): string {
   } catch {
     return isoDate.slice(0, 10);
   }
-}
-
-function currentMonthStr(): string {
-  return new Date().toISOString().slice(0, 7);
 }
 
 function groupByDate(items: PlannedItem[]): Map<string, PlannedItem[]> {
@@ -51,11 +40,12 @@ function groupByDate(items: PlannedItem[]): Map<string, PlannedItem[]> {
 }
 
 export function PlanPage() {
-  const [month, setMonth] = useState(currentMonthStr());
+  const monthPicker = useMonthPicker();
 
-  const { from, to } = useMemo(() => getMonthBounds(month), [month]);
-
-  const planParams: PlanParams = useMemo(() => ({ from, to }), [from, to]);
+  const planParams: PlanParams = useMemo(
+    () => ({ from: monthPicker.from, to: monthPicker.to }),
+    [monthPicker.from, monthPicker.to]
+  );
 
   const planQuery = useQuery({
     queryKey: [PLAN_QUERY_KEY, planParams],
@@ -74,30 +64,8 @@ export function PlanPage() {
     return m;
   }, [groups]);
 
-  const handlePrevMonth = () => {
-    const [y, m] = month.split('-').map(Number);
-    const d = new Date(y, m - 2, 1);
-    setMonth(d.toISOString().slice(0, 7));
-  };
-
-  const handleNextMonth = () => {
-    const [y, m] = month.split('-').map(Number);
-    const d = new Date(y, m, 1);
-    setMonth(d.toISOString().slice(0, 7));
-  };
-
-  const canPrev = month > '2000-01';
-
   const items = planQuery.data ?? [];
   const byDate = useMemo(() => groupByDate(items), [items]);
-
-  const monthLabel = useMemo(() => {
-    const [y, m] = month.split('-').map(Number);
-    return new Date(y, m - 1, 1).toLocaleDateString('ru-RU', {
-      month: 'long',
-      year: 'numeric',
-    });
-  }, [month]);
 
   return (
     <div className={styles.page}>
@@ -110,25 +78,16 @@ export function PlanPage() {
 
       <section className={styles.filters}>
         <div className={styles.filterGroup}>
-          <label>Период</label>
-          <div className={styles.monthNav}>
-            <button
-              type="button"
-              onClick={handlePrevMonth}
-              disabled={!canPrev}
-              aria-label="Предыдущий месяц"
-            >
-              ←
-            </button>
-            <span>{monthLabel}</span>
-            <button
-              type="button"
-              onClick={handleNextMonth}
-              aria-label="Следующий месяц"
-            >
-              →
-            </button>
-          </div>
+          <MonthPicker
+            id="plan-month"
+            month={monthPicker.month}
+            monthLabel={monthPicker.monthLabel}
+            onPrev={monthPicker.handlePrevMonth}
+            onNext={monthPicker.handleNextMonth}
+            onMonthChange={monthPicker.handleMonthChange}
+            canPrev={monthPicker.canPrev}
+            canNext={monthPicker.canNext}
+          />
         </div>
       </section>
 

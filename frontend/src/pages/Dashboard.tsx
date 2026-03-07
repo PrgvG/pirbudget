@@ -65,7 +65,7 @@ export function Dashboard() {
 
       <nav className={styles.nav}>
         <Link to="/groups" className={styles.navLink}>
-          Группы платежей
+          Группы
         </Link>
         <Link to="/incomes" className={styles.navLink}>
           Поступления

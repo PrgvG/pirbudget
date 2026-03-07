@@ -1,17 +1,18 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import type { PaymentGroup } from 'shared/payment-groups';
 import { fetchMonthStats } from '../domains/transactions';
 import { fetchPaymentGroups } from '../domains/payment-groups';
+import {
+  useMonthPicker,
+  MonthPicker,
+  currentMonthStr,
+} from '../components/month-picker';
 import styles from './StatisticsPage.module.css';
 
 const STATS_QUERY_KEY = 'monthStats';
 const GROUPS_QUERY_KEY = ['payment-groups'] as const;
-
-function currentMonthStr(): string {
-  return new Date().toISOString().slice(0, 7);
-}
 
 function formatMoney(value: number): string {
   return value.toLocaleString('ru-RU', {
@@ -21,11 +22,13 @@ function formatMoney(value: number): string {
 }
 
 export function StatisticsPage() {
-  const [month, setMonth] = useState(currentMonthStr());
+  const monthPicker = useMonthPicker({
+    maxMonth: currentMonthStr(),
+  });
 
   const statsQuery = useQuery({
-    queryKey: [STATS_QUERY_KEY, month],
-    queryFn: () => fetchMonthStats(month),
+    queryKey: [STATS_QUERY_KEY, monthPicker.month],
+    queryFn: () => fetchMonthStats(monthPicker.month),
   });
 
   const groupsQuery = useQuery({
@@ -39,29 +42,6 @@ export function StatisticsPage() {
     for (const g of groups) m.set(g.id, g);
     return m;
   }, [groups]);
-
-  const handlePrevMonth = () => {
-    const [y, m] = month.split('-').map(Number);
-    const d = new Date(y, m - 2, 1);
-    setMonth(d.toISOString().slice(0, 7));
-  };
-
-  const handleNextMonth = () => {
-    const [y, m] = month.split('-').map(Number);
-    const d = new Date(y, m, 1);
-    setMonth(d.toISOString().slice(0, 7));
-  };
-
-  const canPrev = month > '2000-01';
-  const canNext = month < currentMonthStr();
-
-  const monthLabel = useMemo(() => {
-    const [y, m] = month.split('-').map(Number);
-    return new Date(y, m - 1, 1).toLocaleDateString('ru-RU', {
-      month: 'long',
-      year: 'numeric',
-    });
-  }, [month]);
 
   const stats = statsQuery.data;
   const sortedByGroup = useMemo(() => {
@@ -86,26 +66,16 @@ export function StatisticsPage() {
       </header>
 
       <section className={styles.monthSection}>
-        <label className={styles.monthLabel}>Период</label>
-        <div className={styles.monthNav}>
-          <button
-            type="button"
-            onClick={handlePrevMonth}
-            disabled={!canPrev}
-            aria-label="Предыдущий месяц"
-          >
-            ←
-          </button>
-          <span>{monthLabel}</span>
-          <button
-            type="button"
-            onClick={handleNextMonth}
-            disabled={!canNext}
-            aria-label="Следующий месяц"
-          >
-            →
-          </button>
-        </div>
+        <MonthPicker
+          id="stats-month"
+          month={monthPicker.month}
+          monthLabel={monthPicker.monthLabel}
+          onPrev={monthPicker.handlePrevMonth}
+          onNext={monthPicker.handleNextMonth}
+          onMonthChange={monthPicker.handleMonthChange}
+          canPrev={monthPicker.canPrev}
+          canNext={monthPicker.canNext}
+        />
       </section>
 
       {statsQuery.isPending && (

@@ -22,6 +22,7 @@ import {
   updateRecurringExpense,
   deleteRecurringExpense,
 } from '../domains/expenses';
+import { formatApiError } from '../api/formatError';
 import styles from './ExpensesPage.module.css';
 
 const GROUPS_QUERY_KEY = ['payment-groups'] as const;
@@ -211,7 +212,7 @@ export function ExpensesPage() {
       setError(null);
     },
     onError: err => {
-      setError(err instanceof Error ? err.message : 'Ошибка создания');
+      setError(formatApiError(err));
     },
   });
 
@@ -225,7 +226,7 @@ export function ExpensesPage() {
       setError(null);
     },
     onError: err => {
-      setError(err instanceof Error ? err.message : 'Ошибка сохранения');
+      setError(formatApiError(err));
     },
   });
 
@@ -237,7 +238,7 @@ export function ExpensesPage() {
       setError(null);
     },
     onError: err => {
-      setError(err instanceof Error ? err.message : 'Ошибка удаления');
+      setError(formatApiError(err));
     },
   });
 
@@ -250,7 +251,7 @@ export function ExpensesPage() {
       setError(null);
     },
     onError: err => {
-      setError(err instanceof Error ? err.message : 'Ошибка создания');
+      setError(formatApiError(err));
     },
   });
 
@@ -267,7 +268,7 @@ export function ExpensesPage() {
       setError(null);
     },
     onError: err => {
-      setError(err instanceof Error ? err.message : 'Ошибка сохранения');
+      setError(formatApiError(err));
     },
   });
 
@@ -279,7 +280,7 @@ export function ExpensesPage() {
       setError(null);
     },
     onError: err => {
-      setError(err instanceof Error ? err.message : 'Ошибка удаления');
+      setError(formatApiError(err));
     },
   });
 
@@ -391,7 +392,7 @@ export function ExpensesPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Обязательные платежи</h1>
+        <h1 className={styles.title}>Платежи</h1>
         <Link to="/" className={styles.backLink}>
           На главную
         </Link>

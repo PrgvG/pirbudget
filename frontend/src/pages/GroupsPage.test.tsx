@@ -50,7 +50,7 @@ describe('GroupsPage', () => {
     renderGroupsPage();
     await waitFor(() => {
       expect(
-        screen.getByRole('heading', { name: /группы платежей/i })
+        screen.getByRole('heading', { name: /^группы$/i })
       ).toBeInTheDocument();
     });
     expect(

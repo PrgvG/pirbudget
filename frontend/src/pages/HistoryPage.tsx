@@ -5,18 +5,15 @@ import type { Transaction } from 'shared/transactions';
 import type { PaymentGroup } from 'shared/payment-groups';
 import { fetchHistory, type HistoryParams } from '../domains/transactions';
 import { fetchPaymentGroups } from '../domains/payment-groups';
+import {
+  useMonthPicker,
+  MonthPicker,
+  currentMonthStr,
+} from '../components/month-picker';
 import styles from './HistoryPage.module.css';
 
 const HISTORY_QUERY_KEY = 'history';
 const GROUPS_QUERY_KEY = ['payment-groups'] as const;
-
-function getMonthBounds(monthStr: string): { from: string; to: string } {
-  const [y, m] = monthStr.split('-').map(Number);
-  const from = `${monthStr}-01`;
-  const lastDay = new Date(y, m, 0).getDate();
-  const to = `${monthStr}-${String(lastDay).padStart(2, '0')}`;
-  return { from, to };
-}
 
 function formatDateLabel(isoDate: string): string {
   try {
@@ -29,10 +26,6 @@ function formatDateLabel(isoDate: string): string {
   } catch {
     return isoDate.slice(0, 10);
   }
-}
-
-function currentMonthStr(): string {
-  return new Date().toISOString().slice(0, 7);
 }
 
 function groupByDate(transactions: Transaction[]): Map<string, Transaction[]> {
@@ -52,33 +45,29 @@ function groupByDate(transactions: Transaction[]): Map<string, Transaction[]> {
 }
 
 type HistoryFilters = {
-  month: string;
   type: 'all' | 'income' | 'expense';
   groupId: string;
 };
 
 const defaultFilters: HistoryFilters = {
-  month: currentMonthStr(),
   type: 'all',
   groupId: '',
 };
 
 export function HistoryPage() {
   const [filters, setFilters] = useState<HistoryFilters>(defaultFilters);
-
-  const { from, to } = useMemo(
-    () => getMonthBounds(filters.month),
-    [filters.month]
-  );
+  const monthPicker = useMonthPicker({
+    maxMonth: currentMonthStr(),
+  });
 
   const historyParams: HistoryParams = useMemo(
     () => ({
-      from,
-      to,
+      from: monthPicker.from,
+      to: monthPicker.to,
       type: filters.type === 'all' ? undefined : filters.type,
       groupId: filters.groupId || undefined,
     }),
-    [from, to, filters.type, filters.groupId]
+    [monthPicker.from, monthPicker.to, filters.type, filters.groupId]
   );
 
   const historyQuery = useQuery({
@@ -98,31 +87,8 @@ export function HistoryPage() {
     return m;
   }, [groups]);
 
-  const handlePrevMonth = () => {
-    const [y, m] = filters.month.split('-').map(Number);
-    const d = new Date(y, m - 2, 1);
-    setFilters(f => ({ ...f, month: d.toISOString().slice(0, 7) }));
-  };
-
-  const handleNextMonth = () => {
-    const [y, m] = filters.month.split('-').map(Number);
-    const d = new Date(y, m, 1);
-    setFilters(f => ({ ...f, month: d.toISOString().slice(0, 7) }));
-  };
-
-  const canPrev = filters.month > '2000-01';
-  const canNext = filters.month < currentMonthStr();
-
   const transactions = historyQuery.data ?? [];
   const byDate = useMemo(() => groupByDate(transactions), [transactions]);
-
-  const monthLabel = useMemo(() => {
-    const [y, m] = filters.month.split('-').map(Number);
-    return new Date(y, m - 1, 1).toLocaleDateString('ru-RU', {
-      month: 'long',
-      year: 'numeric',
-    });
-  }, [filters.month]);
 
   return (
     <div className={styles.page}>
@@ -135,26 +101,16 @@ export function HistoryPage() {
 
       <section className={styles.filters}>
         <div className={styles.filterGroup}>
-          <label>Период</label>
-          <div className={styles.monthNav}>
-            <button
-              type="button"
-              onClick={handlePrevMonth}
-              disabled={!canPrev}
-              aria-label="Предыдущий месяц"
-            >
-              ←
-            </button>
-            <span>{monthLabel}</span>
-            <button
-              type="button"
-              onClick={handleNextMonth}
-              disabled={!canNext}
-              aria-label="Следующий месяц"
-            >
-              →
-            </button>
-          </div>
+          <MonthPicker
+            id="history-month"
+            month={monthPicker.month}
+            monthLabel={monthPicker.monthLabel}
+            onPrev={monthPicker.handlePrevMonth}
+            onNext={monthPicker.handleNextMonth}
+            onMonthChange={monthPicker.handleMonthChange}
+            canPrev={monthPicker.canPrev}
+            canNext={monthPicker.canNext}
+          />
         </div>
         <div className={styles.filterGroup}>
           <label htmlFor="history-type">Тип</label>
