@@ -5,9 +5,7 @@ import { AuthContext } from '../contexts/useAuth';
 import { Dashboard } from './Dashboard';
 
 vi.mock('../api/client', () => ({
-  apiJson: vi.fn(() =>
-    Promise.resolve({ users: [], total: 0, page: 1, limit: 20 })
-  ),
+  apiJson: vi.fn(() => Promise.resolve({ message: 'OK' })),
 }));
 
 vi.mock('../modules/health', () => ({
@@ -71,10 +69,19 @@ describe('Dashboard', () => {
         </AuthContext.Provider>
       </QueryClientProvider>
     );
-    await screen.findByRole('heading', { name: /pirbudget/i });
+    await screen.findByRole('heading', { name: 'PirBudget', level: 1 });
     expect(
-      screen.getByRole('heading', { name: /pirbudget/i })
+      screen.getByRole('heading', { name: 'PirBudget', level: 1 })
     ).toBeInTheDocument();
     expect(screen.getByTestId('health-bar')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /добро пожаловать/i })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /группы платежей/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /поступления/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Платежи' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /история/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /план/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /статистика/i })).toBeInTheDocument();
   });
 });
