@@ -45,14 +45,14 @@ export function useMonthPicker(options: UseMonthPickerOptions = {}) {
 
   const handlePrevMonth = useCallback(() => {
     const [y, m] = month.split('-').map(Number);
-    const d = new Date(y, m - 2, 1);
-    setMonth(d.toISOString().slice(0, 7));
+    const prev = m === 1 ? [y - 1, 12] : [y, m - 1];
+    setMonth(`${prev[0]}-${String(prev[1]).padStart(2, '0')}`);
   }, [month]);
 
   const handleNextMonth = useCallback(() => {
     const [y, m] = month.split('-').map(Number);
-    const d = new Date(y, m, 1);
-    setMonth(d.toISOString().slice(0, 7));
+    const next = m === 12 ? [y + 1, 1] : [y, m + 1];
+    setMonth(`${next[0]}-${String(next[1]).padStart(2, '0')}`);
   }, [month]);
 
   const handleMonthChange = useCallback((value: string) => {
