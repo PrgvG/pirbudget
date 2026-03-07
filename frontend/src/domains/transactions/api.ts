@@ -4,6 +4,7 @@
 
 import type { Transaction } from 'shared/transactions';
 import type { PlannedItem } from 'shared';
+import type { MonthStats } from './types';
 import { apiJson } from '../../api/client';
 
 export type HistoryParams = {
@@ -101,4 +102,28 @@ function buildPlanUrl(params: PlanParams): string {
 export async function fetchPlan(params: PlanParams): Promise<PlannedItem[]> {
   const url = buildPlanUrl(params);
   return apiJson(url, {}, isPlannedItemArray);
+}
+
+// --- Month stats ---
+
+function isMonthStats(data: unknown): data is MonthStats {
+  if (typeof data !== 'object' || data === null) return false;
+  const o = data as Record<string, unknown>;
+  if (typeof o.month !== 'string') return false;
+  if (typeof o.totalIncome !== 'number') return false;
+  if (typeof o.totalExpense !== 'number') return false;
+  if (typeof o.balance !== 'number') return false;
+  if (!Array.isArray(o.expensesByGroup)) return false;
+  for (const item of o.expensesByGroup) {
+    if (typeof item !== 'object' || item === null) return false;
+    const i = item as Record<string, unknown>;
+    if (typeof i.groupId !== 'string' || typeof i.sum !== 'number') return false;
+  }
+  return true;
+}
+
+export async function fetchMonthStats(month: string): Promise<MonthStats> {
+  const search = new URLSearchParams({ month });
+  const url = `/api/transactions/stats?${search.toString()}`;
+  return apiJson(url, {}, isMonthStats);
 }

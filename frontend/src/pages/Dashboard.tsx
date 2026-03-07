@@ -99,6 +99,9 @@ export function Dashboard() {
         <Link to="/plan" className={styles.navLink}>
           План
         </Link>
+        <Link to="/stats" className={styles.navLink}>
+          Статистика
+        </Link>
       </nav>
 
       <HealthStatusBar dbStatus={dbStatus} onRefresh={onRefresh} />

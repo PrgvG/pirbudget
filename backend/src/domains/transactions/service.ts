@@ -6,11 +6,20 @@ import type { Transaction, IncomeEntry } from 'shared/transactions';
 import type { PlannedItem } from 'shared';
 import { expandRecurrence } from 'shared';
 import type { InstantExpensePayment } from '../expenses/types.js';
+import type { MonthStats } from './types.js';
 import { incomeEntriesService } from '../income-entries/service.js';
 import {
   instantExpensesService,
   recurringExpensesService,
 } from '../expenses/service.js';
+
+function getMonthBounds(month: string): { from: string; to: string } {
+  const [y, m] = month.split('-').map(Number);
+  const from = `${month}-01`;
+  const lastDay = new Date(y, m, 0).getDate();
+  const to = `${month}-${String(lastDay).padStart(2, '0')}`;
+  return { from, to };
+}
 
 export type HistoryFilterType = 'income' | 'expense' | 'all';
 
@@ -105,5 +114,36 @@ export const transactionsService = {
 
     items.sort(byScheduledDateThenKind);
     return items;
+  },
+
+  async getMonthStats(userId: string, month: string): Promise<MonthStats> {
+    const { from, to } = getMonthBounds(month);
+
+    const [incomes, instantExpenses] = await Promise.all([
+      incomeEntriesService.listByDateRange(userId, from, to),
+      instantExpensesService.listByDateRange(userId, from, to),
+    ]);
+
+    const totalIncome = incomes.reduce((acc, e) => acc + e.amount, 0);
+
+    const groupSums = new Map<string, number>();
+    let totalExpense = 0;
+    for (const e of instantExpenses) {
+      totalExpense += e.amount;
+      const gid = e.groupId;
+      groupSums.set(gid, (groupSums.get(gid) ?? 0) + e.amount);
+    }
+
+    const expensesByGroup = Array.from(groupSums.entries()).map(
+      ([groupId, sum]) => ({ groupId, sum })
+    );
+
+    return {
+      month,
+      totalIncome,
+      totalExpense,
+      balance: totalIncome - totalExpense,
+      expensesByGroup,
+    };
   },
 };

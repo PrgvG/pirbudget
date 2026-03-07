@@ -10,7 +10,11 @@ import {
 } from '../../middleware/auth.js';
 import { wrapAsync } from '../../middleware/asyncHandler.js';
 import { transactionsService } from './service.js';
-import { validateHistoryQuery, validatePlanQuery } from './validation.js';
+import {
+  validateHistoryQuery,
+  validatePlanQuery,
+  validateMonthQuery,
+} from './validation.js';
 import { AppError } from '../../lib/errors.js';
 
 const router = Router();
@@ -70,6 +74,34 @@ router.get(
         validation.data.to
       );
       res.json(list);
+    }
+  )
+);
+
+router.get(
+  '/stats',
+  wrapAsync(
+    async (
+      req: AuthenticatedRequest,
+      res: Response,
+      next: NextFunction
+    ): Promise<void> => {
+      const validation = validateMonthQuery(req.query as Record<string, unknown>);
+      if (!validation.ok) {
+        next(
+          new AppError(validation.error, {
+            statusCode: 400,
+            code: validation.code,
+          })
+        );
+        return;
+      }
+      const userId = req.user!.userId;
+      const stats = await transactionsService.getMonthStats(
+        userId,
+        validation.data.month
+      );
+      res.json(stats);
     }
   )
 );

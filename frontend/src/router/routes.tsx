@@ -7,6 +7,7 @@ import { ProtectedIncomes } from './ProtectedIncomes';
 import { ProtectedExpenses } from './ProtectedExpenses';
 import { ProtectedHistory } from './ProtectedHistory';
 import { ProtectedPlan } from './ProtectedPlan';
+import { ProtectedStatistics } from './ProtectedStatistics';
 import { LoginPage } from '../modules/registration/LoginPage';
 import { RegisterPage } from '../modules/registration/RegisterPage';
 
@@ -74,6 +75,17 @@ export const planRoute = createRoute({
     }
   },
   component: ProtectedPlan,
+});
+
+export const statisticsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/stats',
+  beforeLoad: () => {
+    if (shouldRedirectToLogin()) {
+      throw redirect({ to: '/login' });
+    }
+  },
+  component: ProtectedStatistics,
 });
 
 export const loginRoute = createRoute({

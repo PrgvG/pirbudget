@@ -77,3 +77,30 @@ export function validateHistoryQuery(query: Record<string, unknown>): HistoryQue
   }
   return { ok: true, data: { from, to, type, groupId } };
 }
+
+const monthRegex = /^\d{4}-\d{2}$/;
+
+export type MonthQueryValid = {
+  ok: true;
+  data: { month: string };
+};
+
+export type MonthQueryInvalid = {
+  ok: false;
+  error: string;
+  code: string;
+};
+
+export function validateMonthQuery(
+  query: Record<string, unknown>
+): MonthQueryValid | MonthQueryInvalid {
+  const month = query.month;
+  if (typeof month !== 'string' || !monthRegex.test(month)) {
+    return { ok: false, error: 'month must be YYYY-MM', code: 'INVALID_MONTH' };
+  }
+  const [y, m] = month.split('-').map(Number);
+  if (m < 1 || m > 12) {
+    return { ok: false, error: 'month must be 01-12', code: 'INVALID_MONTH' };
+  }
+  return { ok: true, data: { month } };
+}

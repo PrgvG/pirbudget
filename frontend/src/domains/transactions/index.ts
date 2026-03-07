@@ -10,4 +10,6 @@ export {
   fetchPlan,
   isPlannedItemArray,
   type PlanParams,
+  fetchMonthStats,
 } from './api';
+export type { MonthStats } from './types';
