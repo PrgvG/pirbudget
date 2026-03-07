@@ -90,6 +90,26 @@ export const instantExpensesService = {
     return docs.map(doc => docToInstant(doc));
   },
 
+  async listByDateRange(
+    userId: string,
+    from: string,
+    to: string,
+    groupId?: string
+  ): Promise<InstantExpensePayment[]> {
+    const uid = toObjectId(userId);
+    const filter: Record<string, unknown> = {
+      userId: uid,
+      date: { $gte: from, $lte: to },
+    };
+    if (groupId != null && groupId !== '') {
+      filter.groupId = toObjectId(groupId);
+    }
+    const docs = await InstantExpensePaymentModel.find(filter)
+      .sort({ date: -1, createdAt: -1 })
+      .lean();
+    return docs.map(doc => docToInstant(doc));
+  },
+
   async getById(userId: string, id: string): Promise<InstantExpensePayment> {
     const uid = toObjectId(userId);
     const doc = await InstantExpensePaymentModel.findOne({

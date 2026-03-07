@@ -49,6 +49,21 @@ export const incomeEntriesService = {
     return docs.map(doc => docToIncomeEntry(doc));
   },
 
+  async listByDateRange(
+    userId: string,
+    from: string,
+    to: string
+  ): Promise<IncomeEntry[]> {
+    const uid = toObjectId(userId);
+    const docs = await IncomeEntryModel.find({
+      userId: uid,
+      date: { $gte: from, $lte: to },
+    })
+      .sort({ date: -1, createdAt: -1 })
+      .lean();
+    return docs.map(doc => docToIncomeEntry(doc));
+  },
+
   async getById(userId: string, id: string): Promise<IncomeEntry> {
     const uid = toObjectId(userId);
     const doc = await IncomeEntryModel.findOne({

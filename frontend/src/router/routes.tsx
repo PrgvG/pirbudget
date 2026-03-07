@@ -5,6 +5,7 @@ import { ProtectedDashboard } from './ProtectedDashboard';
 import { ProtectedGroups } from './ProtectedGroups';
 import { ProtectedIncomes } from './ProtectedIncomes';
 import { ProtectedExpenses } from './ProtectedExpenses';
+import { ProtectedHistory } from './ProtectedHistory';
 import { LoginPage } from '../modules/registration/LoginPage';
 import { RegisterPage } from '../modules/registration/RegisterPage';
 
@@ -50,6 +51,17 @@ export const expensesRoute = createRoute({
     }
   },
   component: ProtectedExpenses,
+});
+
+export const historyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/history',
+  beforeLoad: () => {
+    if (shouldRedirectToLogin()) {
+      throw redirect({ to: '/login' });
+    }
+  },
+  component: ProtectedHistory,
 });
 
 export const loginRoute = createRoute({
