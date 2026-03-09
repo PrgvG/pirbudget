@@ -120,6 +120,7 @@ export function EntryForm({
             onChange={d => onChange({ ...value, date: dateToIso(d) })}
             valueFormat="DD.MM.YYYY"
             clearable
+            inputMode="none"
           />
         ) : null}
 
@@ -191,6 +192,7 @@ export function EntryForm({
               onChange={d => onChange({ ...value, anchorDate: dateToIso(d) })}
               valueFormat="DD.MM.YYYY"
               clearable
+              inputMode="none"
             />
 
             <DateInput
@@ -199,6 +201,7 @@ export function EntryForm({
               onChange={d => onChange({ ...value, endDate: dateToIso(d) })}
               valueFormat="DD.MM.YYYY"
               clearable
+              inputMode="none"
             />
 
             <NumberInput
