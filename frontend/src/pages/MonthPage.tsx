@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import type { Transaction } from 'shared/transactions';
 import type { PlannedItem } from 'shared';
 import type { Category } from 'shared/categories';
@@ -175,9 +174,6 @@ export function MonthPage() {
     <div className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>Месяц</h1>
-        <Link to="/" className={styles.backLink}>
-          На главную
-        </Link>
       </header>
 
       <section className={styles.monthSection}>

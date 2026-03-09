@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import type {
   Category,
   CategoryCreate,
@@ -200,9 +199,6 @@ export function CategoriesPage() {
     <div className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>Категории</h1>
-        <Link to="/" className={styles.backLink}>
-          На главную
-        </Link>
       </header>
 
       <div className={styles.tabs}>
