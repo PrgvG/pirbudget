@@ -9,7 +9,7 @@ type UnifiedFormState = {
   categoryId: string;
   date: string;
   unit: 'day' | 'week' | 'month' | 'year';
-  interval: number;
+  interval: string;
   anchorDate: string;
   endDate: string;
   repeatCount: string;
@@ -31,6 +31,7 @@ type EntryFormProps = {
   editingType: EditingType;
   categories: EntryFormCategory[];
   error: string | null;
+  intervalError: string | null;
   isPending: boolean;
   onSubmit: (event: React.FormEvent) => void;
   onCancel: () => void;
@@ -42,6 +43,7 @@ export function EntryForm({
   editingType,
   categories,
   error,
+  intervalError,
   isPending,
   onSubmit,
   onCancel,
@@ -79,8 +81,12 @@ export function EntryForm({
   const handleIntervalChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const nextInterval = parseInt(event.target.value, 10) || 1;
-    onChange({ ...value, interval: nextInterval });
+    const nextValue = event.target.value;
+    if (nextValue === '') {
+      onChange({ ...value, interval: '' });
+      return;
+    }
+    onChange({ ...value, interval: nextValue });
   };
 
   const handleAnchorDateChange = (
@@ -237,8 +243,15 @@ export function EntryForm({
               min={1}
               value={value.interval}
               onChange={handleIntervalChange}
-              className={styles.input}
+              className={
+                intervalError
+                  ? `${styles.input} ${styles.inputError}`
+                  : styles.input
+              }
             />
+            {intervalError ? (
+              <p className={styles.error}>{intervalError}</p>
+            ) : null}
           </div>
           <div className={styles.field}>
             <label htmlFor="unified-anchorDate" className={styles.label}>

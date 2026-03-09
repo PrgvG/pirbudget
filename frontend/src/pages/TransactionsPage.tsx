@@ -59,7 +59,9 @@ function toIsoDateTime(dateStr: string): string {
   return `${dateStr}T00:00:00.000Z`;
 }
 
-function describeRecurrence(r: RecurrenceByInterval | RecurrenceByDate): string {
+function describeRecurrence(
+  r: RecurrenceByInterval | RecurrenceByDate
+): string {
   if (r.kind === 'date') {
     return formatDate(r.date);
   }
@@ -83,11 +85,15 @@ type UnifiedFormState = {
   categoryId: string;
   date: string;
   unit: 'day' | 'week' | 'month' | 'year';
-  interval: number;
+  interval: string;
   anchorDate: string;
   endDate: string;
   repeatCount: string;
   recurrenceDate: string;
+};
+
+type UnifiedFormErrors = {
+  interval?: string;
 };
 
 function emptyUnifiedForm(): UnifiedFormState {
@@ -99,7 +105,7 @@ function emptyUnifiedForm(): UnifiedFormState {
     categoryId: '',
     date: todayISO(),
     unit: 'month',
-    interval: 1,
+    interval: '',
     anchorDate: todayISO(),
     endDate: '',
     repeatCount: '',
@@ -107,14 +113,17 @@ function emptyUnifiedForm(): UnifiedFormState {
   };
 }
 
-function formToRecurrence(f: UnifiedFormState): RecurrenceByInterval | RecurrenceByDate {
+function formToRecurrence(
+  f: UnifiedFormState
+): RecurrenceByInterval | RecurrenceByDate {
   if (f.schedule === 'date') {
     return { kind: 'date', date: toIsoDateTime(f.date) };
   }
+  const parsedInterval = parseInt(f.interval, 10);
   return {
     kind: 'interval',
     unit: f.unit,
-    interval: f.interval,
+    interval: parsedInterval,
     anchorDate: toIsoDateTime(f.anchorDate),
     ...(f.endDate.trim() && { endDate: toIsoDateTime(f.endDate) }),
   };
@@ -147,8 +156,7 @@ function formToRecurringExpenseCreate(
   const repeatCount =
     f.repeatCount.trim() === '' ? null : parseInt(f.repeatCount, 10);
   const validRepeat =
-    repeatCount === null ||
-    (Number.isInteger(repeatCount) && repeatCount >= 0);
+    repeatCount === null || (Number.isInteger(repeatCount) && repeatCount >= 0);
   return {
     kind: 'recurring',
     categoryId: f.categoryId.trim(),
@@ -184,8 +192,7 @@ function formToRecurringIncomeCreate(
   const repeatCount =
     f.repeatCount.trim() === '' ? null : parseInt(f.repeatCount, 10);
   const validRepeat =
-    repeatCount === null ||
-    (Number.isInteger(repeatCount) && repeatCount >= 0);
+    repeatCount === null || (Number.isInteger(repeatCount) && repeatCount >= 0);
   return {
     categoryId: f.categoryId.trim(),
     amountPerOccurrence: f.amount,
@@ -216,14 +223,22 @@ function formToRecurringIncomeUpdate(
 export function TransactionsPage() {
   const queryClient = useQueryClient();
   const [entryFilter, setEntryFilter] = useState<EntryFilterType>('all');
-  const [unifiedForm, setUnifiedForm] = useState<UnifiedFormState>(emptyUnifiedForm);
+  const [unifiedForm, setUnifiedForm] =
+    useState<UnifiedFormState>(emptyUnifiedForm);
   const [formOpen, setFormOpen] = useState(false);
   const [editingType, setEditingType] = useState<EditingType>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [entryDeleteConfirmId, setEntryDeleteConfirmId] = useState<string | null>(null);
-  const [recurringExpenseDeleteId, setRecurringExpenseDeleteId] = useState<string | null>(null);
-  const [recurringIncomeDeleteId, setRecurringIncomeDeleteId] = useState<string | null>(null);
+  const [entryDeleteConfirmId, setEntryDeleteConfirmId] = useState<
+    string | null
+  >(null);
+  const [recurringExpenseDeleteId, setRecurringExpenseDeleteId] = useState<
+    string | null
+  >(null);
+  const [recurringIncomeDeleteId, setRecurringIncomeDeleteId] = useState<
+    string | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<UnifiedFormErrors>({});
 
   const categoriesIncomeQuery = useQuery({
     queryKey: [...CATEGORIES_QUERY_KEY, 'income'],
@@ -235,10 +250,13 @@ export function TransactionsPage() {
   });
   const categories =
     unifiedForm.direction === 'income'
-      ? categoriesIncomeQuery.data ?? []
-      : categoriesExpenseQuery.data ?? [];
+      ? (categoriesIncomeQuery.data ?? [])
+      : (categoriesExpenseQuery.data ?? []);
   const categoryMap = useMemo(() => {
-    const m = new Map<string, { name: string; color?: string; icon?: string }>();
+    const m = new Map<
+      string,
+      { name: string; color?: string; icon?: string }
+    >();
     for (const c of categoriesIncomeQuery.data ?? []) {
       m.set(c.id, { name: c.name, color: c.color, icon: c.icon });
     }
@@ -400,6 +418,7 @@ export function TransactionsPage() {
       categoryId: (categoriesIncomeQuery.data ?? [])[0]?.id ?? '',
     });
     setError(null);
+    setFormErrors({});
   };
 
   const handleOpenEditEntry = (entry: Entry) => {
@@ -416,6 +435,7 @@ export function TransactionsPage() {
       note: entry.note ?? '',
     });
     setError(null);
+    setFormErrors({});
   };
 
   const handleOpenEditRecurringExpense = (p: RecurringExpensePayment) => {
@@ -432,13 +452,15 @@ export function TransactionsPage() {
       note: p.note ?? '',
       date: r.kind === 'date' ? r.date.slice(0, 10) : todayISO(),
       unit: r.kind === 'interval' ? r.unit : 'month',
-      interval: r.kind === 'interval' ? r.interval : 1,
-      anchorDate: r.kind === 'interval' ? r.anchorDate.slice(0, 10) : todayISO(),
+      interval: r.kind === 'interval' ? String(r.interval) : '',
+      anchorDate:
+        r.kind === 'interval' ? r.anchorDate.slice(0, 10) : todayISO(),
       endDate: r.kind === 'interval' && r.endDate ? r.endDate.slice(0, 10) : '',
       repeatCount: p.repeatCount != null ? String(p.repeatCount) : '',
       recurrenceDate: r.kind === 'date' ? r.date.slice(0, 10) : todayISO(),
     });
     setError(null);
+    setFormErrors({});
   };
 
   const handleOpenEditRecurringIncome = (p: RecurringIncome) => {
@@ -455,13 +477,15 @@ export function TransactionsPage() {
       note: p.note ?? '',
       date: r.kind === 'date' ? r.date.slice(0, 10) : todayISO(),
       unit: r.kind === 'interval' ? r.unit : 'month',
-      interval: r.kind === 'interval' ? r.interval : 1,
-      anchorDate: r.kind === 'interval' ? r.anchorDate.slice(0, 10) : todayISO(),
+      interval: r.kind === 'interval' ? String(r.interval) : '',
+      anchorDate:
+        r.kind === 'interval' ? r.anchorDate.slice(0, 10) : todayISO(),
       endDate: r.kind === 'interval' && r.endDate ? r.endDate.slice(0, 10) : '',
       repeatCount: p.repeatCount != null ? String(p.repeatCount) : '',
       recurrenceDate: r.kind === 'date' ? r.date.slice(0, 10) : todayISO(),
     });
     setError(null);
+    setFormErrors({});
   };
 
   const handleCancelForm = () => {
@@ -470,11 +494,29 @@ export function TransactionsPage() {
     setEditingId(null);
     setUnifiedForm(emptyUnifiedForm());
     setError(null);
+    setFormErrors({});
   };
 
   const handleUnifiedSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setFormErrors({});
     const f = unifiedForm;
+    if (f.schedule === 'interval') {
+      const rawInterval = f.interval.trim();
+      const parsedInterval =
+        rawInterval === '' ? Number.NaN : parseInt(rawInterval, 10);
+      if (!Number.isFinite(parsedInterval) || parsedInterval < 1) {
+        setFormErrors({ interval: 'Введите интервал (число от 1)' });
+        return;
+      }
+      if (String(parsedInterval) !== rawInterval) {
+        setUnifiedForm(prev => ({
+          ...prev,
+          interval: String(parsedInterval),
+        }));
+      }
+    }
     if (f.amount <= 0) {
       setError('Сумма должна быть больше нуля');
       return;
@@ -485,7 +527,10 @@ export function TransactionsPage() {
           setError('Выберите категорию');
           return;
         }
-        updateEntryMutation.mutate({ id: editingId, data: formToEntryUpdate(f) });
+        updateEntryMutation.mutate({
+          id: editingId,
+          data: formToEntryUpdate(f),
+        });
         return;
       }
       if (editingType === 'recurringExpense') {
@@ -579,9 +624,7 @@ export function TransactionsPage() {
           <select
             className={styles.filterSelect}
             value={entryFilter}
-            onChange={e =>
-              setEntryFilter(e.target.value as EntryFilterType)
-            }
+            onChange={e => setEntryFilter(e.target.value as EntryFilterType)}
             aria-label="Фильтр по типу"
           >
             <option value="all">Все</option>
@@ -590,9 +633,7 @@ export function TransactionsPage() {
           </select>
         </div>
         {entriesLoading && <p className={styles.status}>Загрузка...</p>}
-        {entriesListError && (
-          <p className={styles.error}>{entriesListError}</p>
-        )}
+        {entriesListError && <p className={styles.error}>{entriesListError}</p>}
         {!entriesLoading && !entriesListError && entries.length === 0 ? (
           <p className={styles.empty}>Записей пока нет. Добавьте первую.</p>
         ) : null}
@@ -630,7 +671,8 @@ export function TransactionsPage() {
                     </span>
                     {cat ? (
                       <span>
-                        {cat.icon ? `${cat.icon} ` : ''}{cat.name}
+                        {cat.icon ? `${cat.icon} ` : ''}
+                        {cat.name}
                       </span>
                     ) : null}
                     {entry.note ? (
@@ -652,9 +694,7 @@ export function TransactionsPage() {
                         <span className={styles.confirmText}>Удалить?</span>
                         <button
                           type="button"
-                          onClick={() =>
-                            deleteEntryMutation.mutate(entry.id)
-                          }
+                          onClick={() => deleteEntryMutation.mutate(entry.id)}
                           disabled={deleteEntryMutation.isPending}
                           className={styles.dangerButton}
                         >
@@ -731,7 +771,8 @@ export function TransactionsPage() {
                     </span>
                     {cat ? (
                       <span>
-                        {cat.icon ? `${cat.icon} ` : ''}{cat.name}
+                        {cat.icon ? `${cat.icon} ` : ''}
+                        {cat.name}
                       </span>
                     ) : null}
                     {p.note ? (
@@ -824,57 +865,58 @@ export function TransactionsPage() {
                     </span>
                     {cat ? (
                       <span>
-                        {cat.icon ? `${cat.icon} ` : ''}{cat.name}
+                        {cat.icon ? `${cat.icon} ` : ''}
+                        {cat.name}
                       </span>
                     ) : null}
-                  {p.note ? (
-                    <span className={styles.cardNote}>{p.note}</span>
-                  ) : null}
-                </div>
-                <div className={styles.cardActions}>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenEditRecurringIncome(p)}
-                    className={styles.iconButton}
-                    title="Редактировать"
-                    aria-label="Редактировать"
-                  >
-                    ✎
-                  </button>
-                  {recurringIncomeDeleteId === p.id ? (
-                    <>
-                      <span className={styles.confirmText}>Удалить?</span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          deleteRecurringIncomeMutation.mutate(p.id)
-                        }
-                        disabled={deleteRecurringIncomeMutation.isPending}
-                        className={styles.dangerButton}
-                      >
-                        Да
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setRecurringIncomeDeleteId(null)}
-                        className={styles.cancelButton}
-                      >
-                        Нет
-                      </button>
-                    </>
-                  ) : (
+                    {p.note ? (
+                      <span className={styles.cardNote}>{p.note}</span>
+                    ) : null}
+                  </div>
+                  <div className={styles.cardActions}>
                     <button
                       type="button"
-                      onClick={() => setRecurringIncomeDeleteId(p.id)}
+                      onClick={() => handleOpenEditRecurringIncome(p)}
                       className={styles.iconButton}
-                      title="Удалить"
-                      aria-label="Удалить"
+                      title="Редактировать"
+                      aria-label="Редактировать"
                     >
-                      ✕
+                      ✎
                     </button>
-                  )}
-                </div>
-              </li>
+                    {recurringIncomeDeleteId === p.id ? (
+                      <>
+                        <span className={styles.confirmText}>Удалить?</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            deleteRecurringIncomeMutation.mutate(p.id)
+                          }
+                          disabled={deleteRecurringIncomeMutation.isPending}
+                          className={styles.dangerButton}
+                        >
+                          Да
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRecurringIncomeDeleteId(null)}
+                          className={styles.cancelButton}
+                        >
+                          Нет
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setRecurringIncomeDeleteId(p.id)}
+                        className={styles.iconButton}
+                        title="Удалить"
+                        aria-label="Удалить"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                </li>
               );
             })}
           </ul>
@@ -892,6 +934,7 @@ export function TransactionsPage() {
           editingType={editingType}
           categories={categories}
           error={error}
+          intervalError={formErrors.interval ?? null}
           isPending={isFormPending}
           onSubmit={handleUnifiedSubmit}
           onCancel={handleCancelForm}
