@@ -25,6 +25,8 @@ import {
   deleteRecurringIncome,
 } from '../domains/recurring-income';
 import { formatApiError } from '../api/formatError';
+import { ResponsiveModal } from '../components/ResponsiveModal';
+import { EntryForm } from './EntryForm';
 import styles from './TransactionsPage.module.css';
 
 const ENTRIES_QUERY_KEY = ['entries'] as const;
@@ -569,252 +571,6 @@ export function TransactionsPage() {
             </button>
           </div>
         ) : null}
-        {showForm ? (
-          <form onSubmit={handleUnifiedSubmit} className={styles.form}>
-            <h2 className={styles.formTitle}>
-              {editingType ? 'Редактировать запись' : 'Новая запись'}
-            </h2>
-            <div className={styles.field}>
-              <span className={styles.label}>Тип</span>
-              <div className={styles.radioGroup}>
-                <label className={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    name="unified-direction"
-                    checked={unifiedForm.direction === 'income'}
-                    onChange={() =>
-                      setUnifiedForm(prev => ({ ...prev, direction: 'income', categoryId: '' }))
-                    }
-                    disabled={!!editingType}
-                  />
-                  Доход
-                </label>
-                <label className={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    name="unified-direction"
-                    checked={unifiedForm.direction === 'expense'}
-                    onChange={() =>
-                      setUnifiedForm(prev => ({ ...prev, direction: 'expense', categoryId: '' }))
-                    }
-                    disabled={!!editingType}
-                  />
-                  Расход
-                </label>
-              </div>
-            </div>
-            <div className={styles.field}>
-              <span className={styles.label}>Повторение</span>
-              <div className={styles.radioGroup}>
-                <label className={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    name="unified-schedule"
-                    checked={unifiedForm.schedule === 'date'}
-                    onChange={() =>
-                      setUnifiedForm(prev => ({ ...prev, schedule: 'date' }))
-                    }
-                    disabled={!!editingType}
-                  />
-                  Одна дата
-                </label>
-                <label className={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    name="unified-schedule"
-                    checked={unifiedForm.schedule === 'interval'}
-                    onChange={() =>
-                      setUnifiedForm(prev => ({ ...prev, schedule: 'interval' }))
-                    }
-                    disabled={!!editingType}
-                  />
-                  По интервалу
-                </label>
-              </div>
-            </div>
-            {unifiedForm.schedule === 'date' ? (
-              <div className={styles.field}>
-                <label htmlFor="unified-date" className={styles.label}>
-                  Дата
-                </label>
-                <input
-                  id="unified-date"
-                  type="date"
-                  value={unifiedForm.date}
-                  onChange={e =>
-                    setUnifiedForm(prev => ({ ...prev, date: e.target.value }))
-                  }
-                  className={styles.input}
-                />
-              </div>
-            ) : null}
-            <div className={styles.field}>
-              <label htmlFor="unified-amount" className={styles.label}>
-                Сумма
-                {unifiedForm.schedule !== 'date' ? ' за одно вхождение' : ''}
-              </label>
-              <input
-                id="unified-amount"
-                type="number"
-                min={0}
-                step={0.01}
-                value={unifiedForm.amount || ''}
-                onChange={e =>
-                  setUnifiedForm(prev => ({
-                    ...prev,
-                    amount: parseFloat(e.target.value) || 0,
-                  }))
-                }
-                placeholder="0"
-                className={styles.input}
-              />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="unified-category" className={styles.label}>
-                Категория
-              </label>
-              <select
-                id="unified-category"
-                className={styles.select}
-                value={unifiedForm.categoryId}
-                onChange={e =>
-                  setUnifiedForm(prev => ({ ...prev, categoryId: e.target.value }))
-                }
-              >
-                <option value="">— Выберите категорию —</option>
-                {categories.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.icon ? `${c.icon} ` : ''}{c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {unifiedForm.schedule === 'interval' ? (
-              <>
-                <div className={styles.field}>
-                  <label htmlFor="unified-unit" className={styles.label}>
-                    Единица
-                  </label>
-                  <select
-                    id="unified-unit"
-                    className={styles.select}
-                    value={unifiedForm.unit}
-                    onChange={e =>
-                      setUnifiedForm(prev => ({
-                        ...prev,
-                        unit: e.target.value as UnifiedFormState['unit'],
-                      }))
-                    }
-                  >
-                    <option value="day">День</option>
-                    <option value="week">Неделя</option>
-                    <option value="month">Месяц</option>
-                    <option value="year">Год</option>
-                  </select>
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor="unified-interval" className={styles.label}>
-                    Каждые (число)
-                  </label>
-                  <input
-                    id="unified-interval"
-                    type="number"
-                    min={1}
-                    value={unifiedForm.interval}
-                    onChange={e =>
-                      setUnifiedForm(prev => ({
-                        ...prev,
-                        interval: parseInt(e.target.value, 10) || 1,
-                      }))
-                    }
-                    className={styles.input}
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor="unified-anchorDate" className={styles.label}>
-                    Дата начала
-                  </label>
-                  <input
-                    id="unified-anchorDate"
-                    type="date"
-                    value={unifiedForm.anchorDate}
-                    onChange={e =>
-                      setUnifiedForm(prev => ({
-                        ...prev,
-                        anchorDate: e.target.value,
-                      }))
-                    }
-                    className={styles.input}
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor="unified-endDate" className={styles.label}>
-                    Дата окончания (необязательно)
-                  </label>
-                  <input
-                    id="unified-endDate"
-                    type="date"
-                    value={unifiedForm.endDate}
-                    onChange={e =>
-                      setUnifiedForm(prev => ({ ...prev, endDate: e.target.value }))
-                    }
-                    className={styles.input}
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor="unified-repeatCount" className={styles.label}>
-                    Количество повторов (пусто = бесконечно)
-                  </label>
-                  <input
-                    id="unified-repeatCount"
-                    type="number"
-                    min={0}
-                    value={unifiedForm.repeatCount}
-                    onChange={e =>
-                      setUnifiedForm(prev => ({
-                        ...prev,
-                        repeatCount: e.target.value,
-                      }))
-                    }
-                    className={styles.input}
-                    placeholder="Пусто — без ограничения"
-                  />
-                </div>
-              </>
-            ) : null}
-            <div className={styles.field}>
-              <label htmlFor="unified-note" className={styles.label}>
-                Примечание (опционально)
-              </label>
-              <input
-                id="unified-note"
-                type="text"
-                value={unifiedForm.note}
-                onChange={e =>
-                  setUnifiedForm(prev => ({ ...prev, note: e.target.value }))
-                }
-                className={styles.input}
-              />
-            </div>
-            {error ? <p className={styles.error}>{error}</p> : null}
-            <div className={styles.formActions}>
-              <button
-                type="submit"
-                disabled={isFormPending}
-                className={styles.submitButton}
-              >
-                {editingType ? 'Сохранить' : 'Добавить'}
-              </button>
-              <button
-                type="button"
-                onClick={handleCancelForm}
-                className={styles.cancelButton}
-              >
-                Отмена
-              </button>
-            </div>
-          </form>
-        ) : null}
       </section>
 
       <section className={styles.listSection}>
@@ -1124,6 +880,23 @@ export function TransactionsPage() {
           </ul>
         ) : null}
       </section>
+
+      <ResponsiveModal
+        isOpen={showForm}
+        onClose={handleCancelForm}
+        title={editingType ? 'Редактировать запись' : 'Новая запись'}
+      >
+        <EntryForm
+          value={unifiedForm}
+          onChange={next => setUnifiedForm(next)}
+          editingType={editingType}
+          categories={categories}
+          error={error}
+          isPending={isFormPending}
+          onSubmit={handleUnifiedSubmit}
+          onCancel={handleCancelForm}
+        />
+      </ResponsiveModal>
     </div>
   );
 }

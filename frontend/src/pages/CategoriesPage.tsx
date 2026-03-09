@@ -13,6 +13,8 @@ import {
   deleteCategory,
 } from '../domains/categories';
 import { formatApiError } from '../api/formatError';
+import { ResponsiveModal } from '../components/ResponsiveModal';
+import { CategoryForm } from './CategoryForm';
 import styles from './CategoriesPage.module.css';
 
 const CATEGORIES_QUERY_KEY = ['categories'] as const;
@@ -243,104 +245,6 @@ export function CategoriesPage() {
             Добавить категорию
           </button>
         ) : null}
-        {editingId || createMode ? (
-          <form onSubmit={handleSubmit} className={styles.form}>
-            <h2 className={styles.formTitle}>
-              {editingId ? 'Редактировать категорию' : 'Новая категория'}
-            </h2>
-            <div className={styles.field}>
-              <label htmlFor="category-name" className={styles.label}>
-                Название
-              </label>
-              <input
-                id="category-name"
-                type="text"
-                value={form.name}
-                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                placeholder={
-                  direction === 'expense' ? 'Например: Продукты' : 'Например: Зарплата'
-                }
-                className={styles.input}
-                autoFocus
-              />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="category-sortOrder" className={styles.label}>
-                Порядок
-              </label>
-              <input
-                id="category-sortOrder"
-                type="number"
-                min={0}
-                value={form.sortOrder}
-                onChange={e =>
-                  setForm(f => ({
-                    ...f,
-                    sortOrder: parseInt(e.target.value, 10) || 0,
-                  }))
-                }
-                className={styles.input}
-              />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="category-color" className={styles.label}>
-                Цвет
-              </label>
-              <div className={styles.colorRow}>
-                <input
-                  id="category-color"
-                  type="color"
-                  value={form.color || DEFAULT_CATEGORY_COLOR}
-                  onChange={e =>
-                    setForm(f => ({ ...f, color: e.target.value }))
-                  }
-                  className={styles.colorInput}
-                />
-                <input
-                  type="text"
-                  value={form.color}
-                  onChange={e =>
-                    setForm(f => ({ ...f, color: e.target.value }))
-                  }
-                  placeholder="#hex или название"
-                  className={styles.input}
-                />
-              </div>
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="category-icon" className={styles.label}>
-                Иконка (опционально)
-              </label>
-              <input
-                id="category-icon"
-                type="text"
-                value={form.icon}
-                onChange={e => setForm(f => ({ ...f, icon: e.target.value }))}
-                placeholder="Эмодзи или код"
-                className={styles.input}
-              />
-            </div>
-            {error ? <p className={styles.error}>{error}</p> : null}
-            <div className={styles.formActions}>
-              <button
-                type="submit"
-                disabled={createMutation.isPending || updateMutation.isPending}
-                className={styles.submitButton}
-              >
-                {editingId ? 'Сохранить' : 'Добавить'}
-              </button>
-              {editingId ? (
-                <button
-                  type="button"
-                  onClick={handleCancelEdit}
-                  className={styles.cancelButton}
-                >
-                  Отмена
-                </button>
-              ) : null}
-            </div>
-          </form>
-        ) : null}
       </section>
 
       <section className={styles.listSection}>
@@ -443,6 +347,21 @@ export function CategoriesPage() {
           </ul>
         ) : null}
       </section>
+      <ResponsiveModal
+        isOpen={Boolean(editingId || createMode)}
+        onClose={handleCancelEdit}
+        title={editingId ? 'Редактировать категорию' : 'Новая категория'}
+      >
+        <CategoryForm
+          value={form}
+          onChange={next => setForm(next)}
+          mode={editingId ? 'edit' : 'create'}
+          error={error}
+          isPending={createMutation.isPending || updateMutation.isPending}
+          onSubmit={handleSubmit}
+          onCancel={handleCancelEdit}
+        />
+      </ResponsiveModal>
     </div>
   );
 }
