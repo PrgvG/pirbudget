@@ -42,11 +42,9 @@ function formatMoney(value: number): string {
 function formatDateLabel(isoDate: string): string {
   try {
     const d = isoDate.slice(0, 10);
-    return new Date(d + 'T00:00:00').toLocaleDateString('ru-RU', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
+    const [year, month, day] = d.split('-');
+    if (!year || !month || !day) return d;
+    return `${day.padStart(2, '0')}.${month.padStart(2, '0')}.${year}`;
   } catch {
     return isoDate.slice(0, 10);
   }

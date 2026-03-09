@@ -34,10 +34,9 @@ export function useMonthPicker(options: UseMonthPickerOptions = {}) {
 
   const monthLabel = useMemo(() => {
     const [y, m] = month.split('-').map(Number);
-    return new Date(y, m - 1, 1).toLocaleDateString('ru-RU', {
-      month: 'long',
-      year: 'numeric',
-    });
+    const day = '01';
+    const monthStr = String(m).padStart(2, '0');
+    return `${day}.${monthStr}.${y}`;
   }, [month]);
 
   const canPrev = month > minMonth;

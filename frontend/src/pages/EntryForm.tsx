@@ -128,11 +128,10 @@ export function EntryForm({
           min={0}
           step={0.01}
           value={value.amount}
+          inputMode="decimal"
           onChange={(next: string | number) => {
             const numeric =
-              typeof next === 'number'
-                ? next
-                : parseFloat(String(next)) || 0;
+              typeof next === 'number' ? next : parseFloat(String(next)) || 0;
             onChange({ ...value, amount: numeric });
           }}
           placeholder="0"
@@ -174,9 +173,8 @@ export function EntryForm({
             <NumberInput
               label="Каждые (число)"
               min={1}
-              value={
-                value.interval === '' ? undefined : Number(value.interval)
-              }
+              inputMode="numeric"
+              value={value.interval === '' ? undefined : Number(value.interval)}
               onChange={(next: string | number) => {
                 if (next === '' || next === null) {
                   onChange({ ...value, interval: '' });
@@ -190,9 +188,7 @@ export function EntryForm({
             <DateInput
               label="Дата начала"
               value={isoToDate(value.anchorDate)}
-              onChange={d =>
-                onChange({ ...value, anchorDate: dateToIso(d) })
-              }
+              onChange={d => onChange({ ...value, anchorDate: dateToIso(d) })}
               valueFormat="DD.MM.YYYY"
               clearable
             />
@@ -200,9 +196,7 @@ export function EntryForm({
             <DateInput
               label="Дата окончания (необязательно)"
               value={isoToDate(value.endDate)}
-              onChange={d =>
-                onChange({ ...value, endDate: dateToIso(d) })
-              }
+              onChange={d => onChange({ ...value, endDate: dateToIso(d) })}
               valueFormat="DD.MM.YYYY"
               clearable
             />
@@ -211,9 +205,7 @@ export function EntryForm({
               label="Количество повторов (пусто = бесконечно)"
               min={0}
               value={
-                value.repeatCount === ''
-                  ? undefined
-                  : Number(value.repeatCount)
+                value.repeatCount === '' ? undefined : Number(value.repeatCount)
               }
               onChange={(next: string | number) => {
                 if (next === '' || next === null) {

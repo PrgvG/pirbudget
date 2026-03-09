@@ -54,11 +54,9 @@ type EditingType = 'entry' | 'recurringExpense' | 'recurringIncome' | null;
 function formatDate(isoDate: string): string {
   try {
     const d = isoDate.slice(0, 10);
-    return new Date(d + 'T00:00:00').toLocaleDateString('ru-RU', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
+    const [year, month, day] = d.split('-');
+    if (!year || !month || !day) return d;
+    return `${day.padStart(2, '0')}.${month.padStart(2, '0')}.${year}`;
   } catch {
     return isoDate.slice(0, 10);
   }
@@ -810,10 +808,16 @@ export function TransactionsPage() {
                         />
                       )}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <Badge color="gray" radius="sm" size="sm">
-                          Повторяющийся
-                        </Badge>
-                        <Text component="span" fw={600}>
+                        <Group gap="xs" align="center" mb={4}>
+                          <Badge color="red" radius="sm" size="sm">
+                            Расход
+                          </Badge>
+                          <Badge color="gray" radius="sm" size="sm">
+                            Повторяющийся
+                          </Badge>
+                        </Group>
+                        <Text component="span" fw={600} c="red">
+                          −
                           {p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
                         </Text>
                         <Text component="span" size="sm" c="dimmed">
@@ -925,8 +929,17 @@ export function TransactionsPage() {
                     padding="sm"
                   >
                     <Group align="flex-start" gap="sm" wrap="nowrap">
+                      {cat && (
+                        <span
+                          className={styles.colorSwatch}
+                          style={{
+                            '--swatch-color': cat.color || undefined,
+                          } as React.CSSProperties}
+                          aria-hidden
+                        />
+                      )}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <Group gap="xs" align="center">
+                        <Group gap="xs" align="center" mb={4}>
                           <Badge color="green" radius="sm" size="sm">
                             Доход
                           </Badge>
@@ -934,8 +947,9 @@ export function TransactionsPage() {
                             Повторяющийся
                           </Badge>
                         </Group>
-                        <Text component="span" fw={600}>
-                          +{p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
+                        <Text component="span" fw={600} c="teal">
+                          +
+                          {p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
                         </Text>
                         <Text component="span" size="sm" c="dimmed">
                           {describeRecurrence(p.recurrence)}
