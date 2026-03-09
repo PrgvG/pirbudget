@@ -199,11 +199,9 @@ export function MonthPage() {
         <MonthPicker
           id="month-page-picker"
           label="Период"
-          month={monthPicker.month}
           monthLabel={monthPicker.monthLabel}
           onPrev={monthPicker.handlePrevMonth}
           onNext={monthPicker.handleNextMonth}
-          onMonthChange={monthPicker.handleMonthChange}
           canPrev={monthPicker.canPrev}
           canNext={monthPicker.canNext}
         />
@@ -243,10 +241,7 @@ export function MonthPage() {
               <Divider />
               <Group justify="space-between">
                 <Text fw={600}>Баланс</Text>
-                <Text
-                  fw={700}
-                  c={stats.balance >= 0 ? 'teal' : 'red'}
-                >
+                <Text fw={700} c={stats.balance >= 0 ? 'teal' : 'red'}>
                   {stats.balance >= 0 ? '+' : ''}
                   {formatMoney(stats.balance)} ₽
                 </Text>
@@ -263,13 +258,8 @@ export function MonthPage() {
                   {sortedByIncomeCategory.map(({ categoryId, sum }) => {
                     const cat = categoryMap.get(categoryId);
                     return (
-                      <Group
-                        key={categoryId}
-                        justify="space-between"
-                      >
-                        <Text size="sm">
-                          {cat?.name ?? categoryId}
-                        </Text>
+                      <Group key={categoryId} justify="space-between">
+                        <Text size="sm">{cat?.name ?? categoryId}</Text>
                         <Text size="sm" fw={500} c="teal">
                           +{formatMoney(sum)} ₽
                         </Text>
@@ -290,13 +280,8 @@ export function MonthPage() {
                   {sortedByExpenseCategory.map(({ categoryId, sum }) => {
                     const cat = categoryMap.get(categoryId);
                     return (
-                      <Group
-                        key={categoryId}
-                        justify="space-between"
-                      >
-                        <Text size="sm">
-                          {cat?.name ?? categoryId}
-                        </Text>
+                      <Group key={categoryId} justify="space-between">
+                        <Text size="sm">{cat?.name ?? categoryId}</Text>
                         <Text size="sm" fw={500} c="red">
                           −{formatMoney(sum)} ₽
                         </Text>
@@ -377,29 +362,27 @@ export function MonthPage() {
           !historyQuery.error &&
           historyByDate.size > 0 && (
             <Stack gap="md">
-              {Array.from(historyByDate.entries()).map(
-                ([dateKey, list]) => (
-                  <div key={dateKey}>
-                    <Text size="sm" fw={600} mb="xs" c="dimmed">
-                      {formatDateLabel(dateKey)}
-                    </Text>
-                    <Stack gap="xs">
-                      {list.map(t => (
-                        <TransactionCard
-                          key={`${t.direction}-${t.id}`}
-                          transaction={t}
-                          categoryName={
-                            'categoryId' in t
-                              ? categoryMap.get(t.categoryId)
-                                  ?.name ?? t.categoryId
-                              : undefined
-                          }
-                        />
-                      ))}
-                    </Stack>
-                  </div>
-                )
-              )}
+              {Array.from(historyByDate.entries()).map(([dateKey, list]) => (
+                <div key={dateKey}>
+                  <Text size="sm" fw={600} mb="xs" c="dimmed">
+                    {formatDateLabel(dateKey)}
+                  </Text>
+                  <Stack gap="xs">
+                    {list.map(t => (
+                      <TransactionCard
+                        key={`${t.direction}-${t.id}`}
+                        transaction={t}
+                        categoryName={
+                          'categoryId' in t
+                            ? (categoryMap.get(t.categoryId)?.name ??
+                              t.categoryId)
+                            : undefined
+                        }
+                      />
+                    ))}
+                  </Stack>
+                </div>
+              ))}
             </Stack>
           )}
       </section>
@@ -420,39 +403,31 @@ export function MonthPage() {
               : 'Не удалось загрузить план'}
           </Alert>
         )}
-        {!planQuery.isPending &&
-          !planQuery.error &&
-          planItems.length === 0 && (
-            <Text c="dimmed" ta="center" py="md">
-              На выбранный период запланированных платежей нет.
-            </Text>
-          )}
-        {!planQuery.isPending &&
-          !planQuery.error &&
-          planByDate.size > 0 && (
-            <Stack gap="md">
-              {Array.from(planByDate.entries()).map(
-                ([dateKey, list]) => (
-                  <div key={dateKey}>
-                    <Text size="sm" fw={600} mb="xs" c="dimmed">
-                      {formatDateLabel(dateKey)}
-                    </Text>
-                    <Stack gap="xs">
-                      {list.map((item, idx) => (
-                        <PlannedItemCard
-                          key={`${item.kind}-${item.paymentId}-${dateKey}-${idx}`}
-                          item={item}
-                          categoryName={
-                            categoryMap.get(item.categoryId)?.name
-                          }
-                        />
-                      ))}
-                    </Stack>
-                  </div>
-                )
-              )}
-            </Stack>
-          )}
+        {!planQuery.isPending && !planQuery.error && planItems.length === 0 && (
+          <Text c="dimmed" ta="center" py="md">
+            На выбранный период запланированных платежей нет.
+          </Text>
+        )}
+        {!planQuery.isPending && !planQuery.error && planByDate.size > 0 && (
+          <Stack gap="md">
+            {Array.from(planByDate.entries()).map(([dateKey, list]) => (
+              <div key={dateKey}>
+                <Text size="sm" fw={600} mb="xs" c="dimmed">
+                  {formatDateLabel(dateKey)}
+                </Text>
+                <Stack gap="xs">
+                  {list.map((item, idx) => (
+                    <PlannedItemCard
+                      key={`${item.kind}-${item.paymentId}-${dateKey}-${idx}`}
+                      item={item}
+                      categoryName={categoryMap.get(item.categoryId)?.name}
+                    />
+                  ))}
+                </Stack>
+              </div>
+            ))}
+          </Stack>
+        )}
       </section>
     </div>
   );
@@ -463,10 +438,7 @@ type TransactionCardProps = {
   categoryName?: string;
 };
 
-function TransactionCard({
-  transaction,
-  categoryName,
-}: TransactionCardProps) {
+function TransactionCard({ transaction, categoryName }: TransactionCardProps) {
   const isIncome = transaction.direction === 'income';
   const amount = 'amount' in transaction ? transaction.amount : 0;
   const note = 'note' in transaction ? transaction.note : undefined;
@@ -508,10 +480,7 @@ type PlannedItemCardProps = {
   categoryName?: string;
 };
 
-function PlannedItemCard({
-  item,
-  categoryName,
-}: PlannedItemCardProps) {
+function PlannedItemCard({ item, categoryName }: PlannedItemCardProps) {
   const isIncome = item.kind === 'recurringIncome';
   const typeLabel =
     item.kind === 'recurring'
