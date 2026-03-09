@@ -1,4 +1,12 @@
 import type { RecurrenceByInterval, RecurrenceByDate } from 'shared/recurrence';
+import {
+  Alert,
+  Button,
+  NumberInput,
+  SegmentedControl,
+  Select,
+  TextInput,
+} from '@mantine/core';
 import styles from './TransactionsPage.module.css';
 
 type UnifiedFormState = {
@@ -118,53 +126,35 @@ export function EntryForm({
       </h2>
       <div className={styles.field}>
         <span className={styles.label}>Тип</span>
-        <div className={styles.radioGroup}>
-          <label className={styles.radioLabel}>
-            <input
-              type="radio"
-              name="unified-direction"
-              checked={value.direction === 'income'}
-              onChange={() => handleDirectionChange('income')}
-              disabled={!!editingType}
-            />
-            Доход
-          </label>
-          <label className={styles.radioLabel}>
-            <input
-              type="radio"
-              name="unified-direction"
-              checked={value.direction === 'expense'}
-              onChange={() => handleDirectionChange('expense')}
-              disabled={!!editingType}
-            />
-            Расход
-          </label>
-        </div>
+        <SegmentedControl
+          value={value.direction}
+          onChange={next =>
+            handleDirectionChange(
+              next as UnifiedFormState['direction'],
+            )
+          }
+          data={[
+            { label: 'Доход', value: 'income' },
+            { label: 'Расход', value: 'expense' },
+          ]}
+          disabled={!!editingType}
+        />
       </div>
       <div className={styles.field}>
         <span className={styles.label}>Повторение</span>
-        <div className={styles.radioGroup}>
-          <label className={styles.radioLabel}>
-            <input
-              type="radio"
-              name="unified-schedule"
-              checked={value.schedule === 'date'}
-              onChange={() => handleScheduleChange('date')}
-              disabled={!!editingType}
-            />
-            Одна дата
-          </label>
-          <label className={styles.radioLabel}>
-            <input
-              type="radio"
-              name="unified-schedule"
-              checked={value.schedule === 'interval'}
-              onChange={() => handleScheduleChange('interval')}
-              disabled={!!editingType}
-            />
-            По интервалу
-          </label>
-        </div>
+        <SegmentedControl
+          value={value.schedule}
+          onChange={next =>
+            handleScheduleChange(
+              next as UnifiedFormState['schedule'],
+            )
+          }
+          data={[
+            { label: 'Одна дата', value: 'date' },
+            { label: 'По интервалу', value: 'interval' },
+          ]}
+          disabled={!!editingType}
+        />
       </div>
       {value.schedule === 'date' ? (
         <div className={styles.field}>
@@ -185,35 +175,39 @@ export function EntryForm({
           Сумма
           {isIntervalSchedule ? ' за одно вхождение' : ''}
         </label>
-        <input
+        <NumberInput
           id="unified-amount"
-          type="number"
           min={0}
           step={0.01}
-          value={value.amount || ''}
-          onChange={handleAmountChange}
+          value={value.amount}
+          onChange={(next: string | number | null) => {
+            const numeric =
+              typeof next === 'number'
+                ? next
+                : parseFloat(String(next ?? '')) || 0;
+            onChange({ ...value, amount: numeric });
+          }}
           placeholder="0"
-          className={styles.input}
         />
       </div>
       <div className={styles.field}>
         <label htmlFor="unified-category" className={styles.label}>
           Категория
         </label>
-        <select
+        <Select
           id="unified-category"
-          className={styles.select}
-          value={value.categoryId}
-          onChange={handleCategoryChange}
-        >
-          <option value="">— Выберите категорию —</option>
-          {categories.map(category => (
-            <option key={category.id} value={category.id}>
-              {category.icon ? `${category.icon} ` : ''}
-              {category.name}
-            </option>
-          ))}
-        </select>
+          placeholder="— Выберите категорию —"
+          value={value.categoryId || null}
+          onChange={(next: string | null) =>
+            onChange({ ...value, categoryId: next ?? '' })
+          }
+          data={categories.map(category => ({
+            value: category.id,
+            label: `${category.icon ? `${category.icon} ` : ''}${
+              category.name
+            }`,
+          }))}
+        />
       </div>
       {isIntervalSchedule ? (
         <>
@@ -221,37 +215,50 @@ export function EntryForm({
             <label htmlFor="unified-unit" className={styles.label}>
               Единица
             </label>
-            <select
+            <Select
               id="unified-unit"
-              className={styles.select}
               value={value.unit}
-              onChange={handleUnitChange}
-            >
-              <option value="day">День</option>
-              <option value="week">Неделя</option>
-              <option value="month">Месяц</option>
-              <option value="year">Год</option>
-            </select>
+              onChange={(next: string | null) => {
+                if (!next) {
+                  return;
+                }
+                onChange({
+                  ...value,
+                  unit: next as UnifiedFormState['unit'],
+                });
+              }}
+              data={[
+                { value: 'day', label: 'День' },
+                { value: 'week', label: 'Неделя' },
+                { value: 'month', label: 'Месяц' },
+                { value: 'year', label: 'Год' },
+              ]}
+            />
           </div>
           <div className={styles.field}>
             <label htmlFor="unified-interval" className={styles.label}>
               Каждые (число)
             </label>
-            <input
+            <NumberInput
               id="unified-interval"
-              type="number"
               min={1}
-              value={value.interval}
-              onChange={handleIntervalChange}
-              className={
-                intervalError
-                  ? `${styles.input} ${styles.inputError}`
-                  : styles.input
+              value={
+                value.interval === ''
+                  ? undefined
+                  : Number(value.interval)
               }
+              onChange={(next: string | number | null) => {
+                if (next === '' || next === null) {
+                  onChange({ ...value, interval: '' });
+                  return;
+                }
+                onChange({
+                  ...value,
+                  interval: String(next),
+                });
+              }}
+              error={intervalError || undefined}
             />
-            {intervalError ? (
-              <p className={styles.error}>{intervalError}</p>
-            ) : null}
           </div>
           <div className={styles.field}>
             <label htmlFor="unified-anchorDate" className={styles.label}>
@@ -281,46 +288,58 @@ export function EntryForm({
             <label htmlFor="unified-repeatCount" className={styles.label}>
               Количество повторов (пусто = бесконечно)
             </label>
-            <input
+            <NumberInput
               id="unified-repeatCount"
-              type="number"
               min={0}
-              value={value.repeatCount}
-              onChange={handleRepeatCountChange}
-              className={styles.input}
+              value={
+                value.repeatCount === ''
+                  ? undefined
+                  : Number(value.repeatCount)
+              }
+              onChange={(next: string | number | null) => {
+                if (next === '' || next === null) {
+                  onChange({ ...value, repeatCount: '' });
+                  return;
+                }
+                onChange({
+                  ...value,
+                  repeatCount: String(next),
+                });
+              }}
               placeholder="Пусто — без ограничения"
             />
           </div>
         </>
       ) : null}
       <div className={styles.field}>
-        <label htmlFor="unified-note" className={styles.label}>
-          Примечание (опционально)
-        </label>
-        <input
+        <TextInput
           id="unified-note"
-          type="text"
+          label="Примечание (опционально)"
           value={value.note}
           onChange={handleNoteChange}
-          className={styles.input}
         />
       </div>
-      {error ? <p className={styles.error}>{error}</p> : null}
+      {error ? (
+        <Alert color="red" title="Ошибка">
+          {error}
+        </Alert>
+      ) : null}
       <div className={styles.formActions}>
-        <button
+        <Button
           type="submit"
           disabled={isPending}
           className={styles.submitButton}
         >
           {editingType ? 'Сохранить' : 'Добавить'}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="outline"
           onClick={onCancel}
           className={styles.cancelButton}
         >
           Отмена
-        </button>
+        </Button>
       </div>
     </form>
   );

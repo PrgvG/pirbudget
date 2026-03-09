@@ -1,4 +1,5 @@
 import type { CategoryDirection } from 'shared/categories';
+import { Alert, Button, ColorInput, NumberInput, TextInput } from '@mantine/core';
 import styles from './CategoriesPage.module.css';
 
 type CategoryFormState = {
@@ -32,13 +33,16 @@ export function CategoryForm({
     onChange({ ...value, name: event.target.value });
   };
 
-  const handleSortOrderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const nextSortOrder = parseInt(event.target.value, 10) || 0;
+  const handleSortOrderChange = (next: string | number | null) => {
+    const nextSortOrder =
+      typeof next === 'number'
+        ? next
+        : parseInt(String(next ?? ''), 10) || 0;
     onChange({ ...value, sortOrder: nextSortOrder });
   };
 
-  const handleColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...value, color: event.target.value });
+  const handleColorChange = (next: string) => {
+    onChange({ ...value, color: next });
   };
 
   const handleIconChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,26 +57,24 @@ export function CategoryForm({
         {mode === 'edit' ? 'Редактировать категорию' : 'Новая категория'}
       </h2>
       <div className={styles.field}>
-        <label htmlFor="category-name" className={styles.label}>
-          Название
-        </label>
-        <input
+        <TextInput
           id="category-name"
-          type="text"
+          label="Название"
           value={value.name}
           onChange={handleNameChange}
-          placeholder={isExpenseDirection ? 'Например: Продукты' : 'Например: Зарплата'}
+          placeholder={
+            isExpenseDirection
+              ? 'Например: Продукты'
+              : 'Например: Зарплата'
+          }
           className={styles.input}
           autoFocus
         />
       </div>
       <div className={styles.field}>
-        <label htmlFor="category-sortOrder" className={styles.label}>
-          Порядок
-        </label>
-        <input
+        <NumberInput
           id="category-sortOrder"
-          type="number"
+          label="Порядок"
           min={0}
           value={value.sortOrder}
           onChange={handleSortOrderChange}
@@ -80,56 +82,47 @@ export function CategoryForm({
         />
       </div>
       <div className={styles.field}>
-        <label htmlFor="category-color" className={styles.label}>
-          Цвет
-        </label>
-        <div className={styles.colorRow}>
-          <input
-            id="category-color"
-            type="color"
-            value={value.color}
-            onChange={handleColorChange}
-            className={styles.colorInput}
-          />
-          <input
-            type="text"
-            value={value.color}
-            onChange={handleColorChange}
-            placeholder="#hex или название"
-            className={styles.input}
-          />
-        </div>
+        <ColorInput
+          id="category-color"
+          label="Цвет"
+          format="hex"
+          value={value.color}
+          onChange={handleColorChange}
+          className={styles.input}
+        />
       </div>
       <div className={styles.field}>
-        <label htmlFor="category-icon" className={styles.label}>
-          Иконка (опционально)
-        </label>
-        <input
+        <TextInput
           id="category-icon"
-          type="text"
+          label="Иконка (опционально)"
           value={value.icon}
           onChange={handleIconChange}
           placeholder="Эмодзи или код"
           className={styles.input}
         />
       </div>
-      {error ? <p className={styles.error}>{error}</p> : null}
+      {error ? (
+        <Alert color="red" title="Ошибка">
+          {error}
+        </Alert>
+      ) : null}
       <div className={styles.formActions}>
-        <button
+        <Button
           type="submit"
           disabled={isPending}
           className={styles.submitButton}
         >
           {mode === 'edit' ? 'Сохранить' : 'Добавить'}
-        </button>
+        </Button>
         {mode === 'edit' ? (
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={onCancel}
             className={styles.cancelButton}
           >
             Отмена
-          </button>
+          </Button>
         ) : null}
       </div>
     </form>
