@@ -1,4 +1,11 @@
 .nav {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(2.25rem + env(safe-area-inset-bottom, 0px));
+  z-index: 20;
+
+  width: calc(100% - 2rem);
   padding: 0.35rem 0.5rem;
   background: var(--mantine-color-body);
   border-radius: 20px;
