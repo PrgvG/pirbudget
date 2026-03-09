@@ -163,7 +163,11 @@ export const transactionsService = {
 
   async getMonthStats(userId: string, month: string): Promise<MonthStats> {
     const { from, to } = getMonthBounds(month);
-    const entries = await entriesService.listByDateRange({ userId, from, to });
+    const [entries, recurringExpenseList, recurringIncomeList] = await Promise.all([
+      entriesService.listByDateRange({ userId, from, to }),
+      recurringExpensesService.list(userId),
+      recurringIncomeService.list(userId),
+    ]);
 
     let totalIncome = 0;
     let totalExpense = 0;
@@ -177,6 +181,40 @@ export const transactionsService = {
       } else {
         totalExpense += e.amount;
         expenseByCat.set(e.categoryId, (expenseByCat.get(e.categoryId) ?? 0) + e.amount);
+      }
+    }
+
+    for (const rec of recurringIncomeList) {
+      const dates = expandRecurrence(
+        rec.recurrence,
+        from,
+        to,
+        rec.repeatCount ?? null
+      );
+      const sum = rec.amountPerOccurrence * dates.length;
+      if (sum > 0) {
+        totalIncome += sum;
+        incomeByCat.set(
+          rec.categoryId,
+          (incomeByCat.get(rec.categoryId) ?? 0) + sum
+        );
+      }
+    }
+
+    for (const rec of recurringExpenseList) {
+      const dates = expandRecurrence(
+        rec.recurrence,
+        from,
+        to,
+        rec.repeatCount ?? null
+      );
+      const sum = rec.amountPerOccurrence * dates.length;
+      if (sum > 0) {
+        totalExpense += sum;
+        expenseByCat.set(
+          rec.categoryId,
+          (expenseByCat.get(rec.categoryId) ?? 0) + sum
+        );
       }
     }
 
