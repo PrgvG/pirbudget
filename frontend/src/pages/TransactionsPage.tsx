@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { ActionIcon, Badge, Card, Group, Stack, Text } from '@mantine/core';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import type { Entry, EntryCreate, EntryUpdate } from 'shared/entries';
@@ -638,92 +639,120 @@ export function TransactionsPage() {
           <p className={styles.empty}>Записей пока нет. Добавьте первую.</p>
         ) : null}
         {!entriesLoading && !entriesListError && entries.length > 0 ? (
-          <ul className={styles.list}>
+          <Stack component="ul" className={styles.list} gap="xs">
             {entries.map(entry => {
               const cat = categoryMap.get(entry.categoryId);
+              const isIncome = entry.direction === 'income';
               return (
-                <li key={entry.id} className={styles.card}>
-                  {cat ? (
-                    <span
-                      className={styles.colorSwatch}
-                      style={{
-                        backgroundColor: cat.color || '#6b7280',
-                      }}
-                      aria-hidden
-                    />
-                  ) : null}
-                  <div className={styles.cardMain}>
-                    <span
-                      className={
-                        entry.direction === 'income'
-                          ? styles.badgeIncome
-                          : styles.badgeExpense
-                      }
-                    >
-                      {entry.direction === 'income' ? 'Доход' : 'Расход'}
-                    </span>
-                    <span className={styles.cardDate}>
-                      {formatDate(entry.date)}
-                    </span>
-                    <span className={styles.cardAmount}>
-                      {entry.direction === 'income' ? '+' : '−'}
-                      {entry.amount.toLocaleString('ru-RU')} ₽
-                    </span>
+                <Card
+                  key={entry.id}
+                  component="li"
+                  className={styles.card}
+                  withBorder
+                  radius="md"
+                >
+                  <Group align="flex-start" gap="sm" wrap="nowrap">
                     {cat ? (
-                      <span>
-                        {cat.icon ? `${cat.icon} ` : ''}
-                        {cat.name}
-                      </span>
+                      <span
+                        className={styles.colorSwatch}
+                        style={{
+                          backgroundColor: cat.color || '#6b7280',
+                        }}
+                        aria-hidden
+                      />
                     ) : null}
-                    {entry.note ? (
-                      <span className={styles.cardNote}>{entry.note}</span>
-                    ) : null}
-                  </div>
-                  <div className={styles.cardActions}>
-                    <button
-                      type="button"
-                      onClick={() => handleOpenEditEntry(entry)}
-                      className={styles.iconButton}
-                      title="Редактировать"
-                      aria-label="Редактировать"
-                    >
-                      ✎
-                    </button>
-                    {entryDeleteConfirmId === entry.id ? (
-                      <>
-                        <span className={styles.confirmText}>Удалить?</span>
-                        <button
-                          type="button"
-                          onClick={() => deleteEntryMutation.mutate(entry.id)}
-                          disabled={deleteEntryMutation.isPending}
-                          className={styles.dangerButton}
+                    <div className={styles.cardMain}>
+                      <Group gap="xs" align="center">
+                        <Badge
+                          color={isIncome ? 'green' : 'red'}
+                          radius="sm"
+                          size="sm"
                         >
-                          Да
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEntryDeleteConfirmId(null)}
-                          className={styles.cancelButton}
+                          {isIncome ? 'Доход' : 'Расход'}
+                        </Badge>
+                        <Text
+                          component="span"
+                          className={styles.cardDate}
+                          size="sm"
                         >
-                          Нет
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setEntryDeleteConfirmId(entry.id)}
-                        className={styles.iconButton}
-                        title="Удалить"
-                        aria-label="Удалить"
+                          {formatDate(entry.date)}
+                        </Text>
+                      </Group>
+                      <Text
+                        component="span"
+                        className={styles.cardAmount}
+                        fw={600}
                       >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                </li>
+                        {isIncome ? '+' : '−'}
+                        {entry.amount.toLocaleString('ru-RU')} ₽
+                      </Text>
+                      {cat ? (
+                        <Text component="span">
+                          {cat.icon ? `${cat.icon} ` : ''}
+                          {cat.name}
+                        </Text>
+                      ) : null}
+                      {entry.note ? (
+                        <Text
+                          component="span"
+                          className={styles.cardNote}
+                          size="sm"
+                        >
+                          {entry.note}
+                        </Text>
+                      ) : null}
+                    </div>
+                    <div className={styles.cardActions}>
+                      <ActionIcon
+                        variant="subtle"
+                        aria-label="Редактировать"
+                        title="Редактировать"
+                        onClick={() => handleOpenEditEntry(entry)}
+                      >
+                        ✎
+                      </ActionIcon>
+                      {entryDeleteConfirmId === entry.id ? (
+                        <>
+                          <Text
+                            component="span"
+                            className={styles.confirmText}
+                            size="sm"
+                          >
+                            Удалить?
+                          </Text>
+                          <button
+                            type="button"
+                            onClick={() => deleteEntryMutation.mutate(entry.id)}
+                            disabled={deleteEntryMutation.isPending}
+                            className={styles.dangerButton}
+                          >
+                            Да
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEntryDeleteConfirmId(null)}
+                            className={styles.cancelButton}
+                          >
+                            Нет
+                          </button>
+                        </>
+                      ) : (
+                        <ActionIcon
+                          variant="subtle"
+                          color="red"
+                          aria-label="Удалить"
+                          title="Удалить"
+                          onClick={() => setEntryDeleteConfirmId(entry.id)}
+                        >
+                          ✕
+                        </ActionIcon>
+                      )}
+                    </div>
+                  </Group>
+                </Card>
               );
             })}
-          </ul>
+          </Stack>
         ) : null}
       </section>
 
@@ -747,85 +776,121 @@ export function TransactionsPage() {
         {!recurringExpenseQuery.isPending &&
         !recurringExpenseQuery.error &&
         recurringExpenseList.length > 0 ? (
-          <ul className={styles.list}>
+          <Stack component="ul" className={styles.list} gap="xs">
             {recurringExpenseList.map(p => {
               const cat = categoryMap.get(p.categoryId);
               return (
-                <li key={p.id} className={styles.card}>
-                  {cat ? (
-                    <span
-                      className={styles.colorSwatch}
-                      style={{
-                        backgroundColor: cat.color || '#6b7280',
-                      }}
-                      aria-hidden
-                    />
-                  ) : null}
-                  <div className={styles.cardMain}>
-                    <span className={styles.kindBadge}>Повторяющийся</span>
-                    <span className={styles.cardAmount}>
-                      {p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
-                    </span>
-                    <span className={styles.cardRecurrence}>
-                      {describeRecurrence(p.recurrence)}
-                    </span>
+                <Card
+                  key={p.id}
+                  component="li"
+                  className={styles.card}
+                  withBorder
+                  radius="md"
+                >
+                  <Group align="flex-start" gap="sm" wrap="nowrap">
                     {cat ? (
-                      <span>
-                        {cat.icon ? `${cat.icon} ` : ''}
-                        {cat.name}
-                      </span>
+                      <span
+                        className={styles.colorSwatch}
+                        style={{
+                          backgroundColor: cat.color || '#6b7280',
+                        }}
+                        aria-hidden
+                      />
                     ) : null}
-                    {p.note ? (
-                      <span className={styles.cardNote}>{p.note}</span>
-                    ) : null}
-                  </div>
-                  <div className={styles.cardActions}>
-                    <button
-                      type="button"
-                      onClick={() => handleOpenEditRecurringExpense(p)}
-                      className={styles.iconButton}
-                      title="Редактировать"
-                      aria-label="Редактировать"
-                    >
-                      ✎
-                    </button>
-                    {recurringExpenseDeleteId === p.id ? (
-                      <>
-                        <span className={styles.confirmText}>Удалить?</span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            deleteRecurringExpenseMutation.mutate(p.id)
-                          }
-                          disabled={deleteRecurringExpenseMutation.isPending}
-                          className={styles.dangerButton}
+                    <div className={styles.cardMain}>
+                      <Group gap="xs" align="center">
+                        <Badge
+                          color="gray"
+                          radius="sm"
+                          size="sm"
+                          className={styles.kindBadge}
                         >
-                          Да
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setRecurringExpenseDeleteId(null)}
-                          className={styles.cancelButton}
-                        >
-                          Нет
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setRecurringExpenseDeleteId(p.id)}
-                        className={styles.iconButton}
-                        title="Удалить"
-                        aria-label="Удалить"
+                          Повторяющийся
+                        </Badge>
+                      </Group>
+                      <Text
+                        component="span"
+                        className={styles.cardAmount}
+                        fw={600}
                       >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                </li>
+                        {p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
+                      </Text>
+                      <Text
+                        component="span"
+                        className={styles.cardRecurrence}
+                        size="sm"
+                      >
+                        {describeRecurrence(p.recurrence)}
+                      </Text>
+                      {cat ? (
+                        <Text component="span">
+                          {cat.icon ? `${cat.icon} ` : ''}
+                          {cat.name}
+                        </Text>
+                      ) : null}
+                      {p.note ? (
+                        <Text
+                          component="span"
+                          className={styles.cardNote}
+                          size="sm"
+                        >
+                          {p.note}
+                        </Text>
+                      ) : null}
+                    </div>
+                    <div className={styles.cardActions}>
+                      <ActionIcon
+                        variant="subtle"
+                        aria-label="Редактировать"
+                        title="Редактировать"
+                        onClick={() => handleOpenEditRecurringExpense(p)}
+                      >
+                        ✎
+                      </ActionIcon>
+                      {recurringExpenseDeleteId === p.id ? (
+                        <>
+                          <Text
+                            component="span"
+                            className={styles.confirmText}
+                            size="sm"
+                          >
+                            Удалить?
+                          </Text>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              deleteRecurringExpenseMutation.mutate(p.id)
+                            }
+                            disabled={deleteRecurringExpenseMutation.isPending}
+                            className={styles.dangerButton}
+                          >
+                            Да
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setRecurringExpenseDeleteId(null)}
+                            className={styles.cancelButton}
+                          >
+                            Нет
+                          </button>
+                        </>
+                      ) : (
+                        <ActionIcon
+                          variant="subtle"
+                          color="red"
+                          aria-label="Удалить"
+                          title="Удалить"
+                          onClick={() => setRecurringExpenseDeleteId(p.id)}
+                        >
+                          ✕
+                        </ActionIcon>
+                      )}
+                    </div>
+                  </Group>
+                </Card>
               );
             })}
-          </ul>
+          </Stack>
         ) : null}
       </section>
 
@@ -849,77 +914,120 @@ export function TransactionsPage() {
         {!recurringIncomeQuery.isPending &&
         !recurringIncomeQuery.error &&
         recurringIncomeList.length > 0 ? (
-          <ul className={styles.list}>
+          <Stack component="ul" className={styles.list} gap="xs">
             {recurringIncomeList.map(p => {
               const cat = categoryMap.get(p.categoryId);
               return (
-                <li key={p.id} className={styles.card}>
-                  <div className={styles.cardMain}>
-                    <span className={styles.badgeIncome}>Доход</span>
-                    <span className={styles.kindBadge}>Повторяющийся</span>
-                    <span className={styles.cardAmount}>
-                      +{p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
-                    </span>
-                    <span className={styles.cardRecurrence}>
-                      {describeRecurrence(p.recurrence)}
-                    </span>
-                    {cat ? (
-                      <span>
-                        {cat.icon ? `${cat.icon} ` : ''}
-                        {cat.name}
-                      </span>
-                    ) : null}
-                    {p.note ? (
-                      <span className={styles.cardNote}>{p.note}</span>
-                    ) : null}
-                  </div>
-                  <div className={styles.cardActions}>
-                    <button
-                      type="button"
-                      onClick={() => handleOpenEditRecurringIncome(p)}
-                      className={styles.iconButton}
-                      title="Редактировать"
-                      aria-label="Редактировать"
-                    >
-                      ✎
-                    </button>
-                    {recurringIncomeDeleteId === p.id ? (
-                      <>
-                        <span className={styles.confirmText}>Удалить?</span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            deleteRecurringIncomeMutation.mutate(p.id)
-                          }
-                          disabled={deleteRecurringIncomeMutation.isPending}
-                          className={styles.dangerButton}
+                <Card
+                  key={p.id}
+                  component="li"
+                  className={styles.card}
+                  withBorder
+                  radius="md"
+                >
+                  <Group align="flex-start" gap="sm" wrap="nowrap">
+                    <div className={styles.cardMain}>
+                      <Group gap="xs" align="center">
+                        <Badge
+                          color="green"
+                          radius="sm"
+                          size="sm"
+                          className={styles.badgeIncome}
                         >
-                          Да
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setRecurringIncomeDeleteId(null)}
-                          className={styles.cancelButton}
+                          Доход
+                        </Badge>
+                        <Badge
+                          color="gray"
+                          radius="sm"
+                          size="sm"
+                          className={styles.kindBadge}
                         >
-                          Нет
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setRecurringIncomeDeleteId(p.id)}
-                        className={styles.iconButton}
-                        title="Удалить"
-                        aria-label="Удалить"
+                          Повторяющийся
+                        </Badge>
+                      </Group>
+                      <Text
+                        component="span"
+                        className={styles.cardAmount}
+                        fw={600}
                       >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                </li>
+                        +{p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
+                      </Text>
+                      <Text
+                        component="span"
+                        className={styles.cardRecurrence}
+                        size="sm"
+                      >
+                        {describeRecurrence(p.recurrence)}
+                      </Text>
+                      {cat ? (
+                        <Text component="span">
+                          {cat.icon ? `${cat.icon} ` : ''}
+                          {cat.name}
+                        </Text>
+                      ) : null}
+                      {p.note ? (
+                        <Text
+                          component="span"
+                          className={styles.cardNote}
+                          size="sm"
+                        >
+                          {p.note}
+                        </Text>
+                      ) : null}
+                    </div>
+                    <div className={styles.cardActions}>
+                      <ActionIcon
+                        variant="subtle"
+                        aria-label="Редактировать"
+                        title="Редактировать"
+                        onClick={() => handleOpenEditRecurringIncome(p)}
+                      >
+                        ✎
+                      </ActionIcon>
+                      {recurringIncomeDeleteId === p.id ? (
+                        <>
+                          <Text
+                            component="span"
+                            className={styles.confirmText}
+                            size="sm"
+                          >
+                            Удалить?
+                          </Text>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              deleteRecurringIncomeMutation.mutate(p.id)
+                            }
+                            disabled={deleteRecurringIncomeMutation.isPending}
+                            className={styles.dangerButton}
+                          >
+                            Да
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setRecurringIncomeDeleteId(null)}
+                            className={styles.cancelButton}
+                          >
+                            Нет
+                          </button>
+                        </>
+                      ) : (
+                        <ActionIcon
+                          variant="subtle"
+                          color="red"
+                          aria-label="Удалить"
+                          title="Удалить"
+                          onClick={() => setRecurringIncomeDeleteId(p.id)}
+                        >
+                          ✕
+                        </ActionIcon>
+                      )}
+                    </div>
+                  </Group>
+                </Card>
               );
             })}
-          </ul>
+          </Stack>
         ) : null}
       </section>
 

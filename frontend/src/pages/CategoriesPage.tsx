@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ActionIcon, Badge, Card, Group, Stack, Text } from '@mantine/core';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   Category,
@@ -259,92 +260,119 @@ export function CategoriesPage() {
           </p>
         ) : null}
         {!loading && !listError && categories.length > 0 ? (
-          <ul className={styles.list}>
+          <Stack component="ul" className={styles.list} gap="xs">
             {categories.map(c => (
-              <li key={c.id} className={styles.card}>
-                <span
-                  className={styles.colorSwatch}
-                  style={{ backgroundColor: c.color || '#6b7280' }}
-                  aria-hidden
-                />
-                <span className={styles.cardName}>
-                  {c.icon ? (
-                    <span className={styles.cardIcon}>{c.icon}</span>
-                  ) : null}
-                  {c.name}
-                </span>
-                <span className={styles.cardOrder}>{c.sortOrder}</span>
-                <div className={styles.cardActions}>
-                  <button
-                    type="button"
-                    onClick={() => handleMove(c, 'up')}
-                    disabled={
-                      reorderMutation.isPending ||
-                      categoriesQuery.data?.findIndex(x => x.id === c.id) === 0
-                    }
-                    className={styles.iconButton}
-                    title="Выше"
-                    aria-label="Поднять"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleMove(c, 'down')}
-                    disabled={
-                      reorderMutation.isPending ||
-                      categoriesQuery.data?.findIndex(x => x.id === c.id) ===
-                        categories.length - 1
-                    }
-                    className={styles.iconButton}
-                    title="Ниже"
-                    aria-label="Опустить"
-                  >
-                    ↓
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleStartEdit(c)}
-                    className={styles.iconButton}
-                    title="Редактировать"
-                    aria-label="Редактировать"
-                  >
-                    ✎
-                  </button>
-                  {deleteConfirmId === c.id ? (
-                    <>
-                      <span className={styles.confirmText}>В архив?</span>
-                      <button
-                        type="button"
-                        onClick={() => deleteMutation.mutate(c.id)}
-                        disabled={deleteMutation.isPending}
-                        className={styles.dangerButton}
-                      >
-                        Да
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDeleteConfirmId(null)}
-                        className={styles.cancelButton}
-                      >
-                        Нет
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setDeleteConfirmId(c.id)}
-                      className={styles.iconButton}
-                      title="В архив"
-                      aria-label="В архив"
+              <Card
+                key={c.id}
+                component="li"
+                className={styles.card}
+                withBorder
+                radius="md"
+              >
+                <Group align="center" gap="sm" wrap="nowrap">
+                  <span
+                    className={styles.colorSwatch}
+                    style={{ backgroundColor: c.color || '#6b7280' }}
+                    aria-hidden
+                  />
+                  <div className={styles.cardName}>
+                    {c.icon ? (
+                      <span className={styles.cardIcon}>{c.icon}</span>
+                    ) : null}
+                    <Text component="span" fw={500}>
+                      {c.name}
+                    </Text>
+                    <Badge
+                      size="xs"
+                      radius="sm"
+                      color={c.direction === 'expense' ? 'red' : 'green'}
                     >
-                      ✕
-                    </button>
-                  )}
-                </div>
-              </li>
+                      {c.direction === 'expense' ? 'Расход' : 'Доход'}
+                    </Badge>
+                  </div>
+                  <Text
+                    component="span"
+                    className={styles.cardOrder}
+                    size="sm"
+                  >
+                    {c.sortOrder}
+                  </Text>
+                  <div className={styles.cardActions}>
+                    <ActionIcon
+                      variant="subtle"
+                      aria-label="Поднять"
+                      title="Выше"
+                      onClick={() => handleMove(c, 'up')}
+                      disabled={
+                        reorderMutation.isPending ||
+                        categoriesQuery.data?.findIndex(x => x.id === c.id) ===
+                          0
+                      }
+                    >
+                      ↑
+                    </ActionIcon>
+                    <ActionIcon
+                      variant="subtle"
+                      aria-label="Опустить"
+                      title="Ниже"
+                      onClick={() => handleMove(c, 'down')}
+                      disabled={
+                        reorderMutation.isPending ||
+                        categoriesQuery.data?.findIndex(x => x.id === c.id) ===
+                          categories.length - 1
+                      }
+                    >
+                      ↓
+                    </ActionIcon>
+                    <ActionIcon
+                      variant="subtle"
+                      aria-label="Редактировать"
+                      title="Редактировать"
+                      onClick={() => handleStartEdit(c)}
+                    >
+                      ✎
+                    </ActionIcon>
+                    {deleteConfirmId === c.id ? (
+                      <>
+                        <Text
+                          component="span"
+                          className={styles.confirmText}
+                          size="sm"
+                        >
+                          В архив?
+                        </Text>
+                        <button
+                          type="button"
+                          onClick={() => deleteMutation.mutate(c.id)}
+                          disabled={deleteMutation.isPending}
+                          className={styles.dangerButton}
+                        >
+                          Да
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteConfirmId(null)}
+                          className={styles.cancelButton}
+                        >
+                          Нет
+                        </button>
+                      </>
+                    ) : (
+                      <ActionIcon
+                        variant="subtle"
+                        color="red"
+                        aria-label="В архив"
+                        title="В архив"
+                        onClick={() => setDeleteConfirmId(c.id)}
+                      >
+                        ✕
+                      </ActionIcon>
+                    )}
+                  </div>
+                </Group>
+              </Card>
             ))}
-          </ul>
+          </Stack>
         ) : null}
       </section>
       <ResponsiveModal
