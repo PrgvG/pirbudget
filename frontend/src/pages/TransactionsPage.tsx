@@ -555,9 +555,6 @@ export function TransactionsPage() {
     <div className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>Платежи и поступления</h1>
-        <Link to="/" className={styles.backLink}>
-          На главную
-        </Link>
       </header>
 
       <section className={styles.formSection}>

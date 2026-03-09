@@ -2,7 +2,6 @@ import { createRoute, redirect } from '@tanstack/react-router';
 import { shouldRedirectToLogin } from './authRedirect';
 import { rootRoute } from './root';
 import { AuthenticatedLayout } from '../layouts/AuthenticatedLayout';
-import { ProtectedDashboard } from './ProtectedDashboard';
 import { ProtectedCategories } from './ProtectedGroups';
 import { ProtectedTransactions } from './ProtectedTransactions';
 import { ProtectedMonth } from './ProtectedMonth';
@@ -23,7 +22,7 @@ export const authenticatedLayoutRoute = createRoute({
 export const indexRoute = createRoute({
   getParentRoute: () => authenticatedLayoutRoute,
   path: '/',
-  component: ProtectedDashboard,
+  component: ProtectedTransactions,
 });
 
 export const categoriesRoute = createRoute({

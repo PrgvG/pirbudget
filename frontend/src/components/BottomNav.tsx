@@ -8,14 +8,13 @@ type NavItem = {
 };
 
 const items: NavItem[] = [
-  { to: '/', label: 'Главная', icon: '🏠' },
-  { to: '/categories', label: 'Категории', icon: '📁' },
-  { to: '/transactions', label: 'Платежи и поступления', icon: '💳' },
+  { to: '/', label: 'Платежи и поступления', icon: '🏠' },
   { to: '/month', label: 'Месяц', icon: '📅' },
+  { to: '/categories', label: 'Категории', icon: '📁' },
 ];
 
 export function BottomNav() {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const pathname = useRouterState({ select: s => s.location.pathname });
 
   return (
     <nav className={styles.nav} role="navigation" aria-label="Основное меню">
@@ -25,7 +24,9 @@ export function BottomNav() {
           <Link
             key={to}
             to={to}
-            className={isActive ? `${styles.link} ${styles.linkActive}` : styles.link}
+            className={
+              isActive ? `${styles.link} ${styles.linkActive}` : styles.link
+            }
             aria-current={isActive ? 'page' : undefined}
           >
             <span className={styles.icon} aria-hidden>
