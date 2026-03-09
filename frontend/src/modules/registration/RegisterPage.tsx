@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Alert, Button, PasswordInput, TextInput } from '@mantine/core';
 import { useNavigate, Link } from '@tanstack/react-router';
 import { useAuth } from '../../contexts/useAuth';
 import { apiJson } from '../../api/client';
@@ -45,58 +46,59 @@ export function RegisterPage() {
       <h1>Регистрация</h1>
       <form onSubmit={handleSubmit}>
         <div className={styles.fieldGroup}>
-          <label htmlFor="reg-email" className={styles.label}>
-            Email
-          </label>
-          <input
+          <TextInput
             id="reg-email"
             type="email"
+            label="Email"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setEmail(e.currentTarget.value)
+            }
             required
             disabled={submitting}
             autoComplete="email"
-            className={styles.input}
           />
         </div>
         <div className={styles.fieldGroup}>
-          <label htmlFor="reg-password" className={styles.label}>
-            Пароль (не менее 8 символов)
-          </label>
-          <input
+          <PasswordInput
             id="reg-password"
-            type="password"
+            label="Пароль (не менее 8 символов)"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setPassword(e.currentTarget.value)
+            }
             required
-            minLength={8}
             disabled={submitting}
             autoComplete="new-password"
-            className={styles.input}
           />
         </div>
         <div className={styles.fieldGroup}>
-          <label htmlFor="reg-name" className={styles.label}>
-            Имя (необязательно)
-          </label>
-          <input
+          <TextInput
             id="reg-name"
             type="text"
+            label="Имя (необязательно)"
             value={name}
-            onChange={e => setName(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setName(e.currentTarget.value)
+            }
             disabled={submitting}
             autoComplete="name"
-            className={styles.input}
           />
         </div>
-        {error && <div className={styles.error}>{error}</div>}
-        <button
+        {error && (
+          <Alert color="red" variant="light" className={styles.error}>
+            {error}
+          </Alert>
+        )}
+        <Button
           type="submit"
           disabled={submitting}
+          loading={submitting}
           className={styles.registerButton}
+          fullWidth
         >
           {submitting ? 'Регистрация...' : 'Зарегистрироваться'}
-        </button>
+        </Button>
       </form>
       <p className={styles.footer}>
         Уже есть аккаунт? <Link to="/login">Войти</Link>

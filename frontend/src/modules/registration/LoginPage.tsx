@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Alert, Button, PasswordInput, TextInput } from '@mantine/core';
 import { useNavigate, useRouterState, Link } from '@tanstack/react-router';
 import { useAuth } from '../../contexts/useAuth';
 import { apiJson } from '../../api/client';
@@ -44,43 +45,46 @@ export function LoginPage() {
       <h1>Вход</h1>
       <form onSubmit={handleSubmit}>
         <div className={styles.fieldGroup}>
-          <label htmlFor="login-email" className={styles.label}>
-            Email
-          </label>
-          <input
+          <TextInput
             id="login-email"
             type="email"
+            label="Email"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setEmail(e.currentTarget.value)
+            }
             required
             disabled={submitting}
             autoComplete="email"
-            className={styles.input}
           />
         </div>
         <div className={styles.fieldGroup}>
-          <label htmlFor="login-password" className={styles.label}>
-            Пароль
-          </label>
-          <input
+          <PasswordInput
             id="login-password"
-            type="password"
+            label="Пароль"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setPassword(e.currentTarget.value)
+            }
             required
             disabled={submitting}
             autoComplete="current-password"
-            className={styles.input}
           />
         </div>
-        {error && <div className={styles.error}>{error}</div>}
-        <button
+        {error && (
+          <Alert color="red" variant="light" className={styles.error}>
+            {error}
+          </Alert>
+        )}
+        <Button
           type="submit"
           disabled={submitting}
+          loading={submitting}
           className={styles.loginButton}
+          fullWidth
         >
           {submitting ? 'Вход...' : 'Войти'}
-        </button>
+        </Button>
       </form>
       <p className={styles.footer}>
         Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
