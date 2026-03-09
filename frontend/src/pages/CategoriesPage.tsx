@@ -17,6 +17,21 @@ import styles from './CategoriesPage.module.css';
 
 const CATEGORIES_QUERY_KEY = ['categories'] as const;
 
+const DEFAULT_CATEGORY_COLOR = '#6b7280';
+
+const getRandomCategoryColor = (): string => {
+  const palette: string[] = [
+    '#f97316', // orange
+    '#22c55e', // green
+    '#0ea5e9', // sky
+    '#6366f1', // indigo
+    '#ec4899', // pink
+    '#eab308', // amber
+  ];
+  const index = Math.floor(Math.random() * palette.length);
+  return palette[index] ?? DEFAULT_CATEGORY_COLOR;
+};
+
 type FormState = {
   name: string;
   sortOrder: number;
@@ -28,7 +43,7 @@ type FormState = {
 const emptyForm = (direction: CategoryDirection): FormState => ({
   name: '',
   sortOrder: 0,
-  color: '',
+  color: getRandomCategoryColor(),
   icon: '',
   direction,
 });
@@ -275,7 +290,7 @@ export function CategoriesPage() {
                 <input
                   id="category-color"
                   type="color"
-                  value={form.color || '#6b7280'}
+                  value={form.color || DEFAULT_CATEGORY_COLOR}
                   onChange={e =>
                     setForm(f => ({ ...f, color: e.target.value }))
                   }
