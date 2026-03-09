@@ -1,9 +1,16 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate } from '@tanstack/react-router';
-import { AppShell, Button, Container, Group, Text } from '@mantine/core';
+import {
+  AppShell,
+  Button,
+  Center,
+  Container,
+  Group,
+  Loader,
+  Text,
+} from '@mantine/core';
 import { useAuth } from '../contexts/useAuth';
 import { BottomNav } from '../components/BottomNav';
-import styles from './AuthenticatedLayout.module.css';
 
 export function AuthenticatedLayout() {
   const navigate = useNavigate();
@@ -17,26 +24,22 @@ export function AuthenticatedLayout() {
 
   if (isLoading) {
     return (
-      <div className={styles.loading} role="status" aria-label="Загрузка">
-        Загрузка...
-      </div>
+      <Center mih="100vh">
+        <Loader size="lg" />
+      </Center>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className={styles.loading} role="status" aria-label="Перенаправление">
-        Перенаправление...
-      </div>
+      <Center mih="100vh">
+        <Text c="dimmed">Перенаправление...</Text>
+      </Center>
     );
   }
 
   return (
-    <AppShell
-      header={{ height: 56 }}
-      footer={{ height: 64 }}
-      padding="md"
-    >
+    <AppShell header={{ height: 56 }} footer={{ height: 64 }} padding="md">
       <AppShell.Header>
         <Container size="xs" h="100%">
           <Group justify="space-between" align="center" h="100%">
@@ -50,11 +53,7 @@ export function AuthenticatedLayout() {
                   {user.name ? ` (${user.name})` : ''}
                 </Text>
               )}
-              <Button
-                variant="subtle"
-                size="xs"
-                onClick={logout}
-              >
+              <Button variant="subtle" size="xs" onClick={logout}>
                 Выйти
               </Button>
             </Group>

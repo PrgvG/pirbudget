@@ -1,6 +1,13 @@
 import type { CategoryDirection } from 'shared/categories';
-import { Alert, Button, ColorInput, NumberInput, TextInput } from '@mantine/core';
-import styles from './CategoriesPage.module.css';
+import {
+  Alert,
+  Button,
+  ColorInput,
+  Group,
+  NumberInput,
+  Stack,
+  TextInput,
+} from '@mantine/core';
 
 type CategoryFormState = {
   name: string;
@@ -29,103 +36,71 @@ export function CategoryForm({
   onSubmit,
   onCancel,
 }: CategoryFormProps) {
-  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...value, name: event.target.value });
-  };
-
-  const handleSortOrderChange = (next: string | number | null) => {
-    const nextSortOrder =
-      typeof next === 'number'
-        ? next
-        : parseInt(String(next ?? ''), 10) || 0;
-    onChange({ ...value, sortOrder: nextSortOrder });
-  };
-
-  const handleColorChange = (next: string) => {
-    onChange({ ...value, color: next });
-  };
-
-  const handleIconChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...value, icon: event.target.value });
-  };
-
   const isExpenseDirection = value.direction === 'expense';
 
   return (
-    <form onSubmit={onSubmit} className={styles.form}>
-      <h2 className={styles.formTitle}>
-        {mode === 'edit' ? 'Редактировать категорию' : 'Новая категория'}
-      </h2>
-      <div className={styles.field}>
+    <form onSubmit={onSubmit}>
+      <Stack gap="sm">
         <TextInput
-          id="category-name"
           label="Название"
           value={value.name}
-          onChange={handleNameChange}
+          onChange={e =>
+            onChange({ ...value, name: e.currentTarget.value })
+          }
           placeholder={
             isExpenseDirection
               ? 'Например: Продукты'
               : 'Например: Зарплата'
           }
-          className={styles.input}
           autoFocus
         />
-      </div>
-      <div className={styles.field}>
+
         <NumberInput
-          id="category-sortOrder"
           label="Порядок"
           min={0}
           value={value.sortOrder}
-          onChange={handleSortOrderChange}
-          className={styles.input}
+          onChange={next => {
+            const nextSortOrder =
+              typeof next === 'number'
+                ? next
+                : parseInt(String(next ?? ''), 10) || 0;
+            onChange({ ...value, sortOrder: nextSortOrder });
+          }}
         />
-      </div>
-      <div className={styles.field}>
+
         <ColorInput
-          id="category-color"
           label="Цвет"
           format="hex"
           value={value.color}
-          onChange={handleColorChange}
-          className={styles.input}
+          onChange={next => onChange({ ...value, color: next })}
         />
-      </div>
-      <div className={styles.field}>
+
         <TextInput
-          id="category-icon"
           label="Иконка (опционально)"
           value={value.icon}
-          onChange={handleIconChange}
+          onChange={e =>
+            onChange({ ...value, icon: e.currentTarget.value })
+          }
           placeholder="Эмодзи или код"
-          className={styles.input}
         />
-      </div>
-      {error ? (
-        <Alert color="red" title="Ошибка">
-          {error}
-        </Alert>
-      ) : null}
-      <div className={styles.formActions}>
-        <Button
-          type="submit"
-          disabled={isPending}
-          className={styles.submitButton}
-        >
-          {mode === 'edit' ? 'Сохранить' : 'Добавить'}
-        </Button>
-        {mode === 'edit' ? (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            className={styles.cancelButton}
-          >
-            Отмена
+
+        {error && (
+          <Alert color="red" title="Ошибка">
+            {error}
+          </Alert>
+        )}
+
+        <Group gap="sm" mt="xs">
+          <Button type="submit" loading={isPending}>
+            {mode === 'edit' ? 'Сохранить' : 'Добавить'}
           </Button>
-        ) : null}
-      </div>
+          {mode === 'edit' && (
+            <Button type="button" variant="default" onClick={onCancel}>
+              Отмена
+            </Button>
+          )}
+        </Group>
+      </Stack>
     </form>
   );
 }
-

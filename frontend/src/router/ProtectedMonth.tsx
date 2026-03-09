@@ -1,3 +1,4 @@
+import { Center, Loader } from '@mantine/core';
 import { useAuth } from '../contexts/useAuth';
 import { MonthPage } from '../pages/MonthPage';
 
@@ -6,7 +7,9 @@ export function ProtectedMonth() {
 
   if (isLoading) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>Загрузка...</div>
+      <Center py="xl">
+        <Loader size="sm" />
+      </Center>
     );
   }
 

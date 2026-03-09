@@ -1,5 +1,25 @@
 import { useState } from 'react';
-import { ActionIcon, Badge, Card, Group, Stack, Text } from '@mantine/core';
+import {
+  ActionIcon,
+  Badge,
+  Button,
+  Card,
+  Center,
+  Group,
+  Loader,
+  Alert,
+  SegmentedControl,
+  Stack,
+  Text,
+  Title,
+} from '@mantine/core';
+import {
+  IconArrowDown,
+  IconArrowUp,
+  IconPencil,
+  IconPlus,
+  IconX,
+} from '@tabler/icons-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   Category,
@@ -24,12 +44,12 @@ const DEFAULT_CATEGORY_COLOR = '#6b7280';
 
 const getRandomCategoryColor = (): string => {
   const palette: string[] = [
-    '#f97316', // orange
-    '#22c55e', // green
-    '#0ea5e9', // sky
-    '#6366f1', // indigo
-    '#ec4899', // pink
-    '#eab308', // amber
+    '#f97316',
+    '#22c55e',
+    '#0ea5e9',
+    '#6366f1',
+    '#ec4899',
+    '#eab308',
   ];
   const index = Math.floor(Math.random() * palette.length);
   return palette[index] ?? DEFAULT_CATEGORY_COLOR;
@@ -95,9 +115,7 @@ export function CategoriesPage() {
       setCreateMode(false);
       setError(null);
     },
-    onError: err => {
-      setError(formatApiError(err));
-    },
+    onError: err => setError(formatApiError(err)),
   });
 
   const updateMutation = useMutation({
@@ -109,9 +127,7 @@ export function CategoriesPage() {
       setForm(emptyForm(direction));
       setError(null);
     },
-    onError: err => {
-      setError(formatApiError(err));
-    },
+    onError: err => setError(formatApiError(err)),
   });
 
   const reorderMutation = useMutation({
@@ -121,9 +137,7 @@ export function CategoriesPage() {
       queryClient.invalidateQueries({ queryKey: CATEGORIES_QUERY_KEY });
       setError(null);
     },
-    onError: err => {
-      setError(formatApiError(err));
-    },
+    onError: err => setError(formatApiError(err)),
   });
 
   const deleteMutation = useMutation({
@@ -133,9 +147,7 @@ export function CategoriesPage() {
       setDeleteConfirmId(null);
       setError(null);
     },
-    onError: err => {
-      setError(formatApiError(err));
-    },
+    onError: err => setError(formatApiError(err)),
   });
 
   const handleDirectionChange = (d: CategoryDirection) => {
@@ -215,166 +227,169 @@ export function CategoriesPage() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>Категории</h1>
-      </header>
+      <Title order={2} mb="lg">
+        Категории
+      </Title>
 
-      <div className={styles.tabs}>
-        <button
-          type="button"
-          className={direction === 'expense' ? styles.tabActive : styles.tab}
-          onClick={() => handleDirectionChange('expense')}
+      <SegmentedControl
+        value={direction}
+        onChange={val =>
+          handleDirectionChange(val as CategoryDirection)
+        }
+        data={[
+          { label: 'Расходы', value: 'expense' },
+          { label: 'Доходы', value: 'income' },
+        ]}
+        fullWidth
+        mb="md"
+      />
+
+      {!editingId && (
+        <Button
+          leftSection={<IconPlus size={16} />}
+          onClick={handleStartCreate}
+          mb="md"
         >
-          Расходы
-        </button>
-        <button
-          type="button"
-          className={direction === 'income' ? styles.tabActive : styles.tab}
-          onClick={() => handleDirectionChange('income')}
-        >
-          Доходы
-        </button>
-      </div>
+          Добавить категорию
+        </Button>
+      )}
 
-      <section className={styles.formSection}>
-        {!editingId ? (
-          <button
-            type="button"
-            onClick={handleStartCreate}
-            className={styles.addButton}
-          >
-            Добавить категорию
-          </button>
-        ) : null}
-      </section>
+      <section>
+        <Title order={4} mb="sm">
+          {direction === 'expense'
+            ? 'Категории расходов'
+            : 'Категории доходов'}
+        </Title>
 
-      <section className={styles.listSection}>
-        <h2 className={styles.listTitle}>
-          {direction === 'expense' ? 'Категории расходов' : 'Категории доходов'}
-        </h2>
-        {loading && <p className={styles.status}>Загрузка...</p>}
-        {listError && <p className={styles.error}>{listError}</p>}
-        {!loading && !listError && categories.length === 0 ? (
-          <p className={styles.empty}>
+        {loading && (
+          <Center py="md">
+            <Loader size="sm" />
+          </Center>
+        )}
+        {listError && (
+          <Alert color="red" mb="sm">
+            {listError}
+          </Alert>
+        )}
+        {!loading && !listError && categories.length === 0 && (
+          <Text c="dimmed" ta="center" py="md">
             Категорий пока нет. Добавьте первую.
-          </p>
-        ) : null}
-        {!loading && !listError && categories.length > 0 ? (
+          </Text>
+        )}
+        {!loading && !listError && categories.length > 0 && (
           <Stack component="ul" className={styles.list} gap="xs">
             {categories.map(c => (
               <Card
                 key={c.id}
                 component="li"
-                className={styles.card}
                 withBorder
                 radius="md"
+                padding="sm"
               >
                 <Group align="center" gap="sm" wrap="nowrap">
                   <span
                     className={styles.colorSwatch}
-                    style={{ backgroundColor: c.color || '#6b7280' }}
+                    style={{
+                      '--swatch-color': c.color || undefined,
+                    } as React.CSSProperties}
                     aria-hidden
                   />
-                  <div className={styles.cardName}>
-                    {c.icon ? (
-                      <span className={styles.cardIcon}>{c.icon}</span>
-                    ) : null}
-                    <Text component="span" fw={500}>
-                      {c.name}
-                    </Text>
-                    <Badge
-                      size="xs"
-                      radius="sm"
-                      color={c.direction === 'expense' ? 'red' : 'green'}
-                    >
-                      {c.direction === 'expense' ? 'Расход' : 'Доход'}
-                    </Badge>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <Group gap="xs" align="center">
+                      {c.icon && (
+                        <span>{c.icon}</span>
+                      )}
+                      <Text component="span" fw={500}>
+                        {c.name}
+                      </Text>
+                      <Badge
+                        size="xs"
+                        radius="sm"
+                        color={
+                          c.direction === 'expense' ? 'red' : 'green'
+                        }
+                      >
+                        {c.direction === 'expense' ? 'Расход' : 'Доход'}
+                      </Badge>
+                    </Group>
                   </div>
-                  <Text
-                    component="span"
-                    className={styles.cardOrder}
-                    size="sm"
-                  >
+                  <Text component="span" size="sm" c="dimmed">
                     {c.sortOrder}
                   </Text>
-                  <div className={styles.cardActions}>
+                  <Group gap={4} wrap="nowrap">
                     <ActionIcon
                       variant="subtle"
                       aria-label="Поднять"
-                      title="Выше"
                       onClick={() => handleMove(c, 'up')}
                       disabled={
                         reorderMutation.isPending ||
-                        categoriesQuery.data?.findIndex(x => x.id === c.id) ===
-                          0
+                        categoriesQuery.data?.findIndex(
+                          x => x.id === c.id
+                        ) === 0
                       }
                     >
-                      ↑
+                      <IconArrowUp size={16} />
                     </ActionIcon>
                     <ActionIcon
                       variant="subtle"
                       aria-label="Опустить"
-                      title="Ниже"
                       onClick={() => handleMove(c, 'down')}
                       disabled={
                         reorderMutation.isPending ||
-                        categoriesQuery.data?.findIndex(x => x.id === c.id) ===
+                        categoriesQuery.data?.findIndex(
+                          x => x.id === c.id
+                        ) ===
                           categories.length - 1
                       }
                     >
-                      ↓
+                      <IconArrowDown size={16} />
                     </ActionIcon>
                     <ActionIcon
                       variant="subtle"
                       aria-label="Редактировать"
-                      title="Редактировать"
                       onClick={() => handleStartEdit(c)}
                     >
-                      ✎
+                      <IconPencil size={16} />
                     </ActionIcon>
                     {deleteConfirmId === c.id ? (
-                      <>
-                        <Text
-                          component="span"
-                          className={styles.confirmText}
-                          size="sm"
-                        >
+                      <Group gap={4} wrap="nowrap">
+                        <Text component="span" size="xs" c="dimmed">
                           В архив?
                         </Text>
-                        <button
-                          type="button"
+                        <Button
+                          size="compact-xs"
+                          color="red"
                           onClick={() => deleteMutation.mutate(c.id)}
-                          disabled={deleteMutation.isPending}
-                          className={styles.dangerButton}
+                          loading={deleteMutation.isPending}
                         >
                           Да
-                        </button>
-                        <button
-                          type="button"
+                        </Button>
+                        <Button
+                          size="compact-xs"
+                          variant="default"
                           onClick={() => setDeleteConfirmId(null)}
-                          className={styles.cancelButton}
                         >
                           Нет
-                        </button>
-                      </>
+                        </Button>
+                      </Group>
                     ) : (
                       <ActionIcon
                         variant="subtle"
                         color="red"
                         aria-label="В архив"
-                        title="В архив"
                         onClick={() => setDeleteConfirmId(c.id)}
                       >
-                        ✕
+                        <IconX size={16} />
                       </ActionIcon>
                     )}
-                  </div>
+                  </Group>
                 </Group>
               </Card>
             ))}
           </Stack>
-        ) : null}
+        )}
       </section>
+
       <ResponsiveModal
         isOpen={Boolean(editingId || createMode)}
         onClose={handleCancelEdit}

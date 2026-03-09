@@ -1,7 +1,20 @@
 import { useState, useMemo } from 'react';
-import { ActionIcon, Badge, Card, Group, Stack, Text } from '@mantine/core';
+import {
+  ActionIcon,
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Center,
+  Group,
+  Loader,
+  Select,
+  Stack,
+  Text,
+  Title,
+} from '@mantine/core';
+import { IconPencil, IconPlus, IconX } from '@tabler/icons-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import type { Entry, EntryCreate, EntryUpdate } from 'shared/entries';
 import type { RecurringExpensePayment } from 'shared/expenses';
 import type { RecurringIncome } from 'shared/recurring-income';
@@ -77,7 +90,6 @@ function describeRecurrence(
   return `${every} с ${formatDate(r.anchorDate)}`;
 }
 
-// --- Unified form state ---
 type UnifiedFormState = {
   direction: 'income' | 'expense';
   schedule: 'date' | 'interval';
@@ -557,7 +569,6 @@ export function TransactionsPage() {
         return;
       }
     }
-    // Create
     if (f.schedule === 'date') {
       if (!f.categoryId.trim()) {
         setError('Выберите категорию');
@@ -601,44 +612,55 @@ export function TransactionsPage() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>Платежи и поступления</h1>
-      </header>
+      <Title order={2} mb="lg">
+        Платежи и поступления
+      </Title>
 
-      <section className={styles.formSection}>
-        {!showForm ? (
-          <div className={styles.addButtonRow}>
-            <button
-              type="button"
-              onClick={handleOpenCreate}
-              className={styles.addButton}
-            >
-              Добавить запись
-            </button>
-          </div>
-        ) : null}
-      </section>
+      {!showForm && (
+        <Button
+          leftSection={<IconPlus size={16} />}
+          onClick={handleOpenCreate}
+          mb="md"
+        >
+          Добавить запись
+        </Button>
+      )}
 
-      <section className={styles.listSection}>
-        <div className={styles.listHeader}>
-          <h2 className={styles.listTitle}>Записи</h2>
-          <select
-            className={styles.filterSelect}
+      <section>
+        <Group justify="space-between" align="center" mb="sm">
+          <Title order={4}>Записи</Title>
+          <Select
+            size="xs"
+            w={140}
             value={entryFilter}
-            onChange={e => setEntryFilter(e.target.value as EntryFilterType)}
+            onChange={val =>
+              setEntryFilter((val as EntryFilterType) ?? 'all')
+            }
+            data={[
+              { value: 'all', label: 'Все' },
+              { value: 'income', label: 'Доходы' },
+              { value: 'expense', label: 'Расходы' },
+            ]}
             aria-label="Фильтр по типу"
-          >
-            <option value="all">Все</option>
-            <option value="income">Доходы</option>
-            <option value="expense">Расходы</option>
-          </select>
-        </div>
-        {entriesLoading && <p className={styles.status}>Загрузка...</p>}
-        {entriesListError && <p className={styles.error}>{entriesListError}</p>}
-        {!entriesLoading && !entriesListError && entries.length === 0 ? (
-          <p className={styles.empty}>Записей пока нет. Добавьте первую.</p>
-        ) : null}
-        {!entriesLoading && !entriesListError && entries.length > 0 ? (
+          />
+        </Group>
+
+        {entriesLoading && (
+          <Center py="md">
+            <Loader size="sm" />
+          </Center>
+        )}
+        {entriesListError && (
+          <Alert color="red" mb="sm">
+            {entriesListError}
+          </Alert>
+        )}
+        {!entriesLoading && !entriesListError && entries.length === 0 && (
+          <Text c="dimmed" ta="center" py="md">
+            Записей пока нет. Добавьте первую.
+          </Text>
+        )}
+        {!entriesLoading && !entriesListError && entries.length > 0 && (
           <Stack component="ul" className={styles.list} gap="xs">
             {entries.map(entry => {
               const cat = categoryMap.get(entry.categoryId);
@@ -647,21 +669,21 @@ export function TransactionsPage() {
                 <Card
                   key={entry.id}
                   component="li"
-                  className={styles.card}
                   withBorder
                   radius="md"
+                  padding="sm"
                 >
                   <Group align="flex-start" gap="sm" wrap="nowrap">
-                    {cat ? (
+                    {cat && (
                       <span
                         className={styles.colorSwatch}
                         style={{
-                          backgroundColor: cat.color || '#6b7280',
-                        }}
+                          '--swatch-color': cat.color || undefined,
+                        } as React.CSSProperties}
                         aria-hidden
                       />
-                    ) : null}
-                    <div className={styles.cardMain}>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <Group gap="xs" align="center">
                         <Badge
                           color={isIncome ? 'green' : 'red'}
@@ -670,365 +692,320 @@ export function TransactionsPage() {
                         >
                           {isIncome ? 'Доход' : 'Расход'}
                         </Badge>
-                        <Text
-                          component="span"
-                          className={styles.cardDate}
-                          size="sm"
-                        >
+                        <Text component="span" size="sm" c="dimmed">
                           {formatDate(entry.date)}
                         </Text>
                       </Group>
-                      <Text
-                        component="span"
-                        className={styles.cardAmount}
-                        fw={600}
-                      >
+                      <Text component="span" fw={600}>
                         {isIncome ? '+' : '−'}
                         {entry.amount.toLocaleString('ru-RU')} ₽
                       </Text>
-                      {cat ? (
-                        <Text component="span">
+                      {cat && (
+                        <Text component="span" size="sm">
                           {cat.icon ? `${cat.icon} ` : ''}
                           {cat.name}
                         </Text>
-                      ) : null}
-                      {entry.note ? (
-                        <Text
-                          component="span"
-                          className={styles.cardNote}
-                          size="sm"
-                        >
+                      )}
+                      {entry.note && (
+                        <Text component="span" size="sm" c="dimmed">
                           {entry.note}
                         </Text>
-                      ) : null}
+                      )}
                     </div>
-                    <div className={styles.cardActions}>
+                    <Group gap={4} wrap="nowrap">
                       <ActionIcon
                         variant="subtle"
                         aria-label="Редактировать"
-                        title="Редактировать"
                         onClick={() => handleOpenEditEntry(entry)}
                       >
-                        ✎
+                        <IconPencil size={16} />
                       </ActionIcon>
                       {entryDeleteConfirmId === entry.id ? (
-                        <>
-                          <Text
-                            component="span"
-                            className={styles.confirmText}
-                            size="sm"
-                          >
+                        <Group gap={4} wrap="nowrap">
+                          <Text component="span" size="xs" c="dimmed">
                             Удалить?
                           </Text>
-                          <button
-                            type="button"
-                            onClick={() => deleteEntryMutation.mutate(entry.id)}
-                            disabled={deleteEntryMutation.isPending}
-                            className={styles.dangerButton}
+                          <Button
+                            size="compact-xs"
+                            color="red"
+                            onClick={() =>
+                              deleteEntryMutation.mutate(entry.id)
+                            }
+                            loading={deleteEntryMutation.isPending}
                           >
                             Да
-                          </button>
-                          <button
-                            type="button"
+                          </Button>
+                          <Button
+                            size="compact-xs"
+                            variant="default"
                             onClick={() => setEntryDeleteConfirmId(null)}
-                            className={styles.cancelButton}
                           >
                             Нет
-                          </button>
-                        </>
+                          </Button>
+                        </Group>
                       ) : (
                         <ActionIcon
                           variant="subtle"
                           color="red"
                           aria-label="Удалить"
-                          title="Удалить"
                           onClick={() => setEntryDeleteConfirmId(entry.id)}
                         >
-                          ✕
+                          <IconX size={16} />
                         </ActionIcon>
                       )}
-                    </div>
+                    </Group>
                   </Group>
                 </Card>
               );
             })}
           </Stack>
-        ) : null}
+        )}
       </section>
 
       <section className={styles.recurringSection}>
-        <h2 className={styles.listTitle}>Повторяющиеся платежи</h2>
+        <Title order={4} mb="sm">
+          Повторяющиеся платежи
+        </Title>
         {recurringExpenseQuery.isPending && (
-          <p className={styles.status}>Загрузка...</p>
+          <Center py="md">
+            <Loader size="sm" />
+          </Center>
         )}
         {recurringExpenseQuery.error && (
-          <p className={styles.error}>
+          <Alert color="red" mb="sm">
             {recurringExpenseQuery.error instanceof Error
               ? recurringExpenseQuery.error.message
               : 'Не удалось загрузить'}
-          </p>
+          </Alert>
         )}
         {!recurringExpenseQuery.isPending &&
-        !recurringExpenseQuery.error &&
-        recurringExpenseList.length === 0 ? (
-          <p className={styles.empty}>Повторяющихся платежей нет.</p>
-        ) : null}
+          !recurringExpenseQuery.error &&
+          recurringExpenseList.length === 0 && (
+            <Text c="dimmed" ta="center" py="md">
+              Повторяющихся платежей нет.
+            </Text>
+          )}
         {!recurringExpenseQuery.isPending &&
-        !recurringExpenseQuery.error &&
-        recurringExpenseList.length > 0 ? (
-          <Stack component="ul" className={styles.list} gap="xs">
-            {recurringExpenseList.map(p => {
-              const cat = categoryMap.get(p.categoryId);
-              return (
-                <Card
-                  key={p.id}
-                  component="li"
-                  className={styles.card}
-                  withBorder
-                  radius="md"
-                >
-                  <Group align="flex-start" gap="sm" wrap="nowrap">
-                    {cat ? (
-                      <span
-                        className={styles.colorSwatch}
-                        style={{
-                          backgroundColor: cat.color || '#6b7280',
-                        }}
-                        aria-hidden
-                      />
-                    ) : null}
-                    <div className={styles.cardMain}>
-                      <Group gap="xs" align="center">
-                        <Badge
-                          color="gray"
-                          radius="sm"
-                          size="sm"
-                          className={styles.kindBadge}
-                        >
+          !recurringExpenseQuery.error &&
+          recurringExpenseList.length > 0 && (
+            <Stack component="ul" className={styles.list} gap="xs">
+              {recurringExpenseList.map(p => {
+                const cat = categoryMap.get(p.categoryId);
+                return (
+                  <Card
+                    key={p.id}
+                    component="li"
+                    withBorder
+                    radius="md"
+                    padding="sm"
+                  >
+                    <Group align="flex-start" gap="sm" wrap="nowrap">
+                      {cat && (
+                        <span
+                          className={styles.colorSwatch}
+                          style={{
+                            '--swatch-color': cat.color || undefined,
+                          } as React.CSSProperties}
+                          aria-hidden
+                        />
+                      )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <Badge color="gray" radius="sm" size="sm">
                           Повторяющийся
                         </Badge>
-                      </Group>
-                      <Text
-                        component="span"
-                        className={styles.cardAmount}
-                        fw={600}
-                      >
-                        {p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
-                      </Text>
-                      <Text
-                        component="span"
-                        className={styles.cardRecurrence}
-                        size="sm"
-                      >
-                        {describeRecurrence(p.recurrence)}
-                      </Text>
-                      {cat ? (
-                        <Text component="span">
-                          {cat.icon ? `${cat.icon} ` : ''}
-                          {cat.name}
+                        <Text component="span" fw={600}>
+                          {p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
                         </Text>
-                      ) : null}
-                      {p.note ? (
-                        <Text
-                          component="span"
-                          className={styles.cardNote}
-                          size="sm"
-                        >
-                          {p.note}
+                        <Text component="span" size="sm" c="dimmed">
+                          {describeRecurrence(p.recurrence)}
                         </Text>
-                      ) : null}
-                    </div>
-                    <div className={styles.cardActions}>
-                      <ActionIcon
-                        variant="subtle"
-                        aria-label="Редактировать"
-                        title="Редактировать"
-                        onClick={() => handleOpenEditRecurringExpense(p)}
-                      >
-                        ✎
-                      </ActionIcon>
-                      {recurringExpenseDeleteId === p.id ? (
-                        <>
-                          <Text
-                            component="span"
-                            className={styles.confirmText}
-                            size="sm"
-                          >
-                            Удалить?
+                        {cat && (
+                          <Text component="span" size="sm">
+                            {cat.icon ? `${cat.icon} ` : ''}
+                            {cat.name}
                           </Text>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              deleteRecurringExpenseMutation.mutate(p.id)
-                            }
-                            disabled={deleteRecurringExpenseMutation.isPending}
-                            className={styles.dangerButton}
-                          >
-                            Да
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setRecurringExpenseDeleteId(null)}
-                            className={styles.cancelButton}
-                          >
-                            Нет
-                          </button>
-                        </>
-                      ) : (
+                        )}
+                        {p.note && (
+                          <Text component="span" size="sm" c="dimmed">
+                            {p.note}
+                          </Text>
+                        )}
+                      </div>
+                      <Group gap={4} wrap="nowrap">
                         <ActionIcon
                           variant="subtle"
-                          color="red"
-                          aria-label="Удалить"
-                          title="Удалить"
-                          onClick={() => setRecurringExpenseDeleteId(p.id)}
+                          aria-label="Редактировать"
+                          onClick={() => handleOpenEditRecurringExpense(p)}
                         >
-                          ✕
+                          <IconPencil size={16} />
                         </ActionIcon>
-                      )}
-                    </div>
-                  </Group>
-                </Card>
-              );
-            })}
-          </Stack>
-        ) : null}
+                        {recurringExpenseDeleteId === p.id ? (
+                          <Group gap={4} wrap="nowrap">
+                            <Text component="span" size="xs" c="dimmed">
+                              Удалить?
+                            </Text>
+                            <Button
+                              size="compact-xs"
+                              color="red"
+                              onClick={() =>
+                                deleteRecurringExpenseMutation.mutate(p.id)
+                              }
+                              loading={
+                                deleteRecurringExpenseMutation.isPending
+                              }
+                            >
+                              Да
+                            </Button>
+                            <Button
+                              size="compact-xs"
+                              variant="default"
+                              onClick={() =>
+                                setRecurringExpenseDeleteId(null)
+                              }
+                            >
+                              Нет
+                            </Button>
+                          </Group>
+                        ) : (
+                          <ActionIcon
+                            variant="subtle"
+                            color="red"
+                            aria-label="Удалить"
+                            onClick={() =>
+                              setRecurringExpenseDeleteId(p.id)
+                            }
+                          >
+                            <IconX size={16} />
+                          </ActionIcon>
+                        )}
+                      </Group>
+                    </Group>
+                  </Card>
+                );
+              })}
+            </Stack>
+          )}
       </section>
 
       <section className={styles.recurringSection}>
-        <h2 className={styles.listTitle}>Повторяющиеся поступления</h2>
+        <Title order={4} mb="sm">
+          Повторяющиеся поступления
+        </Title>
         {recurringIncomeQuery.isPending && (
-          <p className={styles.status}>Загрузка...</p>
+          <Center py="md">
+            <Loader size="sm" />
+          </Center>
         )}
         {recurringIncomeQuery.error && (
-          <p className={styles.error}>
+          <Alert color="red" mb="sm">
             {recurringIncomeQuery.error instanceof Error
               ? recurringIncomeQuery.error.message
               : 'Не удалось загрузить'}
-          </p>
+          </Alert>
         )}
         {!recurringIncomeQuery.isPending &&
-        !recurringIncomeQuery.error &&
-        recurringIncomeList.length === 0 ? (
-          <p className={styles.empty}>Повторяющихся поступлений нет.</p>
-        ) : null}
+          !recurringIncomeQuery.error &&
+          recurringIncomeList.length === 0 && (
+            <Text c="dimmed" ta="center" py="md">
+              Повторяющихся поступлений нет.
+            </Text>
+          )}
         {!recurringIncomeQuery.isPending &&
-        !recurringIncomeQuery.error &&
-        recurringIncomeList.length > 0 ? (
-          <Stack component="ul" className={styles.list} gap="xs">
-            {recurringIncomeList.map(p => {
-              const cat = categoryMap.get(p.categoryId);
-              return (
-                <Card
-                  key={p.id}
-                  component="li"
-                  className={styles.card}
-                  withBorder
-                  radius="md"
-                >
-                  <Group align="flex-start" gap="sm" wrap="nowrap">
-                    <div className={styles.cardMain}>
-                      <Group gap="xs" align="center">
-                        <Badge
-                          color="green"
-                          radius="sm"
-                          size="sm"
-                          className={styles.badgeIncome}
-                        >
-                          Доход
-                        </Badge>
-                        <Badge
-                          color="gray"
-                          radius="sm"
-                          size="sm"
-                          className={styles.kindBadge}
-                        >
-                          Повторяющийся
-                        </Badge>
-                      </Group>
-                      <Text
-                        component="span"
-                        className={styles.cardAmount}
-                        fw={600}
-                      >
-                        +{p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
-                      </Text>
-                      <Text
-                        component="span"
-                        className={styles.cardRecurrence}
-                        size="sm"
-                      >
-                        {describeRecurrence(p.recurrence)}
-                      </Text>
-                      {cat ? (
-                        <Text component="span">
-                          {cat.icon ? `${cat.icon} ` : ''}
-                          {cat.name}
+          !recurringIncomeQuery.error &&
+          recurringIncomeList.length > 0 && (
+            <Stack component="ul" className={styles.list} gap="xs">
+              {recurringIncomeList.map(p => {
+                const cat = categoryMap.get(p.categoryId);
+                return (
+                  <Card
+                    key={p.id}
+                    component="li"
+                    withBorder
+                    radius="md"
+                    padding="sm"
+                  >
+                    <Group align="flex-start" gap="sm" wrap="nowrap">
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <Group gap="xs" align="center">
+                          <Badge color="green" radius="sm" size="sm">
+                            Доход
+                          </Badge>
+                          <Badge color="gray" radius="sm" size="sm">
+                            Повторяющийся
+                          </Badge>
+                        </Group>
+                        <Text component="span" fw={600}>
+                          +{p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
                         </Text>
-                      ) : null}
-                      {p.note ? (
-                        <Text
-                          component="span"
-                          className={styles.cardNote}
-                          size="sm"
-                        >
-                          {p.note}
+                        <Text component="span" size="sm" c="dimmed">
+                          {describeRecurrence(p.recurrence)}
                         </Text>
-                      ) : null}
-                    </div>
-                    <div className={styles.cardActions}>
-                      <ActionIcon
-                        variant="subtle"
-                        aria-label="Редактировать"
-                        title="Редактировать"
-                        onClick={() => handleOpenEditRecurringIncome(p)}
-                      >
-                        ✎
-                      </ActionIcon>
-                      {recurringIncomeDeleteId === p.id ? (
-                        <>
-                          <Text
-                            component="span"
-                            className={styles.confirmText}
-                            size="sm"
-                          >
-                            Удалить?
+                        {cat && (
+                          <Text component="span" size="sm">
+                            {cat.icon ? `${cat.icon} ` : ''}
+                            {cat.name}
                           </Text>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              deleteRecurringIncomeMutation.mutate(p.id)
-                            }
-                            disabled={deleteRecurringIncomeMutation.isPending}
-                            className={styles.dangerButton}
-                          >
-                            Да
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setRecurringIncomeDeleteId(null)}
-                            className={styles.cancelButton}
-                          >
-                            Нет
-                          </button>
-                        </>
-                      ) : (
+                        )}
+                        {p.note && (
+                          <Text component="span" size="sm" c="dimmed">
+                            {p.note}
+                          </Text>
+                        )}
+                      </div>
+                      <Group gap={4} wrap="nowrap">
                         <ActionIcon
                           variant="subtle"
-                          color="red"
-                          aria-label="Удалить"
-                          title="Удалить"
-                          onClick={() => setRecurringIncomeDeleteId(p.id)}
+                          aria-label="Редактировать"
+                          onClick={() => handleOpenEditRecurringIncome(p)}
                         >
-                          ✕
+                          <IconPencil size={16} />
                         </ActionIcon>
-                      )}
-                    </div>
-                  </Group>
-                </Card>
-              );
-            })}
-          </Stack>
-        ) : null}
+                        {recurringIncomeDeleteId === p.id ? (
+                          <Group gap={4} wrap="nowrap">
+                            <Text component="span" size="xs" c="dimmed">
+                              Удалить?
+                            </Text>
+                            <Button
+                              size="compact-xs"
+                              color="red"
+                              onClick={() =>
+                                deleteRecurringIncomeMutation.mutate(p.id)
+                              }
+                              loading={
+                                deleteRecurringIncomeMutation.isPending
+                              }
+                            >
+                              Да
+                            </Button>
+                            <Button
+                              size="compact-xs"
+                              variant="default"
+                              onClick={() =>
+                                setRecurringIncomeDeleteId(null)
+                              }
+                            >
+                              Нет
+                            </Button>
+                          </Group>
+                        ) : (
+                          <ActionIcon
+                            variant="subtle"
+                            color="red"
+                            aria-label="Удалить"
+                            onClick={() =>
+                              setRecurringIncomeDeleteId(p.id)
+                            }
+                          >
+                            <IconX size={16} />
+                          </ActionIcon>
+                        )}
+                      </Group>
+                    </Group>
+                  </Card>
+                );
+              })}
+            </Stack>
+          )}
       </section>
 
       <ResponsiveModal

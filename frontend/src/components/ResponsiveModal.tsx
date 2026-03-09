@@ -1,11 +1,10 @@
-import { useEffect, useRef } from 'react';
-import styles from './ResponsiveModal.module.css';
+import { Drawer, Modal } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 
 type ResponsiveModalProps = {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
-  ariaLabel?: string;
   children: React.ReactNode;
 };
 
@@ -13,75 +12,41 @@ export function ResponsiveModal({
   isOpen,
   onClose,
   title,
-  ariaLabel,
   children,
 }: ResponsiveModalProps) {
-  const panelRef = useRef<HTMLDivElement | null>(null);
+  const isDesktop = useMediaQuery('(min-width: 48em)');
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [isOpen, onClose]);
-
-  if (!isOpen) {
-    return null;
+  if (isDesktop) {
+    return (
+      <Modal
+        opened={isOpen}
+        onClose={onClose}
+        title={title}
+        size="md"
+        centered
+        overlayProps={{ backgroundOpacity: 0.4, blur: 2 }}
+      >
+        {children}
+      </Modal>
+    );
   }
 
-  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.target === event.currentTarget) {
-      onClose();
-    }
-  };
-
-  const headingId = title ? 'responsive-modal-title' : undefined;
-
   return (
-    <div
-      className={styles.backdrop}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={headingId}
-      aria-label={headingId ? undefined : ariaLabel}
-      onClick={handleBackdropClick}
+    <Drawer
+      opened={isOpen}
+      onClose={onClose}
+      title={title}
+      position="bottom"
+      size="auto"
+      overlayProps={{ backgroundOpacity: 0.4, blur: 2 }}
+      styles={{
+        content: {
+          maxHeight: '90vh',
+          borderRadius: 'var(--mantine-radius-lg) var(--mantine-radius-lg) 0 0',
+        },
+      }}
     >
-      <div ref={panelRef} className={styles.panel}>
-        {(title || onClose) && (
-          <div className={styles.header}>
-            {title ? (
-              <h2 id={headingId} className={styles.title}>
-                {title}
-              </h2>
-            ) : (
-              <span />
-            )}
-            <button
-              type="button"
-              onClick={onClose}
-              className={styles.closeButton}
-              aria-label="Закрыть"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-        <div className={styles.content}>{children}</div>
-      </div>
-    </div>
+      {children}
+    </Drawer>
   );
 }
-

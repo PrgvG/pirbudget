@@ -12,17 +12,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-/* Предотвращение авто-зума при фокусе на инпутах в iOS/Android */
+/* Предотвращение авто-зума при фокусе на инпутах в iOS */
 @media (max-width: 768px) {
   input,
   select,

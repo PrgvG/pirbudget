@@ -1,10 +1,20 @@
 import { useState } from 'react';
-import { Alert, Button, PasswordInput, TextInput } from '@mantine/core';
+import {
+  Alert,
+  Anchor,
+  Button,
+  Container,
+  Paper,
+  PasswordInput,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from '@mantine/core';
 import { useNavigate, useRouterState, Link } from '@tanstack/react-router';
 import { useAuth } from '../../contexts/useAuth';
 import { apiJson } from '../../api/client';
 import { getFromPath, isAuthResponse } from '../../types/guards';
-import styles from './Registration.module.css';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -41,54 +51,51 @@ export function LoginPage() {
   };
 
   return (
-    <div className={styles.container}>
-      <h1>Вход</h1>
-      <form onSubmit={handleSubmit}>
-        <div className={styles.fieldGroup}>
-          <TextInput
-            id="login-email"
-            type="email"
-            label="Email"
-            value={email}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setEmail(e.currentTarget.value)
-            }
-            required
-            disabled={submitting}
-            autoComplete="email"
-          />
-        </div>
-        <div className={styles.fieldGroup}>
-          <PasswordInput
-            id="login-password"
-            label="Пароль"
-            value={password}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setPassword(e.currentTarget.value)
-            }
-            required
-            disabled={submitting}
-            autoComplete="current-password"
-          />
-        </div>
-        {error && (
-          <Alert color="red" variant="light" className={styles.error}>
-            {error}
-          </Alert>
-        )}
-        <Button
-          type="submit"
-          disabled={submitting}
-          loading={submitting}
-          className={styles.loginButton}
-          fullWidth
-        >
-          {submitting ? 'Вход...' : 'Войти'}
-        </Button>
-      </form>
-      <p className={styles.footer}>
-        Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
-      </p>
-    </div>
+    <Container size={400} py="xl">
+      <Title ta="center" order={2} mb="lg">
+        Вход
+      </Title>
+      <Paper withBorder shadow="sm" p="xl" radius="md">
+        <form onSubmit={handleSubmit}>
+          <Stack gap="sm">
+            <TextInput
+              type="email"
+              label="Email"
+              value={email}
+              onChange={e => setEmail(e.currentTarget.value)}
+              required
+              disabled={submitting}
+              autoComplete="email"
+            />
+            <PasswordInput
+              label="Пароль"
+              value={password}
+              onChange={e => setPassword(e.currentTarget.value)}
+              required
+              disabled={submitting}
+              autoComplete="current-password"
+            />
+            {error && (
+              <Alert color="red" variant="light">
+                {error}
+              </Alert>
+            )}
+            <Button
+              type="submit"
+              fullWidth
+              loading={submitting}
+            >
+              Войти
+            </Button>
+          </Stack>
+        </form>
+      </Paper>
+      <Text ta="center" mt="md" size="sm">
+        Нет аккаунта?{' '}
+        <Anchor component={Link} to="/register">
+          Зарегистрироваться
+        </Anchor>
+      </Text>
+    </Container>
   );
 }

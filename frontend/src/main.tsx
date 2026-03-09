@@ -3,9 +3,16 @@ import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { MantineProvider } from '@mantine/core';
+import { DatesProvider } from '@mantine/dates';
+import dayjs from 'dayjs';
+import 'dayjs/locale/ru';
 import { AuthProvider } from './contexts/AuthProvider';
 import { router } from './router';
+import '@mantine/core/styles.css';
+import '@mantine/dates/styles.css';
 import './index.css';
+
+dayjs.locale('ru');
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,11 +56,13 @@ createRoot(document.getElementById('root')!).render(
         },
       }}
     >
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <RouterProvider router={router} />
-        </AuthProvider>
-      </QueryClientProvider>
+      <DatesProvider settings={{ locale: 'ru' }}>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <RouterProvider router={router} />
+          </AuthProvider>
+        </QueryClientProvider>
+      </DatesProvider>
     </MantineProvider>
   </StrictMode>
 );

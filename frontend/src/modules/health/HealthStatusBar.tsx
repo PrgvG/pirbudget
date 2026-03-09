@@ -1,21 +1,16 @@
+import { Alert, Button, Group } from '@mantine/core';
+import { IconCircleFilled, IconRefresh } from '@tabler/icons-react';
 import type { DbStatus } from './types';
-import styles from './HealthStatusBar.module.css';
 
 type HealthStatusBarProps = {
   dbStatus: DbStatus;
   onRefresh: () => void;
 };
 
-const barClass: Record<DbStatus, string> = {
-  connected: styles.connected,
-  disconnected: styles.disconnected,
-  checking: styles.checking,
-};
-
-const dotClass: Record<DbStatus, string> = {
-  connected: styles.dotConnected,
-  disconnected: styles.dotDisconnected,
-  checking: styles.dotChecking,
+const alertColor: Record<DbStatus, string> = {
+  connected: 'green',
+  disconnected: 'red',
+  checking: 'yellow',
 };
 
 const statusLabel: Record<DbStatus, string> = {
@@ -26,16 +21,27 @@ const statusLabel: Record<DbStatus, string> = {
 
 export function HealthStatusBar({ dbStatus, onRefresh }: HealthStatusBarProps) {
   return (
-    <div className={barClass[dbStatus]}>
-      <span className={dotClass[dbStatus]} />
-      <span>MongoDB: {statusLabel[dbStatus]}</span>
-      <button
-        type="button"
-        onClick={onRefresh}
-        className={styles.refreshButton}
-      >
-        Обновить
-      </button>
-    </div>
+    <Alert
+      color={alertColor[dbStatus]}
+      variant="light"
+      radius="md"
+      mb="sm"
+      p="xs"
+    >
+      <Group justify="space-between" align="center" wrap="nowrap">
+        <Group gap="xs" align="center" wrap="nowrap">
+          <IconCircleFilled size={10} />
+          <span>MongoDB: {statusLabel[dbStatus]}</span>
+        </Group>
+        <Button
+          variant="subtle"
+          size="compact-xs"
+          onClick={onRefresh}
+          leftSection={<IconRefresh size={14} />}
+        >
+          Обновить
+        </Button>
+      </Group>
+    </Alert>
   );
 }

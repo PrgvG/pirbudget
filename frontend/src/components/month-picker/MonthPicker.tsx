@@ -1,20 +1,28 @@
-import styles from './MonthPicker.module.css';
+import { ActionIcon, Group, Text } from '@mantine/core';
+import { MonthPickerInput } from '@mantine/dates';
+import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
+import dayjs from 'dayjs';
 
 export type MonthPickerProps = {
-  /** Текущий месяц YYYY-MM */
   month: string;
-  /** Подпись месяца (например "март 2025") */
   monthLabel: string;
   onPrev: () => void;
   onNext: () => void;
   onMonthChange: (value: string) => void;
   canPrev: boolean;
   canNext: boolean;
-  /** Текст лейбла над блоком (например "Период") */
   label?: string;
-  /** id для input type="month" (a11y) */
   id?: string;
 };
+
+function monthStrToDate(m: string): Date {
+  const [y, mo] = m.split('-').map(Number);
+  return new Date(y, mo - 1, 1);
+}
+
+function dateToMonthStr(d: Date): string {
+  return dayjs(d).format('YYYY-MM');
+}
 
 export function MonthPicker({
   month,
@@ -25,47 +33,50 @@ export function MonthPicker({
   canPrev,
   canNext,
   label = 'Период',
-  id = 'month-picker',
 }: MonthPickerProps) {
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value) onMonthChange(value.slice(0, 7));
+  const handlePickerChange = (value: Date | null) => {
+    if (value) onMonthChange(dateToMonthStr(value));
   };
 
   return (
-    <div className={styles.wrapper}>
-      <label htmlFor={id} className={styles.label}>
+    <div>
+      <Text size="xs" fw={500} c="dimmed" mb={4}>
         {label}
-      </label>
-      <div className={styles.row}>
-        <button
-          type="button"
+      </Text>
+      <Group gap="sm" align="center">
+        <ActionIcon
+          variant="default"
           onClick={onPrev}
           disabled={!canPrev}
-          className={styles.navButton}
           aria-label="Предыдущий месяц"
+          size="lg"
         >
-          ←
-        </button>
-        <span className={styles.monthLabel}>{monthLabel}</span>
-        <button
-          type="button"
+          <IconChevronLeft size={18} />
+        </ActionIcon>
+
+        <Text fw={500} ta="center" miw={140}>
+          {monthLabel}
+        </Text>
+
+        <ActionIcon
+          variant="default"
           onClick={onNext}
           disabled={!canNext}
-          className={styles.navButton}
           aria-label="Следующий месяц"
+          size="lg"
         >
-          →
-        </button>
-        <input
-          id={id}
-          type="month"
-          value={month}
-          onChange={handleInputChange}
-          className={styles.monthInput}
+          <IconChevronRight size={18} />
+        </ActionIcon>
+
+        <MonthPickerInput
+          value={monthStrToDate(month)}
+          onChange={handlePickerChange}
           aria-label="Выберите месяц"
+          size="sm"
+          w={160}
+          valueFormat="MMMM YYYY"
         />
-      </div>
+      </Group>
     </div>
   );
 }

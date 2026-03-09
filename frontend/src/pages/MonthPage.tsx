@@ -1,4 +1,18 @@
 import { useState, useMemo } from 'react';
+import {
+  Alert,
+  Badge,
+  Card,
+  Center,
+  Divider,
+  Group,
+  Loader,
+  Paper,
+  Select,
+  Stack,
+  Text,
+  Title,
+} from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import type { Transaction } from 'shared/transactions';
 import type { PlannedItem } from 'shared';
@@ -133,8 +147,7 @@ export function MonthPage() {
 
   const stats = statsQuery.data;
   const sortedByIncomeCategory = useMemo(() => {
-    if (!stats || !stats.incomeByCategory || stats.incomeByCategory.length === 0)
-      return [];
+    if (!stats?.incomeByCategory?.length) return [];
     return [...stats.incomeByCategory].sort((a, b) => {
       const ca = categoryMap.get(a.categoryId);
       const cb = categoryMap.get(b.categoryId);
@@ -146,8 +159,7 @@ export function MonthPage() {
   }, [stats, categoryMap]);
 
   const sortedByExpenseCategory = useMemo(() => {
-    if (!stats || !stats.expensesByCategory || stats.expensesByCategory.length === 0)
-      return [];
+    if (!stats?.expensesByCategory?.length) return [];
     return [...stats.expensesByCategory].sort((a, b) => {
       const ca = categoryMap.get(a.categoryId);
       const cb = categoryMap.get(b.categoryId);
@@ -170,13 +182,20 @@ export function MonthPage() {
     [planItems]
   );
 
+  const filteredCategories = allCategories.filter(
+    c =>
+      historyFilters.type === 'all' ||
+      (historyFilters.type === 'income' && c.direction === 'income') ||
+      (historyFilters.type === 'expense' && c.direction === 'expense')
+  );
+
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>Месяц</h1>
-      </header>
+      <Title order={2} mb="lg">
+        Месяц
+      </Title>
 
-      <section className={styles.monthSection}>
+      <section style={{ marginBottom: 'var(--mantine-spacing-lg)' }}>
         <MonthPicker
           id="month-page-picker"
           label="Период"
@@ -190,229 +209,249 @@ export function MonthPage() {
         />
       </section>
 
-      <section className={styles.totals} aria-labelledby="month-totals-title">
-        <h2 id="month-totals-title" className={styles.sectionTitle}>
+      <section style={{ marginBottom: 'var(--mantine-spacing-lg)' }}>
+        <Title order={4} mb="sm">
           Итоги за месяц
-        </h2>
+        </Title>
         {statsQuery.isPending && (
-          <p className={styles.status}>Загрузка итогов...</p>
+          <Center py="md">
+            <Loader size="sm" />
+          </Center>
         )}
         {statsQuery.error && (
-          <p className={styles.error}>
+          <Alert color="red" mb="sm">
             {statsQuery.error instanceof Error
               ? statsQuery.error.message
               : 'Не удалось загрузить итоги'}
-          </p>
+          </Alert>
         )}
         {!statsQuery.isPending && !statsQuery.error && stats && (
-          <>
-            <div className={styles.totalsBlock}>
-              <div className={styles.totalRow}>
-                <span className={styles.totalLabel}>Доходы</span>
-                <span className={`${styles.totalValue} ${styles.income}`}>
+          <Paper withBorder radius="md" p="md">
+            <Stack gap="xs">
+              <Group justify="space-between">
+                <Text>Доходы</Text>
+                <Text fw={600} c="teal">
                   +{formatMoney(stats.totalIncome)} ₽
-                </span>
-              </div>
-              <div className={styles.totalRow}>
-                <span className={styles.totalLabel}>Расходы</span>
-                <span className={`${styles.totalValue} ${styles.expense}`}>
+                </Text>
+              </Group>
+              <Group justify="space-between">
+                <Text>Расходы</Text>
+                <Text fw={600} c="red">
                   −{formatMoney(stats.totalExpense)} ₽
-                </span>
-              </div>
-              <div className={`${styles.totalRow} ${styles.balanceRow}`}>
-                <span className={styles.totalLabel}>Баланс</span>
-                <span
-                  className={`${styles.totalValue} ${
-                    stats.balance >= 0 ? styles.income : styles.expense
-                  }`}
+                </Text>
+              </Group>
+              <Divider />
+              <Group justify="space-between">
+                <Text fw={600}>Баланс</Text>
+                <Text
+                  fw={700}
+                  c={stats.balance >= 0 ? 'teal' : 'red'}
                 >
                   {stats.balance >= 0 ? '+' : ''}
                   {formatMoney(stats.balance)} ₽
-                </span>
-              </div>
-            </div>
-            {sortedByIncomeCategory.length > 0 ? (
-              <div className={styles.byGroup}>
-                <h3 className={styles.byGroupTitle}>Доходы по категориям</h3>
-                <ul className={styles.groupList}>
+                </Text>
+              </Group>
+            </Stack>
+
+            {sortedByIncomeCategory.length > 0 && (
+              <>
+                <Divider my="sm" />
+                <Text size="sm" fw={600} mb="xs">
+                  Доходы по категориям
+                </Text>
+                <Stack gap={4}>
                   {sortedByIncomeCategory.map(({ categoryId, sum }) => {
                     const cat = categoryMap.get(categoryId);
-                    const name = cat?.name ?? categoryId;
                     return (
-                      <li key={categoryId} className={styles.groupItem}>
-                        <span className={styles.groupName}>{name}</span>
-                        <span className={styles.groupSum}>
+                      <Group
+                        key={categoryId}
+                        justify="space-between"
+                      >
+                        <Text size="sm">
+                          {cat?.name ?? categoryId}
+                        </Text>
+                        <Text size="sm" fw={500} c="teal">
                           +{formatMoney(sum)} ₽
-                        </span>
-                      </li>
+                        </Text>
+                      </Group>
                     );
                   })}
-                </ul>
-              </div>
-            ) : null}
-            {sortedByExpenseCategory.length > 0 ? (
-              <div className={styles.byGroup}>
-                <h3 className={styles.byGroupTitle}>Расходы по категориям</h3>
-                <ul className={styles.groupList}>
+                </Stack>
+              </>
+            )}
+
+            {sortedByExpenseCategory.length > 0 && (
+              <>
+                <Divider my="sm" />
+                <Text size="sm" fw={600} mb="xs">
+                  Расходы по категориям
+                </Text>
+                <Stack gap={4}>
                   {sortedByExpenseCategory.map(({ categoryId, sum }) => {
                     const cat = categoryMap.get(categoryId);
-                    const name = cat?.name ?? categoryId;
                     return (
-                      <li key={categoryId} className={styles.groupItem}>
-                        <span className={styles.groupName}>{name}</span>
-                        <span className={styles.groupSum}>
+                      <Group
+                        key={categoryId}
+                        justify="space-between"
+                      >
+                        <Text size="sm">
+                          {cat?.name ?? categoryId}
+                        </Text>
+                        <Text size="sm" fw={500} c="red">
                           −{formatMoney(sum)} ₽
-                        </span>
-                      </li>
+                        </Text>
+                      </Group>
                     );
                   })}
-                </ul>
-              </div>
-            ) : null}
-          </>
+                </Stack>
+              </>
+            )}
+          </Paper>
         )}
       </section>
 
-      <section
-        className={styles.historySection}
-        aria-labelledby="month-history-title"
-      >
-        <h2 id="month-history-title" className={styles.sectionTitle}>
+      <section style={{ marginBottom: 'var(--mantine-spacing-lg)' }}>
+        <Title order={4} mb="sm">
           История операций
-        </h2>
-        <div className={styles.filters}>
-          <div className={styles.filterGroup}>
-            <label htmlFor="month-history-type">Тип</label>
-            <select
-              id="month-history-type"
-              value={historyFilters.type}
-              onChange={e =>
-                setHistoryFilters(f => ({
-                  ...f,
-                  type: e.target.value as HistoryFilters['type'],
-                }))
-              }
-            >
-              <option value="all">Все</option>
-              <option value="income">Доходы</option>
-              <option value="expense">Расходы</option>
-            </select>
-          </div>
-          {(historyFilters.type === 'all' ||
-            historyFilters.type === 'income' ||
-            historyFilters.type === 'expense') && (
-            <div className={styles.filterGroup}>
-              <label htmlFor="month-history-category">Категория</label>
-              <select
-                id="month-history-category"
-                value={historyFilters.categoryId}
-                onChange={e =>
-                  setHistoryFilters(f => ({ ...f, categoryId: e.target.value }))
-                }
-              >
-                <option value="">Все категории</option>
-                {allCategories
-                  .filter(
-                    c =>
-                      historyFilters.type === 'all' ||
-                      (historyFilters.type === 'income' && c.direction === 'income') ||
-                      (historyFilters.type === 'expense' && c.direction === 'expense')
-                  )
-                  .map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-              </select>
-            </div>
-          )}
-        </div>
+        </Title>
+        <Group gap="sm" mb="sm" align="flex-end">
+          <Select
+            label="Тип"
+            size="xs"
+            w={120}
+            value={historyFilters.type}
+            onChange={val =>
+              setHistoryFilters(f => ({
+                ...f,
+                type: (val as HistoryFilters['type']) ?? 'all',
+              }))
+            }
+            data={[
+              { value: 'all', label: 'Все' },
+              { value: 'income', label: 'Доходы' },
+              { value: 'expense', label: 'Расходы' },
+            ]}
+          />
+          <Select
+            label="Категория"
+            size="xs"
+            w={160}
+            value={historyFilters.categoryId || null}
+            onChange={val =>
+              setHistoryFilters(f => ({
+                ...f,
+                categoryId: val ?? '',
+              }))
+            }
+            data={[
+              { value: '', label: 'Все категории' },
+              ...filteredCategories.map(c => ({
+                value: c.id,
+                label: c.name,
+              })),
+            ]}
+            clearable
+          />
+        </Group>
+
         {historyQuery.isPending && (
-          <p className={styles.status}>Загрузка операций...</p>
+          <Center py="md">
+            <Loader size="sm" />
+          </Center>
         )}
         {historyQuery.error && (
-          <p className={styles.error}>
+          <Alert color="red" mb="sm">
             {historyQuery.error instanceof Error
               ? historyQuery.error.message
               : 'Не удалось загрузить историю'}
-          </p>
+          </Alert>
         )}
         {!historyQuery.isPending &&
           !historyQuery.error &&
           transactions.length === 0 && (
-            <p className={styles.empty}>За выбранный период операций нет.</p>
+            <Text c="dimmed" ta="center" py="md">
+              За выбранный период операций нет.
+            </Text>
           )}
         {!historyQuery.isPending &&
           !historyQuery.error &&
           historyByDate.size > 0 && (
-            <div className={styles.dateSection}>
-              {Array.from(historyByDate.entries()).map(([dateKey, list]) => (
-                <div key={dateKey}>
-                  <h3 className={styles.dateHeading}>
-                    {formatDateLabel(dateKey)}
-                  </h3>
-                  <ul className={styles.list}>
-                    {list.map(t => (
-                      <TransactionCard
-                        key={`${t.direction}-${t.id}`}
-                        transaction={t}
-                        categoryName={
-                          'categoryId' in t
-                            ? categoryMap.get(t.categoryId)?.name ?? t.categoryId
-                            : undefined
-                        }
-                      />
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
+            <Stack gap="md">
+              {Array.from(historyByDate.entries()).map(
+                ([dateKey, list]) => (
+                  <div key={dateKey}>
+                    <Text size="sm" fw={600} mb="xs" c="dimmed">
+                      {formatDateLabel(dateKey)}
+                    </Text>
+                    <Stack gap="xs">
+                      {list.map(t => (
+                        <TransactionCard
+                          key={`${t.direction}-${t.id}`}
+                          transaction={t}
+                          categoryName={
+                            'categoryId' in t
+                              ? categoryMap.get(t.categoryId)
+                                  ?.name ?? t.categoryId
+                              : undefined
+                          }
+                        />
+                      ))}
+                    </Stack>
+                  </div>
+                )
+              )}
+            </Stack>
           )}
       </section>
 
-      <section
-        className={styles.planSection}
-        aria-labelledby="month-plan-title"
-      >
-        <h2 id="month-plan-title" className={styles.sectionTitle}>
+      <section>
+        <Title order={4} mb="sm">
           План платежей
-        </h2>
+        </Title>
         {planQuery.isPending && (
-          <p className={styles.status}>Загрузка плана...</p>
+          <Center py="md">
+            <Loader size="sm" />
+          </Center>
         )}
         {planQuery.error && (
-          <p className={styles.error}>
+          <Alert color="red" mb="sm">
             {planQuery.error instanceof Error
               ? planQuery.error.message
               : 'Не удалось загрузить план'}
-          </p>
-        )}
-        {!planQuery.isPending && !planQuery.error && planItems.length === 0 && (
-          <p className={styles.empty}>
-            На выбранный период запланированных платежей нет.
-          </p>
+          </Alert>
         )}
         {!planQuery.isPending &&
           !planQuery.error &&
+          planItems.length === 0 && (
+            <Text c="dimmed" ta="center" py="md">
+              На выбранный период запланированных платежей нет.
+            </Text>
+          )}
+        {!planQuery.isPending &&
+          !planQuery.error &&
           planByDate.size > 0 && (
-            <div className={styles.dateSection}>
-              {Array.from(planByDate.entries()).map(([dateKey, list]) => (
-                <div key={dateKey}>
-                  <h3 className={styles.dateHeading}>
-                    {formatDateLabel(dateKey)}
-                  </h3>
-                  <ul className={styles.list}>
-                    {list.map((item, idx) => (
-                      <PlannedItemCard
-                        key={`${item.kind}-${item.paymentId}-${dateKey}-${idx}`}
-                        item={item}
-                        categoryName={categoryMap.get(item.categoryId)?.name}
-                      />
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
+            <Stack gap="md">
+              {Array.from(planByDate.entries()).map(
+                ([dateKey, list]) => (
+                  <div key={dateKey}>
+                    <Text size="sm" fw={600} mb="xs" c="dimmed">
+                      {formatDateLabel(dateKey)}
+                    </Text>
+                    <Stack gap="xs">
+                      {list.map((item, idx) => (
+                        <PlannedItemCard
+                          key={`${item.kind}-${item.paymentId}-${dateKey}-${idx}`}
+                          item={item}
+                          categoryName={
+                            categoryMap.get(item.categoryId)?.name
+                          }
+                        />
+                      ))}
+                    </Stack>
+                  </div>
+                )
+              )}
+            </Stack>
           )}
       </section>
     </div>
@@ -433,27 +472,34 @@ function TransactionCard({
   const note = 'note' in transaction ? transaction.note : undefined;
 
   return (
-    <li className={styles.card}>
-      <div className={styles.cardMain}>
-        <div
-          className={`${styles.cardType} ${isIncome ? styles.income : styles.expense}`}
-        >
-          {isIncome ? 'Доход' : 'Расход'}
+    <Card component="li" withBorder radius="md" padding="sm">
+      <Group justify="space-between" align="flex-start" wrap="nowrap">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Badge
+            color={isIncome ? 'green' : 'red'}
+            size="xs"
+            radius="sm"
+            mb={4}
+          >
+            {isIncome ? 'Доход' : 'Расход'}
+          </Badge>
+          {categoryName && (
+            <Text size="sm" c="dimmed">
+              {categoryName}
+            </Text>
+          )}
+          {note && (
+            <Text size="xs" c="dimmed">
+              {note}
+            </Text>
+          )}
         </div>
-        {categoryName && (
-          <span className={styles.cardGroup}>{categoryName}</span>
-        )}
-        {note ? (
-          <div className={styles.cardNote}>{note}</div>
-        ) : null}
-      </div>
-      <div
-        className={`${styles.cardAmount} ${isIncome ? styles.income : styles.expense}`}
-      >
-        {isIncome ? '+' : '−'}
-        {amount.toLocaleString('ru-RU')} ₽
-      </div>
-    </li>
+        <Text fw={600} c={isIncome ? 'teal' : 'red'}>
+          {isIncome ? '+' : '−'}
+          {amount.toLocaleString('ru-RU')} ₽
+        </Text>
+      </Group>
+    </Card>
   );
 }
 
@@ -475,26 +521,33 @@ function PlannedItemCard({
         : 'Разовый';
 
   return (
-    <li className={styles.card}>
-      <div className={styles.cardMain}>
-        <div
-          className={`${styles.cardType} ${isIncome ? styles.income : styles.expense}`}
-        >
-          {typeLabel}
+    <Card component="li" withBorder radius="md" padding="sm">
+      <Group justify="space-between" align="flex-start" wrap="nowrap">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Badge
+            color={isIncome ? 'green' : 'gray'}
+            size="xs"
+            radius="sm"
+            mb={4}
+          >
+            {typeLabel}
+          </Badge>
+          {categoryName != null && categoryName !== '' && (
+            <Text size="sm" c="dimmed">
+              {categoryName}
+            </Text>
+          )}
+          {item.note && (
+            <Text size="xs" c="dimmed">
+              {item.note}
+            </Text>
+          )}
         </div>
-        {categoryName != null && categoryName !== '' && (
-          <span className={styles.cardGroup}>{categoryName}</span>
-        )}
-        {item.note ? (
-          <div className={styles.cardNote}>{item.note}</div>
-        ) : null}
-      </div>
-      <div
-        className={`${styles.cardAmount} ${isIncome ? styles.income : styles.expense}`}
-      >
-        {isIncome ? '+' : '−'}
-        {item.amount.toLocaleString('ru-RU')} ₽
-      </div>
-    </li>
+        <Text fw={600} c={isIncome ? 'teal' : 'red'}>
+          {isIncome ? '+' : '−'}
+          {item.amount.toLocaleString('ru-RU')} ₽
+        </Text>
+      </Group>
+    </Card>
   );
 }
