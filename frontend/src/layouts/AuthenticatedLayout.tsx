@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate } from '@tanstack/react-router';
+import { AppShell, Button, Container, Group, Text } from '@mantine/core';
 import { useAuth } from '../contexts/useAuth';
 import { BottomNav } from '../components/BottomNav';
 import styles from './AuthenticatedLayout.module.css';
@@ -31,29 +32,45 @@ export function AuthenticatedLayout() {
   }
 
   return (
-    <div className={styles.app}>
-      <header className={styles.header}>
-        <h1 className={styles.logo}>PirBudget</h1>
-        <div className={styles.headerRight}>
-          {user && (
-            <span className={styles.userInfo}>
-              {user.email}
-              {user.name ? ` (${user.name})` : ''}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={logout}
-            className={styles.logoutButton}
-          >
-            Выйти
-          </button>
-        </div>
-      </header>
-      <main className={styles.main}>
-        <Outlet />
-      </main>
-      <BottomNav />
-    </div>
+    <AppShell
+      header={{ height: 56 }}
+      footer={{ height: 64 }}
+      padding="md"
+    >
+      <AppShell.Header>
+        <Container size="xs" h="100%">
+          <Group justify="space-between" align="center" h="100%">
+            <Text fw={700} size="lg">
+              PirBudget
+            </Text>
+            <Group gap="xs">
+              {user && (
+                <Text size="xs" c="dimmed">
+                  {user.email}
+                  {user.name ? ` (${user.name})` : ''}
+                </Text>
+              )}
+              <Button
+                variant="subtle"
+                size="xs"
+                onClick={logout}
+              >
+                Выйти
+              </Button>
+            </Group>
+          </Group>
+        </Container>
+      </AppShell.Header>
+
+      <AppShell.Main>
+        <Container size="xs" pb={80}>
+          <Outlet />
+        </Container>
+      </AppShell.Main>
+
+      <AppShell.Footer>
+        <BottomNav />
+      </AppShell.Footer>
+    </AppShell>
   );
 }
