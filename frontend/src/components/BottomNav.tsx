@@ -1,5 +1,5 @@
 import { Link, useRouterState } from '@tanstack/react-router';
-import { ActionIcon, Group, Paper, Text } from '@mantine/core';
+import { ActionIcon, Group, Paper, Stack, Text } from '@mantine/core';
 import styles from './BottomNav.module.css';
 
 type NavItem = {
@@ -9,7 +9,7 @@ type NavItem = {
 };
 
 const items: NavItem[] = [
-  { to: '/', label: 'Платежи и поступления', icon: '🏠' },
+  { to: '/', label: 'Записи', icon: '🏠' },
   { to: '/month', label: 'Месяц', icon: '📅' },
   { to: '/categories', label: 'Категории', icon: '📁' },
 ];
@@ -24,8 +24,8 @@ export function BottomNav() {
       role="navigation"
       aria-label="Основное меню"
       shadow="md"
-      withBorder
-      radius={0}
+      withBorder={false}
+      radius="xl"
     >
       <Group justify="space-around" gap="xs">
         {items.map(({ to, label, icon }) => {
@@ -40,7 +40,7 @@ export function BottomNav() {
               }
               aria-current={isActive ? 'page' : undefined}
             >
-              <Group gap={2} align="center">
+              <Stack gap={2} align="center" justify="center">
                 <ActionIcon
                   variant={isActive ? 'filled' : 'subtle'}
                   color={isActive ? 'blue' : 'gray'}
@@ -58,7 +58,7 @@ export function BottomNav() {
                 >
                   {label}
                 </Text>
-              </Group>
+              </Stack>
             </Link>
           );
         })}

@@ -39,7 +39,7 @@ export function AuthenticatedLayout() {
   }
 
   return (
-    <AppShell header={{ height: 56 }} footer={{ height: 64 }} padding="md">
+    <AppShell header={{ height: 56 }} footer={{ height: 96 }} padding="md">
       <AppShell.Header>
         <Container size="xs" h="100%">
           <Group justify="space-between" align="center" h="100%">
@@ -67,8 +67,17 @@ export function AuthenticatedLayout() {
         </Container>
       </AppShell.Main>
 
-      <AppShell.Footer>
-        <BottomNav />
+      <AppShell.Footer withBorder={false}>
+        <Container
+          size="xs"
+          px="md"
+          pb="xs"
+          style={{
+            paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))',
+          }}
+        >
+          <BottomNav />
+        </Container>
       </AppShell.Footer>
     </AppShell>
   );
