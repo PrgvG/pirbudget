@@ -19,7 +19,7 @@
 }
 
 .backLink {
-  color: #2563eb;
+  color: var(--mantine-color-blue-6);
   text-decoration: none;
   font-weight: 500;
 }
@@ -41,7 +41,7 @@
 
 .addButton {
   padding: 0.5rem 1rem;
-  background-color: #2563eb;
+  background-color: var(--mantine-color-blue-6);
   color: white;
   border: none;
   border-radius: 6px;
@@ -50,7 +50,7 @@
 }
 
 .addButton:hover {
-  background-color: #1d4ed8;
+  background-color: var(--mantine-color-blue-7);
 }
 
 .form {
@@ -129,7 +129,7 @@
 
 .submitButton {
   padding: 0.5rem 1rem;
-  background-color: #2563eb;
+  background-color: var(--mantine-color-blue-6);
   color: white;
   border: none;
   border-radius: 6px;

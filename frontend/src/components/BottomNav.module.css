@@ -12,7 +12,7 @@
   flex: 1;
   min-width: 0;
   padding: 0.35rem 0.25rem;
-  color: #666;
+  color: var(--mantine-color-gray-6);
   text-decoration: none;
   font-size: 0.7rem;
   font-weight: 500;
@@ -22,11 +22,11 @@
 
 .link:hover {
   background: rgba(0, 0, 0, 0.04);
-  color: #333;
+  color: var(--mantine-color-gray-9);
 }
 
 .link:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--mantine-color-blue-6);
   outline-offset: 2px;
 }
 
