@@ -1,4 +1,6 @@
 import { getToken, removeToken } from '../lib/authStorage';
+import type { ZodTypeAny } from 'zod';
+import type { infer as ZodInfer } from 'zod';
 
 const getBaseUrl = (): string => {
   const base = import.meta.env.VITE_API_BASE_URL;
@@ -98,4 +100,21 @@ export async function apiJson<T>(
     throw new Error('Invalid response shape');
   }
   return data;
+}
+
+type InferFromSchema<TSchema extends ZodTypeAny> = ZodInfer<TSchema>;
+
+export function fromZodSchema<TSchema extends ZodTypeAny>(
+  schema: TSchema
+): (data: unknown) => data is InferFromSchema<TSchema> {
+  return (data: unknown): data is InferFromSchema<TSchema> =>
+    schema.safeParse(data).success;
+}
+
+export function fromZodArray<TSchema extends ZodTypeAny>(
+  schema: TSchema
+): (data: unknown) => data is InferFromSchema<TSchema>[] {
+  return (data: unknown): data is InferFromSchema<TSchema>[] =>
+    Array.isArray(data) &&
+    data.every(item => schema.safeParse(item).success);
 }
