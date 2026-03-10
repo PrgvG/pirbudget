@@ -96,10 +96,7 @@ export const categoriesService = {
     return docToCategory(doc);
   },
 
-  async create(
-    userId: string,
-    data: CategoryCreate
-  ): Promise<Category> {
+  async create(userId: string, data: CategoryCreate): Promise<Category> {
     const uid = toObjectId(userId);
     const doc = await CategoryModel.create({
       userId: uid,

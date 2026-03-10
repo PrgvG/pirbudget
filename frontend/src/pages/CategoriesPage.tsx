@@ -233,9 +233,7 @@ export function CategoriesPage() {
 
       <SegmentedControl
         value={direction}
-        onChange={val =>
-          handleDirectionChange(val as CategoryDirection)
-        }
+        onChange={val => handleDirectionChange(val as CategoryDirection)}
         data={[
           { label: 'Расходы', value: 'expense' },
           { label: 'Доходы', value: 'income' },
@@ -256,9 +254,7 @@ export function CategoriesPage() {
 
       <section>
         <Title order={4} mb="sm">
-          {direction === 'expense'
-            ? 'Категории расходов'
-            : 'Категории доходов'}
+          {direction === 'expense' ? 'Категории расходов' : 'Категории доходов'}
         </Title>
 
         {loading && (
@@ -289,25 +285,23 @@ export function CategoriesPage() {
                 <Group align="center" gap="sm" wrap="nowrap">
                   <span
                     className={styles.colorSwatch}
-                    style={{
-                      '--swatch-color': c.color || undefined,
-                    } as React.CSSProperties}
+                    style={
+                      {
+                        '--swatch-color': c.color || undefined,
+                      } as React.CSSProperties
+                    }
                     aria-hidden
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <Group gap="xs" align="center">
-                      {c.icon && (
-                        <span>{c.icon}</span>
-                      )}
+                      {c.icon && <span>{c.icon}</span>}
                       <Text component="span" fw={500}>
                         {c.name}
                       </Text>
                       <Badge
                         size="xs"
                         radius="sm"
-                        color={
-                          c.direction === 'expense' ? 'red' : 'green'
-                        }
+                        color={c.direction === 'expense' ? 'red' : 'green'}
                       >
                         {c.direction === 'expense' ? 'Расход' : 'Доход'}
                       </Badge>
@@ -323,9 +317,8 @@ export function CategoriesPage() {
                       onClick={() => handleMove(c, 'up')}
                       disabled={
                         reorderMutation.isPending ||
-                        categoriesQuery.data?.findIndex(
-                          x => x.id === c.id
-                        ) === 0
+                        categoriesQuery.data?.findIndex(x => x.id === c.id) ===
+                          0
                       }
                     >
                       <IconArrowUp size={16} />
@@ -336,9 +329,7 @@ export function CategoriesPage() {
                       onClick={() => handleMove(c, 'down')}
                       disabled={
                         reorderMutation.isPending ||
-                        categoriesQuery.data?.findIndex(
-                          x => x.id === c.id
-                        ) ===
+                        categoriesQuery.data?.findIndex(x => x.id === c.id) ===
                           categories.length - 1
                       }
                     >

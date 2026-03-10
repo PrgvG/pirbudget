@@ -96,10 +96,7 @@ router.post(
         return;
       }
       const userId = req.user!.userId;
-      const created = await categoriesService.create(
-        userId,
-        validation.data
-      );
+      const created = await categoriesService.create(userId, validation.data);
       res.status(201).json(created);
     }
   )

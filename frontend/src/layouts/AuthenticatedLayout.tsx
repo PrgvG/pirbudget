@@ -41,33 +41,32 @@ export function AuthenticatedLayout() {
   return (
     <>
       <AppShell header={{ height: 56 }} padding="md">
-      <AppShell.Header>
-        <Container size="xs" h="100%">
-          <Group justify="space-between" align="center" h="100%">
-            <Text fw={700} size="lg">
-              PirBudget
-            </Text>
-            <Group gap="xs">
-              {user && (
-                <Text size="xs" c="dimmed">
-                  {user.email}
-                  {user.name ? ` (${user.name})` : ''}
-                </Text>
-              )}
-              <Button variant="subtle" size="xs" onClick={logout}>
-                Выйти
-              </Button>
+        <AppShell.Header>
+          <Container size="xs" h="100%">
+            <Group justify="space-between" align="center" h="100%">
+              <Text fw={700} size="lg">
+                PirBudget
+              </Text>
+              <Group gap="xs">
+                {user && (
+                  <Text size="xs" c="dimmed">
+                    {user.email}
+                    {user.name ? ` (${user.name})` : ''}
+                  </Text>
+                )}
+                <Button variant="subtle" size="xs" onClick={logout}>
+                  Выйти
+                </Button>
+              </Group>
             </Group>
-          </Group>
-        </Container>
-      </AppShell.Header>
+          </Container>
+        </AppShell.Header>
 
-      <AppShell.Main>
-        <Container size="xs" pb={120}>
-          <Outlet />
-        </Container>
-      </AppShell.Main>
-
+        <AppShell.Main>
+          <Container size="xs" pb={120}>
+            <Outlet />
+          </Container>
+        </AppShell.Main>
       </AppShell>
 
       <BottomNav />

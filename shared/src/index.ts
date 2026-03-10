@@ -10,7 +10,12 @@ export type {
   CategoryUpdate,
   CategoryDirection,
 } from "./categories.js";
-export { categorySchema, categoryCreateSchema, categoryUpdateSchema } from "./categories.js";
+export {
+  categorySchema,
+  categoryCreateSchema,
+  categoryUpdateSchema,
+  directionSchema,
+} from "./categories.js";
 export type {
   RecurrenceByInterval,
   RecurrenceByDate,

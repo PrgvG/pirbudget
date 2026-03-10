@@ -4,10 +4,7 @@
  */
 
 import { z } from 'zod';
-import {
-  categoryCreateSchema,
-  categoryUpdateSchema,
-} from 'shared/categories';
+import { categoryCreateSchema, categoryUpdateSchema } from 'shared/categories';
 
 export type CategoryCreateValid = {
   ok: true;

@@ -1,12 +1,13 @@
 /**
  * Общий справочник категорий для доходов и расходов.
+ * Единый источник правды для фронтенда и бэкенда.
  * Категория имеет direction: 'income' | 'expense'.
  */
 
 import { z } from 'zod';
 import { entityIdSchema } from './ids.js';
 
-const directionSchema = z.enum(['income', 'expense']);
+export const directionSchema = z.enum(['income', 'expense']);
 
 /** Схема сущности категории. */
 export const categorySchema = z.object({

@@ -631,9 +631,7 @@ export function TransactionsPage() {
             size="xs"
             w={140}
             value={entryFilter}
-            onChange={val =>
-              setEntryFilter((val as EntryFilterType) ?? 'all')
-            }
+            onChange={val => setEntryFilter((val as EntryFilterType) ?? 'all')}
             data={[
               { value: 'all', label: 'Все' },
               { value: 'income', label: 'Доходы' },
@@ -675,9 +673,11 @@ export function TransactionsPage() {
                     {cat && (
                       <span
                         className={styles.colorSwatch}
-                        style={{
-                          '--swatch-color': cat.color || undefined,
-                        } as React.CSSProperties}
+                        style={
+                          {
+                            '--swatch-color': cat.color || undefined,
+                          } as React.CSSProperties
+                        }
                         aria-hidden
                       />
                     )}
@@ -726,9 +726,7 @@ export function TransactionsPage() {
                           <Button
                             size="compact-xs"
                             color="red"
-                            onClick={() =>
-                              deleteEntryMutation.mutate(entry.id)
-                            }
+                            onClick={() => deleteEntryMutation.mutate(entry.id)}
                             loading={deleteEntryMutation.isPending}
                           >
                             Да
@@ -801,9 +799,11 @@ export function TransactionsPage() {
                       {cat && (
                         <span
                           className={styles.colorSwatch}
-                          style={{
-                            '--swatch-color': cat.color || undefined,
-                          } as React.CSSProperties}
+                          style={
+                            {
+                              '--swatch-color': cat.color || undefined,
+                            } as React.CSSProperties
+                          }
                           aria-hidden
                         />
                       )}
@@ -817,8 +817,7 @@ export function TransactionsPage() {
                           </Badge>
                         </Group>
                         <Text component="span" fw={600} c="red">
-                          −
-                          {p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
+                          −{p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
                         </Text>
                         <Text component="span" size="sm" c="dimmed">
                           {describeRecurrence(p.recurrence)}
@@ -854,18 +853,14 @@ export function TransactionsPage() {
                               onClick={() =>
                                 deleteRecurringExpenseMutation.mutate(p.id)
                               }
-                              loading={
-                                deleteRecurringExpenseMutation.isPending
-                              }
+                              loading={deleteRecurringExpenseMutation.isPending}
                             >
                               Да
                             </Button>
                             <Button
                               size="compact-xs"
                               variant="default"
-                              onClick={() =>
-                                setRecurringExpenseDeleteId(null)
-                              }
+                              onClick={() => setRecurringExpenseDeleteId(null)}
                             >
                               Нет
                             </Button>
@@ -875,9 +870,7 @@ export function TransactionsPage() {
                             variant="subtle"
                             color="red"
                             aria-label="Удалить"
-                            onClick={() =>
-                              setRecurringExpenseDeleteId(p.id)
-                            }
+                            onClick={() => setRecurringExpenseDeleteId(p.id)}
                           >
                             <IconX size={16} />
                           </ActionIcon>
@@ -932,9 +925,11 @@ export function TransactionsPage() {
                       {cat && (
                         <span
                           className={styles.colorSwatch}
-                          style={{
-                            '--swatch-color': cat.color || undefined,
-                          } as React.CSSProperties}
+                          style={
+                            {
+                              '--swatch-color': cat.color || undefined,
+                            } as React.CSSProperties
+                          }
                           aria-hidden
                         />
                       )}
@@ -948,8 +943,7 @@ export function TransactionsPage() {
                           </Badge>
                         </Group>
                         <Text component="span" fw={600} c="teal">
-                          +
-                          {p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
+                          +{p.amountPerOccurrence.toLocaleString('ru-RU')} ₽
                         </Text>
                         <Text component="span" size="sm" c="dimmed">
                           {describeRecurrence(p.recurrence)}
@@ -985,18 +979,14 @@ export function TransactionsPage() {
                               onClick={() =>
                                 deleteRecurringIncomeMutation.mutate(p.id)
                               }
-                              loading={
-                                deleteRecurringIncomeMutation.isPending
-                              }
+                              loading={deleteRecurringIncomeMutation.isPending}
                             >
                               Да
                             </Button>
                             <Button
                               size="compact-xs"
                               variant="default"
-                              onClick={() =>
-                                setRecurringIncomeDeleteId(null)
-                              }
+                              onClick={() => setRecurringIncomeDeleteId(null)}
                             >
                               Нет
                             </Button>
@@ -1006,9 +996,7 @@ export function TransactionsPage() {
                             variant="subtle"
                             color="red"
                             aria-label="Удалить"
-                            onClick={() =>
-                              setRecurringIncomeDeleteId(p.id)
-                            }
+                            onClick={() => setRecurringIncomeDeleteId(p.id)}
                           >
                             <IconX size={16} />
                           </ActionIcon>

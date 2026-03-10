@@ -64,13 +64,9 @@ export function CategoryForm({
           <TextInput
             label="Название"
             value={value.name}
-            onChange={e =>
-              onChange({ ...value, name: e.currentTarget.value })
-            }
+            onChange={e => onChange({ ...value, name: e.currentTarget.value })}
             placeholder={
-              isExpenseDirection
-                ? 'Например: Продукты'
-                : 'Например: Зарплата'
+              isExpenseDirection ? 'Например: Продукты' : 'Например: Зарплата'
             }
             autoFocus
           />
@@ -99,9 +95,7 @@ export function CategoryForm({
           <TextInput
             label="Иконка (опционально)"
             value={value.icon}
-            onChange={e =>
-              onChange({ ...value, icon: e.currentTarget.value })
-            }
+            onChange={e => onChange({ ...value, icon: e.currentTarget.value })}
             placeholder="Эмодзи или код"
           />
 

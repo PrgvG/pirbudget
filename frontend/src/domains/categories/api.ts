@@ -26,9 +26,7 @@ function isCategoryObject(obj: object): obj is Category {
 }
 
 export function isCategory(data: unknown): data is Category {
-  return (
-    typeof data === 'object' && data !== null && isCategoryObject(data)
-  );
+  return typeof data === 'object' && data !== null && isCategoryObject(data);
 }
 
 export function isCategoryArray(data: unknown): data is Category[] {
@@ -64,21 +62,11 @@ export async function fetchArchivedCategories(
 }
 
 export async function fetchCategory(id: string): Promise<Category> {
-  return apiJson(
-    `/api/categories/${encodeURIComponent(id)}`,
-    {},
-    isCategory
-  );
+  return apiJson(`/api/categories/${encodeURIComponent(id)}`, {}, isCategory);
 }
 
-export async function createCategory(
-  data: CategoryCreate
-): Promise<Category> {
-  return apiJson(
-    '/api/categories',
-    { method: 'POST', body: data },
-    isCategory
-  );
+export async function createCategory(data: CategoryCreate): Promise<Category> {
+  return apiJson('/api/categories', { method: 'POST', body: data }, isCategory);
 }
 
 export async function updateCategory(
