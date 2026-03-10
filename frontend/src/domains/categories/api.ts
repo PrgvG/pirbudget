@@ -2,35 +2,22 @@
  * API категорий (доходы и расходы). Вызовы к бэкенду и type guards для ответов.
  */
 
-import type {
-  Category,
-  CategoryCreate,
-  CategoryUpdate,
-  CategoryDirection,
+import {
+  categorySchema,
+  type Category,
+  type CategoryCreate,
+  type CategoryUpdate,
+  type CategoryDirection,
 } from 'shared/categories';
 import { apiJson, apiFetch } from '../../api/client';
 
-function isCategoryObject(obj: object): obj is Category {
-  const o = obj as Record<string, unknown>;
-  return (
-    typeof o.id === 'string' &&
-    typeof o.name === 'string' &&
-    typeof o.sortOrder === 'number' &&
-    (o.direction === 'income' || o.direction === 'expense') &&
-    typeof o.createdAt === 'string' &&
-    typeof o.updatedAt === 'string' &&
-    (o.color === undefined || typeof o.color === 'string') &&
-    (o.icon === undefined || typeof o.icon === 'string') &&
-    (o.archived === undefined || typeof o.archived === 'boolean')
-  );
-}
-
 export function isCategory(data: unknown): data is Category {
-  return typeof data === 'object' && data !== null && isCategoryObject(data);
+  const result = categorySchema.safeParse(data);
+  return result.success;
 }
 
 export function isCategoryArray(data: unknown): data is Category[] {
-  return Array.isArray(data) && data.every(isCategory);
+  return Array.isArray(data) && data.every(item => isCategory(item));
 }
 
 function categoriesUrl(direction?: CategoryDirection): string {
