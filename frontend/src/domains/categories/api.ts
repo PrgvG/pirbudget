@@ -9,16 +9,11 @@ import {
   type CategoryUpdate,
   type CategoryDirection,
 } from 'shared/categories';
-import { apiJson, apiFetch } from '../../api/client';
+import { apiJson, apiFetch, fromZodArray, fromZodSchema } from '../../api/client';
 
-export function isCategory(data: unknown): data is Category {
-  const result = categorySchema.safeParse(data);
-  return result.success;
-}
+export const isCategory = fromZodSchema(categorySchema);
 
-export function isCategoryArray(data: unknown): data is Category[] {
-  return Array.isArray(data) && data.every(item => isCategory(item));
-}
+export const isCategoryArray = fromZodArray(categorySchema);
 
 function categoriesUrl(direction?: CategoryDirection): string {
   const url = '/api/categories';
